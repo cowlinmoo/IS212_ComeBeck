@@ -1,6 +1,7 @@
 services:
   postgres:
     image: postgres:latest
+    container_name: spm_database
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -11,3 +12,23 @@ services:
       - ${POSTGRES_PORT}:5432
     volumes:
       - ./postgres/data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d spm"]
+
+  backend:
+    build:
+      context: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/code
+    command: >
+      uvicorn backend.main:app
+      --host 0.0.0.0 --port 8080 --reload
+    env_file:
+      - .env
+    image: backend_api
+    container_name: backend_api
+    depends_on:
+      postgres:
+        condition: service_healthy
