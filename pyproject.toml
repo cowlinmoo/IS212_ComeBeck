@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "is-212 wfh tracking system"
+version = "0.1.0"
+description = ""
+authors = ["molincok <colinmok1000@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "^0.113.0"
+uvicorn = "^0.30.6"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
