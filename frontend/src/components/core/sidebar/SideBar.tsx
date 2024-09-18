@@ -2,13 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Home, FileText, Settings } from "lucide-react";
+import { Home, FileText, Settings, Users } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 
 const tabs = [
   { name: "Home", icon: Home, path: "/profile" },
   { name: "Schedule", icon: FileText, path: "/schedule" },
-  { name: "Arrangement Management", icon: Settings, path: "/arrangement" },
+  { name: "Arrangement Management", icon: Settings, path: "/arrangement" }, 
+  { name: "Arrangement Approvals", icon: Settings, path: "/approvals" },
+  { name: "Overview Schedule", icon: Users, path: "/overview" },
 ];
 
 export default function SideBar() {

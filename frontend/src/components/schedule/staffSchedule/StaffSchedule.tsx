@@ -32,7 +32,7 @@ const generateSchedule = (startDate: Date, days: number) => {
 const today = new Date()
 const teamSchedule = generateSchedule(today, 30)
 
-export default function Schedule() {
+export default function StaffSchedule() {
   const [activeTab, setActiveTab] = useState("team")
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(today)
 

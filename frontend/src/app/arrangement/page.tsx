@@ -1,5 +1,5 @@
 import { Header } from "@/components/core/header/Header";
-import StaffArrangement from "@/components/arrangement/page";
+import Applications from "@/components/arrangement/applications/Applications";
 import SideBar from "@/components/core/sidebar/SideBar";
 
 export default function Component() {
@@ -14,7 +14,7 @@ export default function Component() {
         {/* Header */}
         <Header/>
         {/* Page Content */}
-        <StaffArrangement />
+        <Applications />
       </div>
     </div>
   )

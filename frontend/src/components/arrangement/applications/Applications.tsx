@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Calendar } from "@/components/ui/calendar"
 // import { CalendarIcon } from "lucide-react"
 
-export default function StaffArrangement() {
+export default function Applications() {
   const [selectedDates, setSelectedDates] = useState<Date[]>([])
   const [activeTab, setActiveTab] = useState("apply")
 
