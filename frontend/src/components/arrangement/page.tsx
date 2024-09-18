@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -44,7 +46,7 @@ export default function StaffArrangement() {
                 <Calendar
                   mode="multiple"
                   selected={selectedDates}
-                //   onSelect={handleDateSelect}
+                  onSelect={()=>handleDateSelect}
                   className="rounded-md border"
                 />
               </div>
@@ -74,7 +76,7 @@ export default function StaffArrangement() {
                 <Calendar
                   mode="multiple"
                   selected={selectedDates}
-                //   onSelect={handleDateSelect}
+                  onSelect={()=>handleDateSelect}
                   className="rounded-md border"
                 />
               </div>
@@ -108,7 +110,7 @@ export default function StaffArrangement() {
                 <Calendar
                   mode="multiple"
                   selected={selectedDates}
-                //   onSelect={handleDateSelect}
+                  onSelect={()=>handleDateSelect}
                   className="rounded-md border"
                 />
               </div>
