@@ -13,7 +13,7 @@ class Employee(EntityMeta):
     email = Column(String(50), nullable=False)
     reporting_manager = Column(Integer, ForeignKey('employees.staff_id'))
     role = Column(Integer, nullable=False)
-    hashed_password = Column(String(128), nullable=False)
+    password = Column(String(128), nullable=False)
 
     class Config:
         orm_mode = True

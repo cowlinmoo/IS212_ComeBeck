@@ -43,7 +43,7 @@ class EmployeeRepository:
             country=employee.country,
             reporting_manager=employee.reporting_manager,
             role=employee.role,
-            hashed_password=pwd_context.hash(employee.hashed_password)
+            password=pwd_context.hash(employee.password)
         )
         self.db.add(new_employee)
         self.db.commit()

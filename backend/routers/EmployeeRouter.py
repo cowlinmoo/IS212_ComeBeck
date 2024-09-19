@@ -6,7 +6,7 @@ from backend.services.EmployeeService import EmployeeService
 from backend.services.dependencies import role_required
 
 EmployeeRouter = APIRouter(
-    prefix="/employee",
+    prefix="/api/employee",
     tags=["Employee Endpoints"],
 )
 

@@ -35,6 +35,6 @@ class AuthenticationService:
 
     def authenticate_employee(self, email: str, password: str) -> Optional[Employee]:
         employee = self.db.query(Employee).filter(Employee.email == email).first()
-        if employee and bcrypt_context.verify(password, employee.hashed_password):
+        if employee and bcrypt_context.verify(password, employee.password):
             return employee
         return None

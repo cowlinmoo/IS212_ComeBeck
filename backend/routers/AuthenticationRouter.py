@@ -6,7 +6,7 @@ from backend.schemas.TokenSchema import Token
 
 AuthRouter = APIRouter(
     prefix="/api",
-    tags=["Authentication"],
+    tags=["Authentication Endpoints"],
 )
 
 @AuthRouter.post("/authenticate", response_model=Token)

@@ -1,14 +1,14 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class EmployeeSchema(BaseModel):
-    staff_id: int
-    staff_fname: str
-    staff_lname: str
-    dept: str
-    position: str
-    country: str
-    email: str
-    reporting_manager: int
-    role: int
-    hashed_password: str
+    staff_id: int = Field(examples=[1, 2, 3])
+    staff_fname: str = Field(examples=["John", "Jane", "Doe"])
+    staff_lname: str = Field(examples=["Doe", "Smith", "Doe"])
+    dept: str = Field(examples=["HR", "IT", "Finance"])
+    position: str = Field(examples=["Manager", "Director"])
+    country: str = Field(examples=["USA", "UK", "Canada"])
+    email: str = Field(examples=["test@gmail.com"])
+    reporting_manager: int = Field(examples=[1, 2, 3])
+    role: int = Field(examples=[1, 2, 3])
+    password: str = Field(examples=["password123"])
