@@ -1,9 +1,9 @@
 from typing import List, Annotated
 from fastapi import APIRouter, Depends
 
-from backend.repositories.EmployeeRepository import EmployeeRepository
 from backend.schemas.EmployeeSchema import EmployeeSchema
 from backend.services.EmployeeService import EmployeeService
+from backend.services.dependencies import role_required
 
 EmployeeRouter = APIRouter(
     prefix="/employee",
@@ -11,7 +11,8 @@ EmployeeRouter = APIRouter(
 )
 
 @EmployeeRouter.get("/", response_model=List[EmployeeSchema])
-def get_all_employees(employee_service: EmployeeService = Depends()):
+def get_all_employees(employee_service: EmployeeService = Depends(),
+                      current_user: dict = Depends(role_required(1, 2))):
     return employee_service.get_all_employees()
 
 @EmployeeRouter.get("/{staff_id}", response_model=EmployeeSchema)
