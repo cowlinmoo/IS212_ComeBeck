@@ -14,20 +14,21 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U admin -d spm"]
 
-#  backend:
-#    build:
-#      context: ./backend
-#    ports:
-#      - "8080:8080"
-#    volumes:
-#      - .:/code
-#    command: >
-#      uvicorn backend.main:app
-#      --host 0.0.0.0 --port 8080 --reload
-#    env_file:
-#      - .env
-#    image: backend_api
-#    container_name: backend_api
-#    depends_on:
-#      postgres:
-#        condition: service_healthy
+  backend:
+    build:
+      context: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/code
+    command: >
+      uvicorn backend.main:app
+      --host 0.0.0.0 --port 8080 --reload
+    environment:
+      - DATABASE_HOSTNAME=postgres
+      - .env
+    image: backend_api
+    container_name: backend_api
+    depends_on:
+      postgres:
+        condition: service_healthy

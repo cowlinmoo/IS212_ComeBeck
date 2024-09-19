@@ -5,6 +5,8 @@ from .Environment import get_environment_variables
 # Load environment variables
 env = get_environment_variables()
 
+DATABASE_HOSTNAME = env.DATABASE_HOSTNAME or 'localhost'
+
 # Construct the DATABASE_URL
 DATABASE_URL = (
     f"{env.DATABASE_DIALECT}://{env.POSTGRES_USER}:{env.POSTGRES_PASSWORD}"
