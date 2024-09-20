@@ -24,6 +24,8 @@ COPY poetry.lock pyproject.toml ./
 
 COPY backend backend
 COPY tests tests
+# Copy the .env file (assuming it's in the same directory as your Dockerfile)
+COPY .env /code/.env
 
 # Install all dependencies
 RUN poetry install
