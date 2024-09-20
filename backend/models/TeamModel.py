@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, Text, DateTime
 from generators import get_current_datetime_sgt
 from models import EntityMeta
 
+
 class Team(EntityMeta):
     __tablename__ = 'team'
 
