@@ -5,11 +5,11 @@ from backend.services.AuthenticationService import AuthenticationService
 from backend.schemas.TokenSchema import Token
 
 AuthRouter = APIRouter(
-    prefix="/api",
+    prefix="/api/authenticate",
     tags=["Authentication Endpoints"],
 )
 
-@AuthRouter.post("/authenticate", response_model=Token)
+@AuthRouter.post("/", response_model=Token)
 def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
     auth_service: AuthenticationService = Depends()
