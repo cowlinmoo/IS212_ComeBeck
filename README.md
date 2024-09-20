@@ -14,12 +14,6 @@
 
 ## Development Workflow
 
-1. Install **Python 3.12.3** and **[Poetry](https://python-poetry.org/docs/)**.
-
-2. From your project directory run `poetry install` to install dependencies.
-
-3. You can activate your virtual environment using `poetry shell`.
-
 ## API Documentation
 
 The API documentation is served using *Swagger*. You may access it using -
