@@ -25,10 +25,10 @@ VALUES
 ON CONFLICT (team_id, staff_id) DO NOTHING;
 
 -- Insert seed data into the Application table if not exists
-INSERT INTO application (application_id, reason, description, created_on, last_updated_on, status, staff_id)
+INSERT INTO application (application_id, reason, description, created_on, last_updated_on, status, staff_id, approver_id)
 VALUES
-    (201, 'WFH Request', 'Requesting to work from home for two weeks.', '2023-07-01 08:00:00', '2023-07-01 08:00:00', 'approved', 101),
-    (202, 'Relocation', 'Requesting to relocate to a different city.', '2023-07-05 09:00:00', '2023-07-06 10:00:00', 'pending', 104)
+    (201, 'WFH Request', 'Requesting to work from home for two weeks.', '2023-07-01 08:00:00', '2023-07-01 08:00:00', 'approved', 101, 103),
+    (202, 'Relocation', 'Requesting to relocate to a different city.', '2023-07-05 09:00:00', '2023-07-06 10:00:00', 'pending', 104, NULL)
 ON CONFLICT (application_id) DO NOTHING;
 
 -- Insert seed data into the Arrangement table if not exists

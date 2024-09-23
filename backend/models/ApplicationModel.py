@@ -16,6 +16,7 @@ class Application(EntityMeta):
     status = Column(String(20), CheckConstraint(
         "status IN ('approved', 'pending', 'rejected', 'withdrawn')"), nullable=False)
     staff_id = Column(ForeignKey('employees.staff_id'), nullable=False)
+    approver_id = Column(ForeignKey('employees.staff_id'), nullable=True)
 
     class Config:
         orm_mode = True
