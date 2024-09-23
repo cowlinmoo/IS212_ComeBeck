@@ -9,7 +9,8 @@ from sqlalchemy.orm import Session
 from ..config.Database import get_db_connection
 from ..models import Application
 from ..models.generators import get_current_datetime_sgt
-from ..schemas.ApplicationSchema import ApplicationCreateSchema, ApplicationUpdateSchema
+from ..schemas.ApplicationSchema import ApplicationCreateSchema, ApplicationUpdateSchema, ApplicationWithdrawSchema
+
 
 class ApplicationRepository:
     db: Session
@@ -38,6 +39,17 @@ class ApplicationRepository:
         self.db.commit()
         self.db.refresh(new_application)
         return new_application
+
+    def withdraw_application(self, application_id: int, application: ApplicationWithdrawSchema) -> Application:
+        db_application = self.get_application_by_application_id(application_id)
+
+        db_application.status = application.status
+        db_application.reason = application.reason
+        db_application.last_updated_on = get_current_datetime_sgt()
+
+        self.db.commit()
+        self.db.refresh(db_application)
+        return db_application
 
     def update_application(self, application_id: int, application: ApplicationUpdateSchema) -> Application:
         db_application = self.db.query(Application).filter(Application.application_id == application_id).first()

@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from ..models.enums.EmployeeRoleEnum import EmployeeRole
-from ..schemas.ApplicationSchema import ApplicationSchema, ApplicationCreateSchema, ApplicationUpdateSchema
+from ..schemas.ApplicationSchema import (ApplicationSchema, ApplicationCreateSchema,ApplicationUpdateSchema,ApplicationWithdrawSchema)
 from ..services.ApplicationService import ApplicationService
 from ..services.dependencies import role_required
 
@@ -52,6 +52,15 @@ def update_application(
     current_user: dict = Depends(role_required(EmployeeRole.HR, EmployeeRole.MANAGER, EmployeeRole.STAFF))
 ):
     return service.update_application(application_id, application)
+
+@ApplicationRouter.put("/withdraw/{application_id}", response_model=ApplicationSchema)
+def withdraw_application(
+    application_id: int,
+    application: ApplicationWithdrawSchema,
+    service: ApplicationService = Depends(),
+    current_user: dict = Depends(role_required(EmployeeRole.HR, EmployeeRole.MANAGER, EmployeeRole.STAFF))
+):
+    return service.withdraw_application(application_id, application)
 
 @ApplicationRouter.get("/status/{status}", response_model=List[ApplicationSchema])
 def get_applications_by_status(

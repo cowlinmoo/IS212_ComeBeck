@@ -71,3 +71,10 @@ class EmployeeRepository:
         self.db.delete(employee)
         self.db.commit()
         return employee
+
+    def get_manager(self, staff_id):
+        employee = self.db.query(Employee).filter(Employee.staff_id == staff_id).first()
+        if employee is not None:
+            return self.db.query(Employee).filter(Employee.staff_id == employee.reporting_manager).first()
+        else:
+            return None

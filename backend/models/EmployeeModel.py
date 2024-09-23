@@ -12,8 +12,8 @@ class Employee(EntityMeta):
     position = Column(String(50), nullable=False)
     country = Column(String(50), nullable=False)
     email = Column(String(50), nullable=False)
-    reporting_manager = Column(Integer, ForeignKey('employees.staff_id'))
-    role = Column(Integer)
+    reporting_manager = Column(Integer, ForeignKey('employees.staff_id'), nullable=False)
+    role = Column(Integer, nullable=False)
     password = Column(String(128), nullable=False)
 
     class Config:

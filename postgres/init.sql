@@ -9,6 +9,7 @@ ON CONFLICT (team_id) DO NOTHING;
 -- All the password is "password123"
 INSERT INTO employees (staff_id, staff_fname, staff_lname, dept, position, country, email, reporting_manager, role, password)
 VALUES
+    (100, 'Colin', 'Mok', 'Cleaning', 'Janitor','Singapore', 'colinmok1000@gmail.com', 100, 1, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
     (101, 'Alice', 'Smith', 'Engineering', 'Software Engineer', 'USA', 'alice.smith@example.com', 101, 1, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
     (102, 'Bob', 'Johnson', 'Engineering', 'Tech Lead', 'Canada', 'bob.johnson@example.com', 101, 2, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
     (103, 'Charlie', 'Brown', 'Marketing', 'Marketing Manager', 'UK', 'charlie.brown@example.com', 102, 2, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
