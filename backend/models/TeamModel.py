@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime
-from generators import get_current_datetime_sgt
-from models import EntityMeta
+from backend.models.generators import get_current_datetime_sgt
+from backend.models.BaseModel import EntityMeta
 
 
 class Team(EntityMeta):

@@ -1,5 +1,5 @@
 from sqlalchemy import Column, ForeignKey
-from models import EntityMeta
+from backend.models.BaseModel import EntityMeta
 
 class TeamEmployee(EntityMeta):
     __tablename__ = 'team_employee'

@@ -34,7 +34,11 @@ class AuthenticationService:
         return encoded_jwt
 
     def authenticate_employee(self, email: str, password: str) -> Optional[Employee]:
-        employee = self.db.query(Employee).filter(Employee.email == email).first()
-        if employee and bcrypt_context.verify(password, employee.password):
-            return employee
+        try:
+            employee = self.db.query(Employee).filter(Employee.email == email).first()
+            if employee and bcrypt_context.verify(password, employee.password):
+                return employee
+        except Exception as e:
+            # Log the exception for debugging purposes
+            print(f"Authentication error: {str(e)}")
         return None
