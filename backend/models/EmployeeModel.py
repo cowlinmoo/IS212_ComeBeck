@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, Enum
 from backend.models.BaseModel import EntityMeta
+from backend.models.enums.EmployeeRoleEnum import EmployeeRole
 
 class Employee(EntityMeta):
     __tablename__ = 'employees'
@@ -12,7 +13,7 @@ class Employee(EntityMeta):
     country = Column(String(50), nullable=False)
     email = Column(String(50), nullable=False)
     reporting_manager = Column(Integer, ForeignKey('employees.staff_id'))
-    role = Column(Integer, nullable=False)
+    role = Column(Integer)
     password = Column(String(128), nullable=False)
 
     class Config:

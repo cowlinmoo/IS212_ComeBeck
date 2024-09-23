@@ -2,10 +2,11 @@ from typing import List, Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from ..models.enums.EmployeeRoleEnum import EmployeeRole
 from ..schemas.ApplicationSchema import ApplicationSchema, ApplicationCreateSchema, ApplicationUpdateSchema
 from ..services.ApplicationService import ApplicationService
 from ..services.dependencies import role_required
-from ..config.Database import get_db_connection
+
 
 ApplicationRouter = APIRouter(
     prefix="/api/application",
@@ -13,8 +14,9 @@ ApplicationRouter = APIRouter(
 )
 
 @ApplicationRouter.get("/", response_model=List[ApplicationSchema])
-def get_all_applications(service: ApplicationService = Depends(),
-    roles: Annotated[List[str], Depends(role_required(1, 2, 3))] = None
+def get_all_applications(
+        service: ApplicationService = Depends(),
+        current_user: dict = Depends(role_required(EmployeeRole.HR, EmployeeRole.MANAGER, EmployeeRole.STAFF))
 ):
     return service.get_all_applications()
 
@@ -22,7 +24,7 @@ def get_all_applications(service: ApplicationService = Depends(),
 def get_application_by_id(
     application_id: int,
     service: ApplicationService = Depends(),
-    roles: Annotated[List[str], Depends(role_required(1, 2, 3))] = None
+    current_user: dict = Depends(role_required(EmployeeRole.HR, EmployeeRole.MANAGER, EmployeeRole.STAFF))
 ):
     return service.get_application_by_id(application_id)
 
@@ -30,7 +32,7 @@ def get_application_by_id(
 def get_applications_by_staff_id(
     staff_id: int,
     service: ApplicationService = Depends(),
-    roles: Annotated[List[str], Depends(role_required(1, 2, 3))] = None
+    current_user: dict = Depends(role_required(EmployeeRole.HR, EmployeeRole.MANAGER, EmployeeRole.STAFF))
 ):
     return service.get_applications_by_staff_id(staff_id)
 
@@ -38,7 +40,7 @@ def get_applications_by_staff_id(
 def create_application(
     application: ApplicationCreateSchema,
     service: ApplicationService = Depends(),
-    roles: Annotated[List[str], Depends(role_required(1, 2, 3))] = None
+    current_user: dict = Depends(role_required(EmployeeRole.HR, EmployeeRole.MANAGER, EmployeeRole.STAFF))
 ):
     return service.create_application(application)
 
@@ -47,7 +49,7 @@ def update_application(
     application_id: int,
     application: ApplicationUpdateSchema,
     service: ApplicationService = Depends(),
-    roles: Annotated[List[str], Depends(role_required(1, 2, 3))] = None
+    current_user: dict = Depends(role_required(EmployeeRole.HR, EmployeeRole.MANAGER, EmployeeRole.STAFF))
 ):
     return service.update_application(application_id, application)
 
@@ -55,7 +57,7 @@ def update_application(
 def get_applications_by_status(
     status: str,
     service: ApplicationService = Depends(),
-    roles: Annotated[List[str], Depends(role_required(1, 2, 3))] = None
+    current_user: dict = Depends(role_required(EmployeeRole.HR, EmployeeRole.MANAGER, EmployeeRole.STAFF))
 ):
     return service.get_applications_by_status(status)
 
@@ -64,6 +66,6 @@ def update_application_status(
     application_id: int,
     new_status: str,
     service: ApplicationService = Depends(),
-    roles: Annotated[List[str], Depends(role_required(1, 2, 3))] = None
+    current_user: dict = Depends(role_required(EmployeeRole.HR, EmployeeRole.MANAGER, EmployeeRole.STAFF))
 ):
     return service.update_application_status(application_id, new_status)
