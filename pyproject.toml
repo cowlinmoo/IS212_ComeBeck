@@ -19,6 +19,7 @@ python-multipart = "^0.0.9"
 psycopg2-binary = "^2.9.9"
 email-validator = "^2.2.0"
 pytz = "^2024.2"
+python-dateutil = "^2.9.0.post0"
 
 
 [build-system]
