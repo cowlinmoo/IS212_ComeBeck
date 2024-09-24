@@ -6,3 +6,6 @@ class Token(BaseModel):
     role: str = Field(examples=["HR", "STAFF", "MANAGER"])
     access_token: str = Field(examples=["access_token"])
     token_type: str = Field(examples=["bearer"])
+
+    class Config:
+        from_attributes = True

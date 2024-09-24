@@ -22,8 +22,7 @@ def get_employee(staff_id: int, employee_service: EmployeeService = Depends(),
     return employee_service.get_employee_by_staff_id(staff_id)
 
 @EmployeeRouter.post("/", response_model=EmployeeSchema)
-def create_employee(employee: EmployeeSchema, employee_service: EmployeeService = Depends(),
-                    current_user: dict = Depends(role_required(EmployeeRole.HR, EmployeeRole.MANAGER, EmployeeRole.STAFF))):
+def create_employee(employee: EmployeeSchema, employee_service: EmployeeService = Depends()):
     return employee_service.create_employee(employee)
 
 @EmployeeRouter.put("/{staff_id}", response_model=EmployeeSchema)

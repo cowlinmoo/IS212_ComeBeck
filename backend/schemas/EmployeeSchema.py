@@ -14,3 +14,6 @@ class EmployeeSchema(BaseModel):
     reporting_manager: int = Field(examples=[1, 2, 3])
     role: EmployeeRole = Field(examples=[EmployeeRole.HR, EmployeeRole.STAFF, EmployeeRole.MANAGER])
     password: str = Field(examples=["password123"])
+
+    class Config:
+        from_attributes = True
