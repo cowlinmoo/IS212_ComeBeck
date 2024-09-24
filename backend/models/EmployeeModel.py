@@ -15,6 +15,3 @@ class Employee(EntityMeta):
     reporting_manager = Column(Integer, ForeignKey('employees.staff_id'), nullable=False)
     role = Column(Integer, nullable=False)
     password = Column(String(128), nullable=False)
-
-    class Config:
-        orm_mode = True

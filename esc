@@ -1,0 +1,32 @@
+[33med8bbd8[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mCB-43-Apply-for-withdrawal-Back-end[m[33m, [m[1;31morigin/CB-43-Apply-for-withdrawal-Back-end[m[33m)[m HEAD@{0}: reset: moving to HEAD
+[33med8bbd8[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mCB-43-Apply-for-withdrawal-Back-end[m[33m, [m[1;31morigin/CB-43-Apply-for-withdrawal-Back-end[m[33m)[m HEAD@{1}: reset: moving to HEAD
+[33med8bbd8[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mCB-43-Apply-for-withdrawal-Back-end[m[33m, [m[1;31morigin/CB-43-Apply-for-withdrawal-Back-end[m[33m)[m HEAD@{2}: reset: moving to HEAD
+[33med8bbd8[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mCB-43-Apply-for-withdrawal-Back-end[m[33m, [m[1;31morigin/CB-43-Apply-for-withdrawal-Back-end[m[33m)[m HEAD@{3}: commit: CB-43 added withdraw application endpoint with email service
+[33m268f6f0[m[33m ([m[1;31morigin/CB-47-View-my-applications-Back-end[m[33m)[m HEAD@{4}: checkout: moving from CB-47-View-own-schedule-Back-end to CB-43-Apply-for-withdrawal-Back-end
+[33maacb283[m[33m ([m[1;32mCB-47-View-own-schedule-Back-end[m[33m)[m HEAD@{5}: commit: CB-47 Added Approver ID Field for Application
+[33mca2c627[m HEAD@{6}: commit: CB-47 added employee role enum for clearer mapping
+[33m498744c[m HEAD@{7}: commit: CB-47 Added Application Endpoints
+[33mb917df7[m[33m ([m[1;31morigin/CB-48-Auto-rejection-of-arrangement-Front-end[m[33m)[m HEAD@{8}: checkout: moving from main to CB-47-View-own-schedule-Back-end
+[33m641a66a[m HEAD@{9}: reset: moving to HEAD
+[33m641a66a[m HEAD@{10}: checkout: moving from testing-deployment-branch to main
+[33mea9d2a4[m HEAD@{11}: commit: removed copy of env
+[33m2f5dd64[m HEAD@{12}: commit: test create deployment
+[33m641a66a[m HEAD@{13}: checkout: moving from main to testing-deployment-branch
+[33m641a66a[m HEAD@{14}: checkout: moving from CB-56-Create-Models-From-DB-Schema to main
+[33m124fd00[m[33m ([m[1;32mCB-56-Create-Models-From-DB-Schema[m[33m)[m HEAD@{15}: reset: moving to HEAD
+[33m124fd00[m[33m ([m[1;32mCB-56-Create-Models-From-DB-Schema[m[33m)[m HEAD@{16}: checkout: moving from CB-57-Fix-wrong-authentication-endpoint-url to CB-56-Create-Models-From-DB-Schema
+[33mb52447a[m[33m ([m[1;32mCB-57-Fix-wrong-authentication-endpoint-url[m[33m)[m HEAD@{17}: commit: CB-57-Fix wrong authentication endpoint urL
+[33mac9b133[m HEAD@{18}: checkout: moving from CB-35-create-db-schema to CB-57-Fix-wrong-authentication-endpoint-url
+[33m1fd7a04[m[33m ([m[1;32mCB-35-create-db-schema[m[33m)[m HEAD@{19}: checkout: moving from CB-36-Authenticate-Users-Based-On-Roles to CB-35-create-db-schema
+[33m867ab75[m[33m ([m[1;32mCB-36-Authenticate-Users-Based-On-Roles[m[33m)[m HEAD@{20}: pull origin: Fast-forward
+[33m0b33698[m HEAD@{21}: commit: CB-36 fixed docker compose issue
+[33m80d4f81[m HEAD@{22}: commit: CB-36 Added some documentation of schema
+[33me1e5dd2[m HEAD@{23}: reset: moving to HEAD
+[33me1e5dd2[m HEAD@{24}: commit: CB-36 added RBAC
+[33m3f39427[m HEAD@{25}: commit: CB-36 Added Employee Schema and simple Employee APIs
+[33m0355616[m HEAD@{26}: checkout: moving from main to CB-36-Authenticate-Users-Based-On-Roles
+[33m0355616[m HEAD@{27}: reset: moving to 03556166228b902bdd613fab8708f2c7838d0317
+[33md1bf4fb[m HEAD@{28}: checkout: moving from CB-36-Authenticate-Users-Based-On-Roles to main
+[33m0355616[m HEAD@{29}: checkout: moving from main to CB-36-Authenticate-Users-Based-On-Roles
+[33md1bf4fb[m HEAD@{30}: commit: added employee schema
+[33m0355616[m HEAD@{31}: clone: from https://github.com/cowlinmoo/IS212_ComeBeck.git

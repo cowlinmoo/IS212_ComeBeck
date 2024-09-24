@@ -2,14 +2,13 @@ from fastapi import HTTPException
 from typing import List, Type
 
 from fastapi import Depends
-from passlib.context import CryptContext
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
-from ..config.Database import get_db_connection
-from ..models import Application
-from ..models.generators import get_current_datetime_sgt
-from ..schemas.ApplicationSchema import ApplicationCreateSchema, ApplicationUpdateSchema, ApplicationWithdrawSchema
+from backend.config.Database import get_db_connection
+from backend.models import Application
+from backend.models.generators import get_current_datetime_sgt
+from backend.schemas.ApplicationSchema import ApplicationCreateSchema, ApplicationUpdateSchema, ApplicationWithdrawSchema
 
 
 class ApplicationRepository:
@@ -44,7 +43,7 @@ class ApplicationRepository:
         db_application = self.get_application_by_application_id(application_id)
 
         db_application.status = application.status
-        db_application.reason = application.reason
+        db_application.reason = application.withdraw_reason
         db_application.last_updated_on = get_current_datetime_sgt()
 
         self.db.commit()

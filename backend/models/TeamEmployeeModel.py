@@ -6,6 +6,3 @@ class TeamEmployee(EntityMeta):
 
     team_id = Column(ForeignKey('team.team_id'), primary_key=True)
     staff_id = Column(ForeignKey('employees.staff_id'), primary_key=True)
-
-    class Config:
-        orm_mode = True

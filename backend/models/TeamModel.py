@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
 from backend.models.generators import get_current_datetime_sgt
 from backend.models.BaseModel import EntityMeta
 
@@ -10,6 +10,4 @@ class Team(EntityMeta):
     name = Column(String(100), nullable=False)
     description = Column(Text)
     created_on = Column(DateTime, default=get_current_datetime_sgt)
-
-    class Config:
-        orm_mode = True
+    manager_id = Column(Integer, ForeignKey('employees.staff_id'))  # New column

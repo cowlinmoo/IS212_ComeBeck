@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import datetime, date
+
 
 def get_new_application_manager_email_subject(staff_id: int, employee_name: str) -> str:
     return f"New Application Request from Employee ID: {staff_id} - {employee_name}"
@@ -12,7 +13,7 @@ def get_application_withdrawn_manager_email_subject(staff_id: int, employee_name
 def get_application_withdrawn_employee_email_subject(application_id: int) -> str:
     return f"Application Withdrawn - Application ID: {application_id}"
 
-def get_new_application_manager_email_template(manager_name: str, employee_name: str, employee_id: int, application_id: int, reason: str, description: str, status: str, created_on: datetime) -> str:
+def get_new_application_manager_email_template(manager_name: str, employee_name: str, employee_id: int, application_id: int, reason: str, requested_date: date,description: str, status: str, created_on: date) -> str:
     return f"""
 Dear {manager_name},
 
@@ -23,6 +24,7 @@ Application Details:
 Employee Name: {employee_name}
 Employee ID: {employee_id}
 Application ID: {application_id}
+Requested Date: {requested_date}
 Reason: {reason}
 Description: {description if description else "No additional description provided"}
 Status: {status}
@@ -38,7 +40,7 @@ HR Department
 This is an automated message. Please do not reply directly to this email.
     """
 
-def get_new_application_employee_email_template(employee_name: str, application_id: int, reason: str, description: str, status: str, created_on: datetime) -> str:
+def get_new_application_employee_email_template(employee_name: str, application_id: int, reason: str, requested_date: date,description: str, status: str, created_on: date) -> str:
     return f"""
 Dear {employee_name},
 
@@ -47,6 +49,7 @@ This email confirms that your application has been successfully submitted.
 Application Details:
 --------------------
 Application ID: {application_id}
+Requested Date: {requested_date}
 Reason: {reason}
 Description: {description if description else "No additional description provided"}
 Status: {status}

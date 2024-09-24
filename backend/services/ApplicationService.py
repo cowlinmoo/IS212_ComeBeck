@@ -10,20 +10,26 @@ from backend.config.EmailTemplates import (get_new_application_manager_email_sub
                                            get_application_withdrawn_manager_email_subject,
                                            get_application_withdrawn_manager_email_template)
 from backend.models.generators import get_current_datetime_sgt
+from backend.models.generators import get_current_date
 from backend.repositories.ApplicationRepository import ApplicationRepository
-from backend.models import Application
+from backend.models import Application, Event
 from backend.repositories.EmployeeRepository import EmployeeRepository
+from backend.repositories.EventRepository import EventRepository
 from backend.schemas.ApplicationSchema import (ApplicationCreateSchema, ApplicationUpdateSchema,
                                                ApplicationWithdrawSchema)
 from backend.services.EmailService import EmailService
+from backend.services.EventService import EventService
+
 
 class ApplicationService:
     def __init__(self,
                  application_repository: ApplicationRepository = Depends(),
                  employee_repository: EmployeeRepository = Depends(),
-                 email_service: EmailService = Depends()
+                 email_service: EmailService = Depends(),
+                 event_service: EventService = Depends()
                  ):
 
+        self.event_service = event_service
         self.employee_repository = employee_repository
         self.application_repository = application_repository
         self.email_service = email_service
@@ -43,17 +49,24 @@ class ApplicationService:
             raise HTTPException(status_code=404, detail="Employee not found")
         return self.application_repository.get_application_by_staff_id(staff_id)
 
-    def create_application(self, application: ApplicationCreateSchema) -> Application:
+    def create_application(self, application: ApplicationCreateSchema) -> ApplicationCreateSchema:
         # check if employee exists in the database
         employee = self.employee_repository.get_employee(application.staff_id)
         if employee is None:
             raise HTTPException(status_code=404, detail="Employee not found")
-        application_dict = application.model_dump()
+        application_dict = application.model_dump(exclude={"requested_date", "location"})
         application_dict["status"] = "pending" # set status to pending as it is a new application
         application_dict["created_on"] = get_current_datetime_sgt()
         application_dict["last_updated_on"] = get_current_datetime_sgt()
         new_application = self.application_repository.create_application(application_dict)
-        manager = self.employee_repository.get_manager(application.staff_id)
+        event = Event(
+            requested_date=application.requested_date,
+            location=application.location,
+            application_id=new_application.application_id
+        )
+        self.event_service.create_event(event)
+        manager_id = employee.reporting_manager
+        manager = self.employee_repository.get_employee(manager_id)
         manager_email = manager.email
         staff_name = employee.staff_fname + " " + employee.staff_lname
         employee_email = employee.email
@@ -64,9 +77,10 @@ class ApplicationService:
             employee_name=staff_name,
             employee_id=application.staff_id,
             reason=application.reason,
+            requested_date=application.requested_date,
             description=application.description,
             status=new_application.status,
-            created_on=get_current_datetime_sgt(),
+            created_on=get_current_date(),
             application_id = new_application.application_id
         )
         self.email_service.send_email(manager_email, manager_subject, manager_body)
@@ -76,14 +90,15 @@ class ApplicationService:
         employee_body = get_new_application_employee_email_template(
             employee_name=staff_name,
             reason=application.reason,
+            requested_date=application.requested_date,
             description=application.description,
             status=new_application.status,
-            created_on=get_current_datetime_sgt(),
+            created_on=get_current_date(),
             application_id = new_application.application_id
         )
         self.email_service.send_email(employee_email, employee_subject, employee_body)
 
-        return new_application
+        return application
 
     def update_application(self, application_id: int, application: ApplicationUpdateSchema) -> Application:
         return self.application_repository.update_application(application_id, application)
@@ -108,7 +123,8 @@ class ApplicationService:
         # Fetch employee data
         employee = self.employee_repository.get_employee(withdrawn_application.staff_id)
         staff_name = f"{employee.staff_fname} {employee.staff_lname}"
-        manager = self.employee_repository.get_manager(application.staff_id)
+        manager_id = employee.reporting_manager
+        manager = self.employee_repository.get_employee(manager_id)
         manager_email = manager.email
         # Prepare email data
         current_time = get_current_datetime_sgt()
