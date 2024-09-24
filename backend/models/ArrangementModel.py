@@ -1,5 +1,5 @@
 from sqlalchemy import Column, BigInteger, Text, Boolean, ForeignKey
-from models import EntityMeta
+from backend.models.BaseModel import EntityMeta
 
 
 class Arrangement(EntityMeta):

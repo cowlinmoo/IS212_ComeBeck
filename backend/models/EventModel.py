@@ -1,6 +1,6 @@
 from sqlalchemy import Column, BigInteger, String, ForeignKey, DateTime
-from models import EntityMeta
-from generators import get_current_datetime_sgt
+from backend.models.BaseModel import EntityMeta
+from backend.models.generators import get_current_datetime_sgt
 
 
 class Event(EntityMeta):

@@ -1,5 +1,7 @@
 from pydantic import BaseModel, Field
 
+from backend.models.enums.EmployeeRoleEnum import EmployeeRole
+
 
 class EmployeeSchema(BaseModel):
     staff_id: int = Field(examples=[1, 2, 3])
@@ -10,5 +12,5 @@ class EmployeeSchema(BaseModel):
     country: str = Field(examples=["USA", "UK", "Canada"])
     email: str = Field(examples=["test@gmail.com"])
     reporting_manager: int = Field(examples=[1, 2, 3])
-    role: int = Field(examples=[1, 2, 3])
+    role: EmployeeRole = Field(examples=[EmployeeRole.HR, EmployeeRole.STAFF, EmployeeRole.MANAGER])
     password: str = Field(examples=["password123"])

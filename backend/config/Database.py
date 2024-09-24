@@ -1,4 +1,6 @@
-from sqlalchemy import create_engine
+import os
+
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import scoped_session, sessionmaker
 from .Environment import get_environment_variables
 
@@ -29,3 +31,21 @@ def get_db_connection():
         yield db
     finally:
         db.close()
+
+
+def init_db():
+    # Path to your init.sql file
+    init_sql_path = os.path.join(os.path.dirname(__file__), '..', '..', 'postgres', 'init.sql')
+
+    # Read the SQL file
+    with open(init_sql_path, 'r') as file:
+        sql_script = file.read()
+
+    # Create a database connection
+    with Engine.connect() as connection:
+        # Begin a transaction
+        with connection.begin():
+            # Execute the SQL script
+            connection.execute(text(sql_script))
+
+    print("Database initialized with init.sql")
