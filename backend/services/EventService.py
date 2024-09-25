@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import Depends
 
 from backend.models import Event
@@ -28,3 +30,10 @@ class EventService:
 
     def delete_event(self, event_id):
         return self.eventRepository.delete_event(event_id)
+
+    def create_multiple_events(self, events: List[Event]) -> List[Event]:
+        created_events = []
+        for event in events:
+            created_event = self.eventRepository.create_event(event)
+            created_events.append(created_event)
+        return created_events
