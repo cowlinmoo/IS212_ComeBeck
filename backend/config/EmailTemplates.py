@@ -1,4 +1,7 @@
 from datetime import datetime, date
+from typing import Optional, List
+
+from backend.schemas.EventSchema import EventCreateSchema
 
 
 def get_new_application_manager_email_subject(staff_id: int, employee_name: str) -> str:
@@ -13,14 +16,36 @@ def get_application_withdrawn_manager_email_subject(staff_id: int, employee_name
 def get_application_withdrawn_employee_email_subject(application_id: int) -> str:
     return f"Application Withdrawn - Application ID: {application_id}"
 
-def get_new_application_manager_email_template(manager_name: str, employee_name: str, employee_id: int, application_id: int, reason: str, requested_date: date, description: str, status: str, created_on: date, recurring: bool = False, recurrence_type: str = None, end_date: date = None) -> str:
-    recurring_info = f"""
+def get_new_application_manager_email_template(
+    manager_name: str,
+    employee_name: str,
+    employee_id: int,
+    application_id: int,
+    reason: str,
+    requested_date: date,
+    description: str,
+    status: str,
+    created_on: date,
+    location: str,
+    recurring: bool = False,
+    recurrence_type: Optional[str] = None,
+    end_date: Optional[date] = None,
+    events: Optional[List[EventCreateSchema]] = None
+) -> str:
+    if events and len(events) > 1:
+        event_info = "Multiple Dates:\n"
+        for idx, event in enumerate(events, 1):
+            event_info += f"Event {idx}: Date: {event.requested_date}\n"
+    elif recurring:
+        event_info = f"""
 Recurring Details:
 ------------------
 Recurrence Type: {recurrence_type}
 Start Date: {requested_date}
 End Date: {end_date}
-""" if recurring else ""
+"""
+    else:
+        event_info = f"Requested Date: {requested_date}\n"
 
     return f"""
 Dear {manager_name},
@@ -32,12 +57,14 @@ Application Details:
 Employee Name: {employee_name}
 Employee ID: {employee_id}
 Application ID: {application_id}
-Requested Date: {requested_date}
 Reason: {reason}
 Description: {description if description else "No additional description provided"}
+Location: {location}
 Status: {status}
 Submission Date: {created_on}
-{recurring_info}
+
+{event_info}
+
 If you require any additional information or have any questions regarding this application, please don't hesitate to contact the HR department.
 
 Thank you for your prompt attention to this matter.
@@ -48,14 +75,34 @@ HR Department
 This is an automated message. Please do not reply directly to this email.
     """
 
-def get_new_application_employee_email_template(employee_name: str, application_id: int, reason: str, requested_date: date, description: str, status: str, created_on: date, recurring: bool = False, recurrence_type: str = None, end_date: date = None) -> str:
-    recurring_info = f"""
+def get_new_application_employee_email_template(
+    employee_name: str,
+    application_id: int,
+    reason: str,
+    requested_date: date,
+    description: str,
+    status: str,
+    created_on: date,
+    location: str,
+    recurring: bool = False,
+    recurrence_type: Optional[str] = None,
+    end_date: Optional[date] = None,
+    events: Optional[List[EventCreateSchema]] = None
+) -> str:
+    if events and len(events) > 1:
+        event_info = "Multiple Dates:\n"
+        for idx, event in enumerate(events, 1):
+            event_info += f"Event {idx}: Date: {event.requested_date}\n"
+    elif recurring:
+        event_info = f"""
 Recurring Details:
 ------------------
 Recurrence Type: {recurrence_type}
 Start Date: {requested_date}
 End Date: {end_date}
-""" if recurring else ""
+"""
+    else:
+        event_info = f"Requested Date: {requested_date}\n"
 
     return f"""
 Dear {employee_name},
@@ -65,12 +112,14 @@ This email confirms that your application has been successfully submitted.
 Application Details:
 --------------------
 Application ID: {application_id}
-Requested Date: {requested_date}
 Reason: {reason}
 Description: {description if description else "No additional description provided"}
+Location: {location}
 Status: {status}
 Submission Date: {created_on}
-{recurring_info}
+
+{event_info}
+
 Your application has been received and will be reviewed by your manager. You will be notified of any updates or decisions regarding your application.
 
 If you need to make any changes or have any questions about your application, please contact the HR department.
