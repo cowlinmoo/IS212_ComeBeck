@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect} from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,14 +15,35 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
-import {cn} from "@/lib/utils";
-import {format, addMonths, subMonths} from "date-fns";
-import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover"
-import { CalendarIcon } from "lucide-react"
+import { cn } from "@/lib/utils";
+import { format, addMonths, subMonths } from "date-fns";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+} from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
+//formschema
+const applyFormSchema = z.object({
+  arangement_type: z.string().default("WFH"),
+  date: z.date({
+    required_error: "Please select a date.",
+  }),
+  reason: z.string().length(50),
+});
 export default function Applications() {
   //restricted calendar
-  const [date,setDate] = useState<Date|undefined>(new Date());
   const [fromDate, setFromDate] = useState<Date>(new Date());
   const [toDate, setToDate] = useState<Date>(new Date());
 
@@ -36,11 +57,25 @@ export default function Applications() {
         : [...prev, date]
     );
   };
-  useEffect(()=>{
+  useEffect(() => {
     const currentDate = new Date();
-    setFromDate(subMonths(currentDate, 2))
-    setToDate(addMonths(currentDate, 3))
-  },[])
+    setFromDate(subMonths(currentDate, 2));
+    setToDate(addMonths(currentDate, 3));
+  }, []);
+
+  //Apply form
+  const apply_form = useForm<z.infer<typeof applyFormSchema>>({
+    resolver: zodResolver(applyFormSchema),
+    defaultValues: {
+      arrangement_type: "WFH",
+      reason: "",
+    },
+  });
+
+  //Submission for apply form
+  function applySubmit(values: z.infer<typeof applyFormSchema>) {}
+
+  //check if selcted date conflicts with existing arrangements
 
   return (
     <div className="container mx-auto p-4">
@@ -58,54 +93,80 @@ export default function Applications() {
                 Submit a new arrangement request.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Arrangement Type:</Label> <br></br>
-                <Label className="font-bold">WFH</Label>
-              </div>
-              <div className="space-y-2">
-                <Label>Date:</Label><br></br>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-[280px] justify-start text-left font-normal", !date && "text-muted-foreground"
-                    )}>
-                  <CalendarIcon className="mr-2 h-4 w-4"/>
-                  {date ? format (date,"PPP") : <span>Pick a date</span>}
-                  </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={date}
-                      onSelect={setDate}
-                      fromDate={fromDate}
-                      toDate={toDate}
-                      initialFocus
-                    />
-                  <div className="p-3 border-t">
-                    <p className="">
-                      Selectable range: {format(fromDate, "MMM d, yyyy")} - {format(toDate,"MMM d, yyyy")}
-                    </p>
-                  </div>  
-                  </PopoverContent>
-
-                </Popover>
-
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="reason">Reason for Arrangement</Label>
-                <Textarea
-                  id="reason"
-                  placeholder="Please provide a reason for your arrangement request."
-                />
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button>Submit Application</Button>
-            </CardFooter>
+            <Form {...apply_form}>
+              <form onSubmit={apply_form.handleSubmit(applySubmit)}>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Arrangement Type:</Label> <br></br>
+                    <Label className="font-bold">WFH</Label>
+                  </div>
+                  <FormField
+                    control={format.control}
+                    name="date"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Date:</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "w-[280px] justify-start text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP")
+                                ) : (
+                                  <span>Pick a date</span>
+                                )}
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent>
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              fromDate={fromDate}
+                              toDate={toDate}
+                              initialFocus
+                            />
+                            <div className="p-3 border-t">
+                              <p className="text-s text-muted-foreground">
+                                Selectable range:{" "}
+                                {format(fromDate, "MMM d, yyyy")} -{" "}
+                                {format(toDate, "MMM d, yyyy")}
+                              </p>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={apply_form.control}
+                    name="reason"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Reason for arrangement:</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Please provide a reason for your arrangement request."
+                            {...field}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+                <CardFooter>
+                  <Button type="submit">Submit Application</Button>
+                </CardFooter>
+              </form>
+            </Form>
           </Card>
         </TabsContent>
         <TabsContent value="change">
