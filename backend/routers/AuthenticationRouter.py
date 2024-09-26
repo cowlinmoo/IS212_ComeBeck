@@ -5,16 +5,16 @@ from backend.services.AuthenticationService import AuthenticationService
 from backend.schemas.TokenSchema import Token
 
 AuthRouter = APIRouter(
-    prefix="/api",
+    prefix="/api/authenticate",
     tags=["Authentication Endpoints"],
 )
 
-@AuthRouter.post("/authenticate", response_model=Token)
+@AuthRouter.post("/", response_model=Token)
 def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
     auth_service: AuthenticationService = Depends()
 ):
-    employee = auth_service.authenticate_employee(form_data.username, form_data.password)
+    employee, employee_role = auth_service.authenticate_employee(form_data.username, form_data.password)
     if not employee:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -25,4 +25,4 @@ def login_for_access_token(
         data={"sub": employee.email, "role": employee.role}
     )
 
-    return Token(email=employee.email, role=employee.role, access_token=access_token, token_type="bearer")
+    return Token(email=employee.email, role=employee_role.name, access_token=access_token, token_type="bearer")
