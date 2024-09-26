@@ -1,3 +1,5 @@
+from datetime import timedelta
+from dateutil.relativedelta import relativedelta
 from fastapi import Depends, HTTPException
 from typing import List, Type
 
@@ -9,12 +11,12 @@ from backend.config.EmailTemplates import (get_new_application_manager_email_sub
                                            get_application_withdrawn_employee_email_template,
                                            get_application_withdrawn_manager_email_subject,
                                            get_application_withdrawn_manager_email_template)
+from backend.models.enums.RecurrenceType import RecurrenceType
 from backend.models.generators import get_current_datetime_sgt
 from backend.models.generators import get_current_date
 from backend.repositories.ApplicationRepository import ApplicationRepository
-from backend.models import Application, Event
+from backend.models import Application, Event, Employee
 from backend.repositories.EmployeeRepository import EmployeeRepository
-from backend.repositories.EventRepository import EventRepository
 from backend.schemas.ApplicationSchema import (ApplicationCreateSchema, ApplicationUpdateSchema,
                                                ApplicationWithdrawSchema)
 from backend.services.EmailService import EmailService
@@ -54,51 +56,120 @@ class ApplicationService:
         employee = self.employee_repository.get_employee(application.staff_id)
         if employee is None:
             raise HTTPException(status_code=404, detail="Employee not found")
+
+        # Check if recurring application has necessary fields
+        if application.recurring:
+            if not application.recurrence_type or not application.end_date:
+                raise HTTPException(status_code=400,
+                                    detail="Recurring applications must have recurrence_type and end_date set")
+
+        max_end_date = application.requested_date + relativedelta(months=3)
+        if application.end_date > max_end_date:
+            raise HTTPException(status_code=400, detail="End date cannot be more than 3 months away from the requested date")
+        # Prepare application data
         application_dict = application.model_dump(exclude={"requested_date", "location"})
         application_dict["status"] = "pending" # set status to pending as it is a new application
         application_dict["created_on"] = get_current_datetime_sgt()
         application_dict["last_updated_on"] = get_current_datetime_sgt()
+
+        # Create new application
         new_application = self.application_repository.create_application(application_dict)
-        event = Event(
-            requested_date=application.requested_date,
-            location=application.location,
-            application_id=new_application.application_id
-        )
-        self.event_service.create_event(event)
+
+        if application.recurring:
+            self._create_recurring_events(application, new_application.application_id)
+
+        else:
+            self._create_single_event(application, new_application.application_id)
+
+        # Get Manager Details
         manager_id = employee.reporting_manager
         manager = self.employee_repository.get_employee(manager_id)
         manager_email = manager.email
-        staff_name = employee.staff_fname + " " + employee.staff_lname
+        staff_name = f"{employee.staff_fname} {employee.staff_lname}"
         employee_email = employee.email
-        # Send email to manager
-        manager_subject = get_new_application_manager_email_subject(application.staff_id, staff_name)
-        manager_body = get_new_application_manager_email_template(
-            manager_name=manager.staff_fname + " " + manager.staff_lname,
-            employee_name=staff_name,
-            employee_id=application.staff_id,
-            reason=application.reason,
-            requested_date=application.requested_date,
-            description=application.description,
-            status=new_application.status,
-            created_on=get_current_date(),
-            application_id = new_application.application_id
-        )
-        self.email_service.send_email(manager_email, manager_subject, manager_body)
 
-        # Send email to employee
-        employee_subject = get_new_application_employee_email_subject(new_application.application_id)
-        employee_body = get_new_application_employee_email_template(
-            employee_name=staff_name,
-            reason=application.reason,
-            requested_date=application.requested_date,
-            description=application.description,
-            status=new_application.status,
-            created_on=get_current_date(),
-            application_id = new_application.application_id
-        )
-        self.email_service.send_email(employee_email, employee_subject, employee_body)
+        # Send emails
+        self._send_emails(application, new_application, manager, employee, staff_name)
 
         return application
+
+    def _create_single_event(self, application: ApplicationCreateSchema, application_id: int):
+        event = Event(
+            requested_date=application.requested_date,
+            location=application.location,
+            application_id=application_id
+        )
+        self.event_service.create_event(event)
+
+    def _create_recurring_events(self, application: ApplicationCreateSchema, application_id: int):
+        current_date = application.requested_date
+        end_date = application.end_date or (
+                    current_date + timedelta(days=365))  # Default to one year if no end_date
+
+        while current_date <= end_date:
+            event = Event(
+                requested_date=current_date,
+                location=application.location,
+                application_id=application_id
+            )
+            self.event_service.create_event(event)
+
+            if application.recurrence_type == RecurrenceType.DAILY:
+                current_date += timedelta(days=1)
+            elif application.recurrence_type == RecurrenceType.WEEKLY:
+                current_date += timedelta(weeks=1)
+            elif application.recurrence_type == RecurrenceType.MONTHLY:
+                # Move to the same day next month
+                if current_date.month == 12:
+                    current_date = current_date.replace(year=current_date.year + 1, month=1)
+                else:
+                    current_date = current_date.replace(month=current_date.month + 1)
+
+    def _send_emails(self, application: ApplicationCreateSchema, new_application: Application, manager: Employee,
+                     employee: Employee, staff_name: str):
+        # Determine if the application is recurring
+        is_recurring = application.recurring
+
+        # Create base subject lines using the provided methods
+        # Add prefix based on whether the application is recurring or one-time
+        prefix = "RECURRING: " if is_recurring else "ONE-TIME: "
+
+        # Send email to manager
+        # Add "RECURRING: " to subject if the application is recurring
+        base_manager_subject = get_new_application_manager_email_subject(application.staff_id, staff_name)
+        manager_subject = f"{prefix}{base_manager_subject}"
+        manager_body = get_new_application_manager_email_template(
+            manager_name=f"{manager.staff_fname} {manager.staff_lname}",
+            employee_name=staff_name,
+            employee_id=application.staff_id,
+            application_id=new_application.application_id,
+            reason=application.reason,
+            requested_date=application.requested_date,
+            description=application.description,
+            status=new_application.status,
+            created_on=get_current_date(),
+            recurring=application.recurring,
+            recurrence_type=application.recurrence_type.value if application.recurring else None,
+            end_date=application.end_date if application.recurring else None
+        )
+        self.email_service.send_email(manager.email, manager_subject, manager_body)
+
+        # Send email to employee
+        base_employee_subject = get_new_application_employee_email_subject(new_application.application_id)
+        employee_subject = f"{prefix}{base_employee_subject}"
+        employee_body = get_new_application_employee_email_template(
+            employee_name=staff_name,
+            application_id=new_application.application_id,
+            reason=application.reason,
+            requested_date=application.requested_date,
+            description=application.description,
+            status=new_application.status,
+            created_on=get_current_date(),
+            recurring=application.recurring,
+            recurrence_type=application.recurrence_type.value if application.recurring else None,
+            end_date=application.end_date if application.recurring else None
+        )
+        self.email_service.send_email(employee.email, employee_subject, employee_body)
 
     def update_application(self, application_id: int, application: ApplicationUpdateSchema) -> Application:
         return self.application_repository.update_application(application_id, application)
