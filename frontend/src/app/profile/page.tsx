@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from "react"
+import useAuth from "@/lib/auth";
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -13,7 +14,16 @@ import SideBar from "@/components/core/sidebar/SideBar";
 import { Header } from "@/components/core/header/Header";
 
 export default function Component() {
-    const [notifications, setNotifications] = useState(true)
+  const [notifications, setNotifications] = useState(true)
+
+  const { token, userId, pageLoading } = useAuth();
+
+  if (pageLoading || (!pageLoading && token === undefined)) {
+    return <div className='flex items-center justify-center h-screen w-screen'>Loading...</div>;
+  }
+
+  console.log('Token:', token);
+  console.log('User ID:', userId);
 
   return (
     <div className="flex h-screen bg-gray-100 text-black">
