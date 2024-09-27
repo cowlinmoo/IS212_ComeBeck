@@ -81,35 +81,19 @@ class ApplicationRepository:
         self.db.refresh(db_application)
         return db_application
 
-    def reject_applications_older_than(self, date: datetime) -> int:
-        db_application = self.db.query(Application).filter(
-            and_(Application.created_on<date,Application.status == 'pending')
-            ).update(
-                {
-                'status': 'rejected',
-                'last_updated_on': get_current_datetime_sgt()
-                }
-            )
-        self.db.commit()
-        self.db.refresh(db_application)
-        return db_application
-            
-        # try:
-        #     rejected = self.db.query(Application).filter(
-        #         and_(
-        #             Application.created_on < date,
-        #             Application.status == 'pending'
-        #         )
-        #     ).update(
-        #         {
-        #             'status': 'rejected',
-        #             'last_updated_on': get_current_datetime_sgt()
-        #         },
-        #         synchronize_session='fetch'
-        #     )
-        #     self.db.commit()
-        #     return rejected
-        # except Exception as e:
-        #     self.db.rollback()
-        #     print(f"Error in reject_applications_older_than: {str(e)}")
-        #     raise e
+    def reject_old_applications(self, date_threshold: datetime.datetime) -> int:
+            old_applications = self.db.query(Application).filter(
+                and_(
+                    Application.created_on < date_threshold,
+                    Application.status == 'pending'
+                )
+            ).all()
+
+            rejected_count = 0
+            for application in old_applications:
+                application.status = 'rejected'
+                application.last_updated_on = get_current_datetime_sgt()
+                rejected_count += 1
+
+            self.db.commit()
+            return rejected_count
