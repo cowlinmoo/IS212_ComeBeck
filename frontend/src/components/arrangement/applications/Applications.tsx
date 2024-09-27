@@ -35,7 +35,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-
 //formschema
 const applyFormSchema = z.object({
   arangementType: z.string().default("WFH"),
@@ -60,6 +59,10 @@ interface IApplications {
   staffId: string;
 }
 const Applications: React.FC<IApplications> = ({ staffId }) => {
+  //fetching wfh applications currently existing
+  // const data = fetch("http://localhost:8080/api/application/staff/"+staffId)
+  // const wfhApplications = data.json()
+
   //restricted calendar
   const [fromDate, setFromDate] = useState<Date>(new Date());
   const [toDate, setToDate] = useState<Date>(new Date());

@@ -27,7 +27,7 @@ export default function Component() {
         {/* Header */}
         <Header />
         {/* Page Content */}
-        <Applications/>
+        <Applications staffId = "${userId}"/>
       </div>
     </div>
   );
