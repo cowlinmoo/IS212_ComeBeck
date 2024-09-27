@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from apscheduler.schedulers.background import BackgroundScheduler
+from fastapi.middleware.cors import CORSMiddleware
 
 from backend.config.Database import init_db
 from backend.models.BaseModel import create_database
@@ -17,6 +17,14 @@ app = FastAPI(
     description="This is the backend for ComeBeck and it is built using FastAPI",
     version="1.0.0",
     docs_url="/api/documentation",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(AuthRouter)

@@ -67,34 +67,45 @@ class ApplicationService:
                                     detail="Recurring applications must have recurrence_type and end_date set")
 
         max_end_date = application.requested_date + relativedelta(months=3)
-        if application.end_date > max_end_date:
-            raise HTTPException(status_code=400, detail="End date cannot be more than 3 months away from the requested date")
+        if application.end_date and application.end_date > max_end_date:
+            raise HTTPException(status_code=400,
+                                detail="End date cannot be more than 3 months away from the requested date")
+
         # Prepare application data
-        application_dict = application.model_dump(exclude={"requested_date", "location"})
-        application_dict["status"] = "pending" # set status to pending as it is a new application
+        application_dict = application.model_dump(exclude={"events", "location", "requested_date"})
+        application_dict["status"] = "pending"  # set status to pending as it is a new application
         application_dict["created_on"] = get_current_datetime_sgt()
         application_dict["last_updated_on"] = get_current_datetime_sgt()
 
         # Create new application
         new_application = self.application_repository.create_application(application_dict)
 
-        if application.recurring:
-            self._create_recurring_events(application, new_application.application_id)
-
-        else:
-            self._create_single_event(application, new_application.application_id)
+        # Create events
+        self._create_events(application, new_application.application_id)
 
         # Get Manager Details
         manager_id = employee.reporting_manager
         manager = self.employee_repository.get_employee(manager_id)
-        manager_email = manager.email
         staff_name = f"{employee.staff_fname} {employee.staff_lname}"
-        employee_email = employee.email
 
         # Send emails
         self._send_emails(application, new_application, manager, employee, staff_name)
 
         return application
+
+    def _create_events(self, application: ApplicationCreateSchema, application_id: int):
+        if application.events:
+            for event in application.events:
+                new_event = Event(
+                    requested_date=event.requested_date,
+                    location=application.location,
+                    application_id=application_id
+                )
+                self.event_service.create_event(new_event)
+        elif application.recurring:
+            self._create_recurring_events(application, application_id)
+        else:
+            self._create_single_event(application, application_id)
 
     def _create_single_event(self, application: ApplicationCreateSchema, application_id: int):
         event = Event(
@@ -130,15 +141,13 @@ class ApplicationService:
 
     def _send_emails(self, application: ApplicationCreateSchema, new_application: Application, manager: Employee,
                      employee: Employee, staff_name: str):
-        # Determine if the application is recurring
-        is_recurring = application.recurring
+        # Determine if the application has multiple events
+        has_multiple_events = len(application.events) > 1 if application.events else False
 
-        # Create base subject lines using the provided methods
-        # Add prefix based on whether the application is recurring or one-time
-        prefix = "RECURRING: " if is_recurring else "ONE-TIME: "
+        # Create base subject lines
+        prefix = "MULTIPLE: " if has_multiple_events else ("RECURRING: " if application.recurring else "ONE-TIME: ")
 
         # Send email to manager
-        # Add "RECURRING: " to subject if the application is recurring
         base_manager_subject = get_new_application_manager_email_subject(application.staff_id, staff_name)
         manager_subject = f"{prefix}{base_manager_subject}"
         manager_body = get_new_application_manager_email_template(
@@ -152,8 +161,10 @@ class ApplicationService:
             status=new_application.status,
             created_on=get_current_date(),
             recurring=application.recurring,
+            location=application.location,
             recurrence_type=application.recurrence_type.value if application.recurring else None,
-            end_date=application.end_date if application.recurring else None
+            end_date=application.end_date if application.recurring else None,
+            events=application.events if has_multiple_events else None
         )
         self.email_service.send_email(manager.email, manager_subject, manager_body)
 
@@ -169,8 +180,10 @@ class ApplicationService:
             status=new_application.status,
             created_on=get_current_date(),
             recurring=application.recurring,
+            location=application.location,
             recurrence_type=application.recurrence_type.value if application.recurring else None,
-            end_date=application.end_date if application.recurring else None
+            end_date=application.end_date if application.recurring else None,
+            events=application.events if has_multiple_events else None
         )
         self.email_service.send_email(employee.email, employee_subject, employee_body)
 
