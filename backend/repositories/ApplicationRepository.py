@@ -1,8 +1,9 @@
 from fastapi import HTTPException
 from typing import List, Type
+import datetime
 
 from fastapi import Depends
-from sqlalchemy import desc
+from sqlalchemy import desc , and_
 from sqlalchemy.orm import Session
 
 from backend.config.Database import get_db_connection
@@ -79,3 +80,36 @@ class ApplicationRepository:
         self.db.commit()
         self.db.refresh(db_application)
         return db_application
+
+    def reject_applications_older_than(self, date: datetime) -> Application:
+        db_application = self.db.query(Application).filter(
+            and_(Application.created_on<date,Application.status == 'pending')
+            ).update(
+                {
+                'status': 'rejected',
+                'last_updated_on': get_current_datetime_sgt()
+                }
+            )
+        self.db.commit()
+        self.db.refresh(db_application)
+        return db_application
+            
+        # try:
+        #     rejected = self.db.query(Application).filter(
+        #         and_(
+        #             Application.created_on < date,
+        #             Application.status == 'pending'
+        #         )
+        #     ).update(
+        #         {
+        #             'status': 'rejected',
+        #             'last_updated_on': get_current_datetime_sgt()
+        #         },
+        #         synchronize_session='fetch'
+        #     )
+        #     self.db.commit()
+        #     return rejected
+        # except Exception as e:
+        #     self.db.rollback()
+        #     print(f"Error in reject_applications_older_than: {str(e)}")
+        #     raise e
