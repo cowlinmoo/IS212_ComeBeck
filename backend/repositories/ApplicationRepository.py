@@ -81,7 +81,7 @@ class ApplicationRepository:
         self.db.refresh(db_application)
         return db_application
 
-    def reject_applications_older_than(self, date: datetime) -> Application:
+    def reject_applications_older_than(self, date: datetime) -> int:
         db_application = self.db.query(Application).filter(
             and_(Application.created_on<date,Application.status == 'pending')
             ).update(

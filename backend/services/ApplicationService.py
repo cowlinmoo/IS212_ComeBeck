@@ -237,7 +237,7 @@ class ApplicationService:
     def update_application_status(self, application_id: int, new_status: str) -> Application:
         return self.application_repository.update_application_status(application_id, new_status)
     
-    def reject_old_applications(self) -> Application:
+    def reject_old_applications(self) -> int:
         try:
             two_months_ago = get_current_datetime_sgt() - timedelta(days=60)
             rejected_count = self.application_repository.reject_applications_older_than(two_months_ago)
@@ -245,13 +245,13 @@ class ApplicationService:
         except Exception as e:
             print(f"Error rejecting old applications: {str(e)}")
         
-def setup_application_cleanup_scheduler(application_service: ApplicationService):
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(
-        application_service.reject_old_applications(),
-        trigger=CronTrigger(minute='*'),  # Run at midnight every day
-        id='reject_old_applications',
-        name='Reject applications older than 2 months',
-        replace_existing=True
-    )
-    return scheduler
+    def setup_application_cleanup_scheduler(self):
+        scheduler = BackgroundScheduler()
+        scheduler.add_job(
+            self.reject_old_applications,
+            trigger=CronTrigger(second='10'),  # Run at midnight every day
+            id='reject_old_applications',
+            name='Reject applications older than 2 months',
+            replace_existing=True
+        )
+        return scheduler

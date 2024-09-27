@@ -7,7 +7,7 @@ from backend.routers.EventRouter import EventRouter
 from backend.routers.ApplicationRouter import ApplicationRouter
 from backend.routers.AuthenticationRouter import AuthRouter
 from backend.routers.EmployeeRouter import EmployeeRouter
-from backend.services.ApplicationService import ApplicationService, setup_application_cleanup_scheduler
+from backend.services.ApplicationService import ApplicationService
 
 
 create_database()
@@ -27,7 +27,7 @@ app.include_router(EventRouter)
 
 application_service = ApplicationService()
 
-scheduler = setup_application_cleanup_scheduler(application_service)
+scheduler = ApplicationService.setup_application_cleanup_scheduler(application_service)
 
 @app.on_event("startup")
 async def startup_event():
