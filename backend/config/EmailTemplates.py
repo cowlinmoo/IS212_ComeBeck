@@ -16,6 +16,12 @@ def get_application_withdrawn_manager_email_subject(staff_id: int, employee_name
 def get_application_withdrawn_employee_email_subject(application_id: int) -> str:
     return f"Application Withdrawn - Application ID: {application_id}"
 
+def get_application_auto_rejected_manager_email_subject(staff_id: int, employee_name: str) -> str:
+    return f"Application Auto Rejected - Employee ID: {staff_id} - {employee_name}"
+
+def get_application_auto_rejected_employee_email_subject(application_id: int) -> str:
+    return f"Application Auto Rejected - Application ID: {application_id}"
+
 def get_new_application_manager_email_template(
     manager_name: str,
     employee_name: str,
@@ -167,6 +173,52 @@ Application ID: {application_id}
 Reason: {reason}
 Status: {status}
 Withdrawn On: {withdrawn_on}
+
+If you need to submit a new application or have any questions, please contact the HR department.
+
+Thank you for using our application system.
+
+Best regards,
+HR Department
+
+This is an automated message. Please do not reply directly to this email.
+    """
+
+def get_application_auto_rejected_manager_email_template(manager_name: str, employee_name: str, employee_id: int, application_id: int, reason: str, status: str, date_req: datetime) -> str:
+    return f"""
+Dear {manager_name},
+
+This is to inform you that an application has been auto rejected as 2 months has passed the requested date.
+
+Application Details:
+--------------------
+Employee Name: {employee_name}
+Employee ID: {employee_id}
+Application ID: {application_id}
+Reason: {reason}
+Status: {status}
+Date Requested: {date_req}
+
+If you have any questions regarding this rejection, please contact the HR department.
+
+Best regards,
+HR Department
+
+This is an automated message. Please do not reply directly to this email.
+    """
+
+def get_application_auto_rejected_employee_email_template(employee_name: str, application_id: int, reason: str, status: str, date_req: datetime) -> str:
+    return f"""
+Dear {employee_name},
+
+This email confirms that your application has been auto rejected as 2 months has passed the requested date.
+
+Application Details:
+--------------------
+Application ID: {application_id}
+Reason: {reason}
+Status: {status}
+Date Requested: {date_req}
 
 If you need to submit a new application or have any questions, please contact the HR department.
 

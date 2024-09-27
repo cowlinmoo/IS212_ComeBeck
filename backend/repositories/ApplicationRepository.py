@@ -81,19 +81,22 @@ class ApplicationRepository:
         self.db.refresh(db_application)
         return db_application
 
-    def reject_old_applications(self, date_threshold: datetime.datetime) -> int:
-            old_applications = self.db.query(Application).filter(
-                and_(
-                    Application.created_on < date_threshold,
-                    Application.status == 'pending'
-                )
-            ).all()
+    def get_pending_applications(self) -> List[Type[Application]]:
+        return self.db.query(Application).filter(Application.status == 'pending').all()
+    
+    # def reject_old_applications(self, date_threshold: datetime.datetime) -> int:
+    #         old_applications = self.db.query(Application).filter(
+    #             and_(
+    #                 Application.created_on < date_threshold,
+    #                 Application.status == 'pending'
+    #             )
+    #         ).all()
 
-            rejected_count = 0
-            for application in old_applications:
-                application.status = 'rejected'
-                application.last_updated_on = get_current_datetime_sgt()
-                rejected_count += 1
+    #         rejected_count = 0
+    #         for application in old_applications:
+    #             application.status = 'rejected'
+    #             application.last_updated_on = get_current_datetime_sgt()
+    #             rejected_count += 1
 
-            self.db.commit()
-            return rejected_count
+    #         self.db.commit()
+    #         return rejected_count

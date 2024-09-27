@@ -52,4 +52,6 @@ class EventRepository:
         self.db.delete(event_to_delete)
         self.db.commit()
         return event_to_delete
-
+    
+    def get_events_by_application_ids(self, application_ids: List[int]) -> List[Type[Event]]:
+        return self.db.query(Event).filter(Event.application_id.in_(application_ids)).all()
