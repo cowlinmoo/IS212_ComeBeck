@@ -13,3 +13,8 @@ class EventSchema(BaseModel):
 
 class EventCreateSchema(BaseModel):
     requested_date: date = Field(examples=[date.today()])
+
+class EventResponse(BaseModel):
+    event_id: int = Field(examples=[301, 302, 303])
+    requested_date: date = Field(examples=[date.today()])
+    location: str = Field(examples=["Office A", "Office B", "Home"])
