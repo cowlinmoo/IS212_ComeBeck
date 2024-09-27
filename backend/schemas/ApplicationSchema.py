@@ -6,7 +6,7 @@ from backend.models.enums.RecurrenceType import RecurrenceType
 
 import logging
 
-from backend.schemas.EventSchema import EventCreateSchema
+from backend.schemas.EventSchema import EventCreateSchema, EventResponse
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -35,6 +35,7 @@ class ApplicationResponse(BaseModel):
     staff_id: int = Field(examples=[101, 102, 103])
     approver_id: Optional[int] = Field(default=None, examples=[101, 102, 103])
     recurring: bool = Field(examples=[True, False])
+    events: List[EventResponse] = Field(default_factory=list)
 
 class ApplicationCreateSchema(BaseModel):
     location: str = Field(examples=["Home", "Office", "Remote"])
