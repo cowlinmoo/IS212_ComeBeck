@@ -32,12 +32,13 @@ import {
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as  z  from "zod";
+import * as z from "zod";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+
 
 //formschema
 const applyFormSchema = z.object({
-  arangement_type: z.string().default("WFH"),
+  arangementType: z.string().default("WFH"),
   isMultiple: z.enum(["Yes", "No"], {
     required_error: "Please specify if this is for multiple dates.",
   }),
@@ -54,7 +55,11 @@ const applyFormSchema = z.object({
     .optional(),
   reason: z.string(),
 });
-export default function Applications() {
+
+interface IApplications {
+  staffId: string;
+}
+const Applications: React.FC<IApplications> = ({ staffId }) => {
   //restricted calendar
   const [fromDate, setFromDate] = useState<Date>(new Date());
   const [toDate, setToDate] = useState<Date>(new Date());
@@ -76,10 +81,10 @@ export default function Applications() {
   }, []);
 
   //Apply form
-  const apply_form = useForm<z.infer<typeof applyFormSchema>>({
+  const applyForm = useForm<z.infer<typeof applyFormSchema>>({
     resolver: zodResolver(applyFormSchema),
     defaultValues: {
-      arrangement_type: "WFH",
+      arrangementType: "WFH",
       isMultiple: "No",
       reason: "",
     },
@@ -106,27 +111,28 @@ export default function Applications() {
                 Submit a new arrangement request.
               </CardDescription>
             </CardHeader>
-            <Form {...apply_form}>
-              <form onSubmit={apply_form.handleSubmit(applySubmit)}>
+            <Form {...applyForm}>
+              <form onSubmit={applyForm.handleSubmit(applySubmit)}>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label>Arrangement Type:</Label> <br></br>
                     <Label className="font-bold">WFH</Label>
                   </div>
                   <FormField
-                    control={apply_form.control}
+                    control={applyForm.control}
                     name="isMultiple"
                     render={({ field }) => (
                       <FormItem className="space-y-3">
                         <FormLabel>Is this for multiple dates?</FormLabel>
                         <FormControl>
                           <RadioGroup
-                            onValueChange={(value)=>{field.onChange(value)
-                            if (value === "No"){
-                              apply_form.setValue("multipleDate", undefined)
-                            } else{
-                              apply_form.setValue("singleDate", undefined)
-                            }
+                            onValueChange={(value) => {
+                              field.onChange(value);
+                              if (value === "No") {
+                                applyForm.setValue("multipleDate", undefined);
+                              } else {
+                                applyForm.setValue("singleDate", undefined);
+                              }
                             }}
                             defaultValue={field.value}
                             className="flex flex-col space-y-1"
@@ -148,57 +154,57 @@ export default function Applications() {
                       </FormItem>
                     )}
                   />
-                  {apply_form.watch("isMultiple") === "No" && (
-                      <FormField
-                        control={apply_form.control}
-                        name="singleDate"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-col">
-                            <FormLabel>Date:</FormLabel>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <FormControl>
-                                  <Button
-                                    variant={"outline"}
-                                    className={cn(
-                                      "w-[240px] justify-start text-left font-normal",
-                                      !field.value && "text-muted-foreground"
-                                    )}
-                                  >
-                                    {field.value ? (
-                                      format(field.value, "PPP")
-                                    ) : (
-                                      <span>Pick a date</span>
-                                    )}
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                  </Button>
-                                </FormControl>
-                              </PopoverTrigger>
-                              <PopoverContent>
-                                <Calendar
-                                  mode="single"
-                                  selected={field.value}
-                                  onSelect={field.onChange}
-                                  fromDate={fromDate}
-                                  toDate={toDate}
-                                  initialFocus
-                                />
-                                <div className="p-3 border-t">
-                                  <p className="text-s text-muted-foreground">
-                                    Selectable range:{" "}
-                                    {format(fromDate, "MMM d, yyyy")} -{" "}
-                                    {format(toDate, "MMM d, yyyy")}
-                                  </p>
-                                </div>
-                              </PopoverContent>
-                            </Popover>
-                          </FormItem>
-                        )}
-                      />
-                  )}
-                  {apply_form.watch("isMultiple") === "Yes" && (
+                  {applyForm.watch("isMultiple") === "No" && (
                     <FormField
-                      control={apply_form.control}
+                      control={applyForm.control}
+                      name="singleDate"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Date:</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                    "w-[240px] justify-start text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value ? (
+                                    format(field.value, "PPP")
+                                  ) : (
+                                    <span>Pick a date</span>
+                                  )}
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent>
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                fromDate={fromDate}
+                                toDate={toDate}
+                                initialFocus
+                              />
+                              <div className="p-3 border-t">
+                                <p className="text-s text-muted-foreground">
+                                  Selectable range:{" "}
+                                  {format(fromDate, "MMM d, yyyy")} -{" "}
+                                  {format(toDate, "MMM d, yyyy")}
+                                </p>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                  {applyForm.watch("isMultiple") === "Yes" && (
+                    <FormField
+                      control={applyForm.control}
                       name="multipleDate"
                       render={({ field }) => (
                         <FormItem className="flex flex-col">
@@ -245,7 +251,7 @@ export default function Applications() {
                     />
                   )}
                   <FormField
-                    control={apply_form.control}
+                    control={applyForm.control}
                     name="reason"
                     render={({ field }) => (
                       <FormItem>
@@ -357,4 +363,5 @@ export default function Applications() {
       </Tabs>
     </div>
   );
-}
+};
+export default Applications;
