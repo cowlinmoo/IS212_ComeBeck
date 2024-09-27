@@ -17,27 +17,25 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    console.log(JSON.stringify({ username, password }));
+    
+    const formData = new URLSearchParams();
+    formData.append('username', username);
+    formData.append('password', password);
+  
     try {
       const response = await fetch('http://localhost:8080/api/authenticate', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: JSON.stringify({ 
-          username: username,
-          password: password
-        }),
+        body: formData
       });
-      
+
       if (response.ok) {
         const data = await response.json();
-        const jwtToken = data.token;
-
-        await storeToken({ token: jwtToken });
-        console.log("JWT Token Stored: ", jwtToken);
-
+        const jwtToken = data.access_token;
+        const userId = data.staff_id;
+        await storeToken({ token: jwtToken, id: userId });
         router.push('/overview'); 
       } else {
         const errorData = await response.json();
