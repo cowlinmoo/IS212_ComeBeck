@@ -10,3 +10,6 @@ class EventSchema(BaseModel):
 
     class Config:
         from_attributes = True
+
+class EventCreateSchema(BaseModel):
+    requested_date: date = Field(examples=[date.today()])
