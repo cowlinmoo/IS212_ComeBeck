@@ -1,5 +1,6 @@
 "use client";
 
+import { headers } from 'next/headers'
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,13 +58,18 @@ const applyFormSchema = z.object({
 
 interface IApplications {
   staffId: string;
+  token: string;
 }
-const Applications: React.FC<IApplications> = ({ staffId }) => {
-  //fetching wfh applications currently existing
-  // const data = fetch("http://localhost:8080/api/application/staff/"+staffId)
-  // const wfhApplications = data.json()
+const Applications: React.FC<IApplications> = ({ staffId, token}) => {
+  // fetching wfh applications currently existing
+  console.log(staffId)
+  console.log(token)
+  const bearer = "www-authenticate:" + token
+  const data = fetch("http://localhost:8080/api/application/staff/"+staffId,  {headers: { bearer },})
+  // const wfh_Applications = data.json()
+  console.log(data)
 
-  //restricted calendar
+  // restricted calendar
   const [fromDate, setFromDate] = useState<Date>(new Date());
   const [toDate, setToDate] = useState<Date>(new Date());
 
