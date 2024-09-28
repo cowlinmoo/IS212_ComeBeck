@@ -2,14 +2,14 @@
 -- All passwords are "password123"
 INSERT INTO employees (staff_id, staff_fname, staff_lname, dept, position, country, email, reporting_manager, role, password)
 VALUES
-    (100, 'John', 'Doe', 'Engineering', 'CTO', 'Singapore', 'etainez88@gmail.com', 100, 3, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
-    (101, 'Alice', 'Smith', 'Engineering', 'Software Engineer', 'USA', 'etainez88@gmail.com', 100, 1, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
-    (102, 'Bob', 'Johnson', 'Engineering', 'Tech Lead', 'Canada', 'etainez88@gmail.com', 100, 2, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
-    (103, 'Charlie', 'Brown', 'Marketing', 'Marketing Manager', 'UK', 'etainez88@gmail.com', 100, 2, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
-    (104, 'David', 'Williams', 'Engineering', 'Senior Engineer', 'Australia', 'etainez88@gmail.com', 102, 1, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
-    (105, 'Emma', 'Jones', 'Human Resources', 'HR Manager', 'New Zealand', 'etainez88@gmail.com', 100, 2, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
-    (106, 'Frank', 'Miller', 'Finance', 'Finance Manager', 'Germany', 'etainez88@gmail.com', 100, 2, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
-    (107, 'Grace', 'Lee', 'Customer Support', 'Support Manager', 'South Korea', 'etainez88@gmail.com', 100, 2, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO')
+    (100, 'John', 'Doe', 'Engineering', 'CTO', 'Singapore', 'colinmok1000@gmail.com', 100, 3, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
+    (101, 'Alice', 'Smith', 'Engineering', 'Software Engineer', 'USA', 'colinmok3@gmail.com', 100, 1, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
+    (102, 'Bob', 'Johnson', 'Engineering', 'Tech Lead', 'Canada', 'test@gmail.com', 100, 2, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
+    (103, 'Charlie', 'Brown', 'Marketing', 'Marketing Manager', 'UK', 'test@gmail.com', 100, 2, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
+    (104, 'David', 'Williams', 'Engineering', 'Senior Engineer', 'Australia', 'test@gmail.com', 102, 1, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
+    (105, 'Emma', 'Jones', 'Human Resources', 'HR Manager', 'New Zealand', 'test8@gmail.com', 100, 2, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
+    (106, 'Frank', 'Miller', 'Finance', 'Finance Manager', 'Germany', 'test@gmail.com', 100, 2, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
+    (107, 'Grace', 'Lee', 'Customer Support', 'Support Manager', 'South Korea', 'test@gmail.com', 100, 2, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO')
 ON CONFLICT (staff_id) DO NOTHING;
 -- Insert seed data into the Team table if not exists
 INSERT INTO team (team_id, name, description, created_on, manager_id)
@@ -36,10 +36,10 @@ ON CONFLICT (team_id, staff_id) DO NOTHING;
 -- Insert seed data into the Application table if not exists
 INSERT INTO application (application_id, reason, description, created_on, last_updated_on, status, staff_id, approver_id, recurring)
 VALUES
-    (201, 'WFH Request', 'Requesting to work from home for two weeks due to home renovation.', '2023-07-01 08:00:00', '2023-07-02 10:00:00', 'pending', 101, 102, TRUE),
+    (201, 'WFH Request', 'Requesting to work from home for two weeks due to home renovation.', '2023-07-01 08:00:00', '2023-07-02 10:00:00', 'approved', 101, 102, TRUE),
     (202, 'Relocation', 'Requesting to relocate to the New York office for 3 months.', '2023-07-05 09:00:00', '2023-07-06 11:00:00', 'pending', 104, 100, FALSE),
-    (203, 'Flexible Hours', 'Requesting flexible working hours for childcare reasons.', '2023-07-10 14:00:00', '2023-07-11 09:00:00', 'pending', 103, 100, TRUE),
-    (204, 'Remote Work', 'Requesting to work remotely from Bali for 1 month.', '2023-07-15 11:00:00', '2023-07-16 13:00:00', 'pending', 106, 100, FALSE),
+    (203, 'Flexible Hours', 'Requesting flexible working hours for childcare reasons.', '2023-07-10 14:00:00', '2023-07-11 09:00:00', 'approved', 103, 100, TRUE),
+    (204, 'Remote Work', 'Requesting to work remotely from Bali for 1 month.', '2023-07-15 11:00:00', '2023-07-16 13:00:00', 'rejected', 106, 100, FALSE),
     (205, 'Office Change', 'Requesting to move to a quieter area in the office.', '2023-07-20 10:00:00', '2023-07-20 15:00:00', 'pending', 107, 103, FALSE)
 ON CONFLICT (application_id) DO NOTHING;
 
