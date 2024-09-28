@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from backend.config.Database import get_db_connection
 from backend.models import Application
 from backend.models.generators import get_current_datetime_sgt
-from backend.schemas.ApplicationSchema import ApplicationCreateSchema, ApplicationUpdateSchema, ApplicationWithdrawSchema
+from backend.schemas.ApplicationSchema import ApplicationUpdateSchema, ApplicationWithdrawSchema
 
 
 class ApplicationRepository:
@@ -79,3 +79,7 @@ class ApplicationRepository:
         self.db.commit()
         self.db.refresh(db_application)
         return db_application
+
+    def get_pending_applications(self) -> List[Type[Application]]:
+        return self.db.query(Application).filter(Application.status == 'pending').all()
+    

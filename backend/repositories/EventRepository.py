@@ -2,15 +2,10 @@ from fastapi import HTTPException
 from typing import List, Type
 
 from fastapi import Depends
-from passlib.context import CryptContext
-from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
 from ..config.Database import get_db_connection
 from backend.models import Event
-from backend.models.generators import get_current_datetime_sgt
-from backend.models.generators import get_current_date
-from ..schemas.ApplicationSchema import ApplicationCreateSchema, ApplicationUpdateSchema, ApplicationWithdrawSchema
 
 class EventRepository:
     db: Session
@@ -52,4 +47,6 @@ class EventRepository:
         self.db.delete(event_to_delete)
         self.db.commit()
         return event_to_delete
-
+    
+    def get_events_by_application_ids(self, application_ids: List[int]) -> List[Type[Event]]:
+        return self.db.query(Event).filter(Event.application_id.in_(application_ids)).all()
