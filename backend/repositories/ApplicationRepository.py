@@ -1,15 +1,14 @@
 from fastapi import HTTPException
 from typing import List, Type
-import datetime
 
 from fastapi import Depends
-from sqlalchemy import desc , and_
+from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
 from backend.config.Database import get_db_connection
 from backend.models import Application
 from backend.models.generators import get_current_datetime_sgt
-from backend.schemas.ApplicationSchema import ApplicationCreateSchema, ApplicationUpdateSchema, ApplicationWithdrawSchema
+from backend.schemas.ApplicationSchema import ApplicationUpdateSchema, ApplicationWithdrawSchema
 
 
 class ApplicationRepository:

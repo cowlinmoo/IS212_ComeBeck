@@ -2,15 +2,10 @@ from fastapi import HTTPException
 from typing import List, Type
 
 from fastapi import Depends
-from passlib.context import CryptContext
-from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
 from ..config.Database import get_db_connection
 from backend.models import Event
-from backend.models.generators import get_current_datetime_sgt
-from backend.models.generators import get_current_date
-from ..schemas.ApplicationSchema import ApplicationCreateSchema, ApplicationUpdateSchema, ApplicationWithdrawSchema
 
 class EventRepository:
     db: Session

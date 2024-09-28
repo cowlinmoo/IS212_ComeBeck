@@ -2,21 +2,14 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.cron import CronTrigger
 
-from backend.config.Database import init_db , get_db_connection
+
+from backend.config.Database import init_db
 from backend.models.BaseModel import create_database
 from backend.routers.EventRouter import EventRouter
 from backend.routers.ApplicationRouter import ApplicationRouter
 from backend.routers.AuthenticationRouter import AuthRouter
 from backend.routers.EmployeeRouter import EmployeeRouter
-from backend.repositories.ApplicationRepository import ApplicationRepository
-from backend.services.ApplicationService import ApplicationService
-from backend.repositories.EmployeeRepository import EmployeeRepository
-from backend.services.EmailService import EmailService
-from backend.repositories.EventRepository import EventRepository
-from backend.services.EventService import EventService
 from backend.services.dependencies import get_scheduler_service
 
 create_database()
