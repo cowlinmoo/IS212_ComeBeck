@@ -7,7 +7,7 @@ VALUES
     (102, 'Bob', 'Johnson', 'Engineering', 'Tech Lead', 'Canada', 'test@gmail.com', 100, 2, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
     (103, 'Charlie', 'Brown', 'Marketing', 'Marketing Manager', 'UK', 'test@gmail.com', 100, 2, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
     (104, 'David', 'Williams', 'Engineering', 'Senior Engineer', 'Australia', 'test@gmail.com', 102, 1, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
-    (105, 'Emma', 'Jones', 'Human Resources', 'HR Manager', 'New Zealand', 'test8@gmail.com', 100, 2, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
+    (105, 'Emma', 'Jones', 'Human Resources', 'HR Manager', 'New Zealand', 'test@gmail.com', 100, 2, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
     (106, 'Frank', 'Miller', 'Finance', 'Finance Manager', 'Germany', 'test@gmail.com', 100, 2, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
     (107, 'Grace', 'Lee', 'Customer Support', 'Support Manager', 'South Korea', 'test@gmail.com', 100, 2, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO')
 ON CONFLICT (staff_id) DO NOTHING;
