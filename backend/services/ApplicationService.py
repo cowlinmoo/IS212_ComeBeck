@@ -2,9 +2,7 @@ from datetime import timedelta
 from dateutil.relativedelta import relativedelta
 from fastapi import Depends, HTTPException
 from typing import List, Type
-
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.cron import CronTrigger
+from sqlalchemy.orm import InstrumentedAttribute
 
 from backend.config.EmailTemplates import (get_new_application_manager_email_subject,
                                            get_new_application_manager_email_template,
@@ -15,9 +13,7 @@ from backend.config.EmailTemplates import (get_new_application_manager_email_sub
                                            get_application_withdrawn_manager_email_subject,
                                            get_application_withdrawn_manager_email_template,
                                            get_application_auto_rejected_employee_email_subject,
-                                           get_application_auto_rejected_employee_email_template,
-                                           get_application_auto_rejected_manager_email_subject,
-                                           get_application_auto_rejected_manager_email_template)
+                                           get_application_auto_rejected_employee_email_template)
 from backend.models.enums.RecurrenceType import RecurrenceType
 from backend.models.generators import get_current_datetime_sgt
 from backend.models.generators import get_current_date
@@ -260,10 +256,15 @@ class ApplicationService:
     
     def reject_old_applications(self):
         pending_applications = self.application_repository.get_pending_applications()
-        application_ids = [app.application_id for app in pending_applications]
+        application_ids: List[int] = [int(getattr(app, 'application_id')
+                                          if isinstance(app.application_id,InstrumentedAttribute)
+                                          else app.application_id)
+            for app in pending_applications
+            if app.application_id is not None
+        ]
         events = self.event_repository.get_events_by_application_ids(application_ids)
 
-        two_months_ago = get_current_date() - timedelta(days=60)
+        two_months_ago = get_current_date() - relativedelta(months=2)
         rejected_count = 0
 
         event_application_ids = []
@@ -282,20 +283,7 @@ class ApplicationService:
 
     def _send_rejection_emails(self, application: Application,req_date):
         employee = self.employee_repository.get_employee(application.staff_id)
-        manager = self.employee_repository.get_employee(employee.reporting_manager)
         staff_name = f"{employee.staff_fname} {employee.staff_lname}"
-
-        manager_subject = get_application_auto_rejected_manager_email_subject(application.staff_id, staff_name)
-        manager_body = get_application_auto_rejected_manager_email_template(
-            manager_name=f"{manager.staff_fname} {manager.staff_lname}",
-            employee_name=staff_name,
-            employee_id=application.staff_id,
-            application_id=application.application_id,
-            reason="Application automatically rejected due to old requested date",
-            status=application.status,
-            date_req=req_date
-        )
-        self.email_service.send_email(manager.email, manager_subject, manager_body)
 
         employee_subject = get_application_auto_rejected_employee_email_subject(application.application_id)
         employee_body = get_application_auto_rejected_employee_email_template(

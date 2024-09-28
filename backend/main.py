@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -15,14 +17,24 @@ from backend.repositories.EmployeeRepository import EmployeeRepository
 from backend.services.EmailService import EmailService
 from backend.repositories.EventRepository import EventRepository
 from backend.services.EventService import EventService
+from backend.services.dependencies import get_scheduler_service
 
 create_database()
 init_db()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    scheduler_service = get_scheduler_service()
+    scheduler_service.start()
+    yield
+    # Shutdown
+    scheduler_service.stop()
 app = FastAPI(
     title="ComeBeck Backend API",  # Add a descriptive title
     description="This is the backend for ComeBeck and it is built using FastAPI",
     version="1.0.0",
     docs_url="/api/documentation",
+    lifespan=lifespan
 )
 
 app.add_middleware(
@@ -37,30 +49,3 @@ app.include_router(AuthRouter)
 app.include_router(ApplicationRouter)
 app.include_router(EmployeeRouter)
 app.include_router(EventRouter)
-
-
-scheduler = BackgroundScheduler()
-db = next(get_db_connection())
-application_repository = ApplicationRepository(db)
-employee_repository = EmployeeRepository(db)
-event_repository = EventRepository(db)
-email_service = EmailService()
-event_service = EventService()
-application_service = ApplicationService(application_repository, employee_repository, email_service,event_repository, event_service)
-
-@app.on_event("startup")
-async def start_scheduler():
-    scheduler.add_job(
-        application_service.reject_old_applications,
-        trigger=CronTrigger(minute='*'),  # Run at midnight
-        id="reject_old_applications",
-        name="Reject applications with events older than two months",
-        replace_existing=True,
-    )
-    scheduler.start()
-
-@app.on_event("shutdown")
-async def shutdown_scheduler():
-    scheduler.shutdown()
-
-
