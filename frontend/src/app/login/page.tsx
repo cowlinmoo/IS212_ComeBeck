@@ -4,19 +4,50 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useRouter } from 'next/navigation';
+import { storeToken } from '@/lib/cookie';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("")
+  const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
-  const [rememberMe, setRememberMe] = useState(false)
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Handle login logic here
-    console.log("Login attempted with:", { email, password, rememberMe })
-  }
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    
+    const formData = new URLSearchParams();
+    formData.append('username', username);
+    formData.append('password', password);
+  
+    try {
+      const response = await fetch('http://localhost:8080/api/authenticate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formData
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const jwtToken = data.access_token;
+        const userId = data.staff_id;
+        await storeToken({ token: jwtToken, id: userId });
+        router.push('/overview'); 
+      } else {
+        const errorData = await response.json();
+        setError(errorData.message || 'Login failed');
+        console.error('Login failed');
+      }
+
+    } catch (error) {
+      setError('An error occured during login. Please try again.');
+      console.error('An error occured during login:', error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -24,21 +55,21 @@ export default function LoginPage() {
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Login</CardTitle>
           <CardDescription className="text-center">
-            Enter your email and password to login to your account
+            Enter your username and password to login to your account
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin}>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="username">Username</Label>
                 <Input 
-                  id="email" 
-                  type="email" 
+                  id="username" 
+                  type="username" 
                   placeholder="m@example.com" 
                   required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
@@ -52,61 +83,14 @@ export default function LoginPage() {
                 />
               </div>
               <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="remember" 
-                  checked={rememberMe}
-                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                />
-                <label
-                  htmlFor="remember"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  Remember me
-                </label>
+                {error && <p className='text-red-600 text-sm'>{error}</p>}
               </div>
-              <Button type="submit" className="w-full">
+              <Button type="submit" className="w-full" onClick={() => handleLogin}>
                 Login
               </Button>
             </div>
           </form>
-          {/* <div className="mt-4">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-muted-foreground">Or continue with</span>
-              </div>
-            </div>
-            <div className="mt-4 flex gap-2">
-              <Button variant="outline" className="w-full">
-                <Github className="mr-2 h-4 w-4" />
-                Github
-              </Button>
-              <Button variant="outline" className="w-full">
-                <Twitter className="mr-2 h-4 w-4" />
-                Twitter
-              </Button>
-            </div>
-          </div> */}
         </CardContent>
-        {/* <CardFooter className="flex flex-wrap items-center justify-between gap-2">
-          <div className="text-sm text-muted-foreground">
-            <span className="mr-1 hidden sm:inline-block">Dont have an account?</span>
-            <a 
-              href="#" 
-              className="underline underline-offset-4 hover:text-primary"
-            >
-              Sign up
-            </a>
-          </div>
-          <a
-            href="#"
-            className="text-sm underline underline-offset-4 hover:text-primary"
-          >
-            Forgot password?
-          </a>
-        </CardFooter> */}
       </Card>
     </div>
   )

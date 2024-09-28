@@ -22,7 +22,7 @@ def login_for_access_token(
             headers={"WWW-Authenticate": "Bearer"},
         )
     access_token = auth_service.create_access_token(
-        data={"sub": employee.email, "role": employee.role}
+        data={"sub": employee.email, "role": employee.role, "id":employee.staff_id}
     )
 
-    return Token(email=employee.email, role=employee_role.name, access_token=access_token, token_type="bearer")
+    return Token(email=employee.email, role=employee_role.name, access_token=access_token, token_type="bearer", staff_id=employee.staff_id)
