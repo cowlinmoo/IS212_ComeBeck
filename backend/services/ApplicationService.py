@@ -2,6 +2,7 @@ from datetime import timedelta
 from dateutil.relativedelta import relativedelta
 from fastapi import Depends, HTTPException
 from typing import List, Type
+from sqlalchemy.orm import InstrumentedAttribute
 
 from backend.config.EmailTemplates import (get_new_application_manager_email_subject,
                                            get_new_application_manager_email_template,
@@ -10,7 +11,9 @@ from backend.config.EmailTemplates import (get_new_application_manager_email_sub
                                            get_application_withdrawn_employee_email_subject,
                                            get_application_withdrawn_employee_email_template,
                                            get_application_withdrawn_manager_email_subject,
-                                           get_application_withdrawn_manager_email_template)
+                                           get_application_withdrawn_manager_email_template,
+                                           get_application_auto_rejected_employee_email_subject,
+                                           get_application_auto_rejected_employee_email_template)
 from backend.models.enums.RecurrenceType import RecurrenceType
 from backend.models.generators import get_current_datetime_sgt
 from backend.models.generators import get_current_date
@@ -21,6 +24,8 @@ from backend.schemas.ApplicationSchema import (ApplicationCreateSchema, Applicat
                                                ApplicationWithdrawSchema)
 from backend.services.EmailService import EmailService
 from backend.services.EventService import EventService
+from backend.repositories.EventRepository import EventRepository
+from backend.services.EventService import EventService
 
 
 class ApplicationService:
@@ -28,9 +33,11 @@ class ApplicationService:
                  application_repository: ApplicationRepository = Depends(),
                  employee_repository: EmployeeRepository = Depends(),
                  email_service: EmailService = Depends(),
+                 event_repository: EventRepository = Depends(),
                  event_service: EventService = Depends()
                  ):
 
+        self.event_repository = event_repository
         self.event_service = event_service
         self.employee_repository = employee_repository
         self.application_repository = application_repository
@@ -246,3 +253,44 @@ class ApplicationService:
 
     def update_application_status(self, application_id: int, new_status: str) -> Application:
         return self.application_repository.update_application_status(application_id, new_status)
+    
+    def reject_old_applications(self):
+        pending_applications = self.application_repository.get_pending_applications()
+        application_ids: List[int] = [int(getattr(app, 'application_id')
+                                          if isinstance(app.application_id,InstrumentedAttribute)
+                                          else app.application_id)
+            for app in pending_applications
+            if app.application_id is not None
+        ]
+        events = self.event_repository.get_events_by_application_ids(application_ids)
+
+        two_months_ago = get_current_date() - relativedelta(months=2)
+        rejected_count = 0
+
+        event_application_ids = []
+        for event in events:
+            print(event_application_ids,"over here")
+            if event.requested_date < two_months_ago:
+                if event.application_id not in event_application_ids:
+                    event_application_ids.append(event.application_id)
+                    application=self.application_repository.update_application_status(event.application_id, 'rejected')
+                    rejected_count += 1
+
+                    self._send_rejection_emails(application,event.requested_date)
+        
+
+        print(f"Rejected {rejected_count} applications with events older than {two_months_ago}")
+
+    def _send_rejection_emails(self, application: Application,req_date):
+        employee = self.employee_repository.get_employee(application.staff_id)
+        staff_name = f"{employee.staff_fname} {employee.staff_lname}"
+
+        employee_subject = get_application_auto_rejected_employee_email_subject(application.application_id)
+        employee_body = get_application_auto_rejected_employee_email_template(
+            employee_name=staff_name,
+            application_id=application.application_id,
+            reason="Application automatically rejected due to old requested date",
+            status=application.status,
+            date_req=req_date
+        )
+        self.email_service.send_email(employee.email, employee_subject, employee_body)
