@@ -1,6 +1,6 @@
 "use client";
 
-import { headers } from 'next/headers'
+import { headers } from "next/headers";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +17,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { format, addMonths, subMonths } from "date-fns";
+import { format, addMonths, subMonths,isWeekend } from "date-fns";
 import {
   Popover,
   PopoverContent,
@@ -35,6 +35,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
+import {AlertTriangle} from "lucide-react";
 
 //formschema
 const applyFormSchema = z.object({
@@ -45,13 +47,17 @@ const applyFormSchema = z.object({
   singleDate: z
     .date({
       required_error: "Please select a date.",
-    })
+    }).refine(
+      (date)=>!isWeekend(date), 
+      {message:"Weekends are not allowed"}
+    )
     .optional(),
   multipleDate: z
-    .array(z.date())
-    .refine((dates) => dates.length > 1, {
-      required_error: "Please select dates (at least 2).",
-    })
+    .array(z.date({
+      required_error: "Please select dates (at least 2), excluding weekends."
+    }))
+    .refine((dates) => dates.length > 1 && dates.every(date=>!isWeekend(date)), 
+    {message: "Please select dates (at least 2), excluding weekends.",})
     .optional(),
   reason: z.string(),
 });
@@ -60,46 +66,74 @@ interface IApplications {
   staffId: string;
   token: string;
 }
-const Applications: React.FC<IApplications> = ({ staffId, token}) => {
+const Applications: React.FC<IApplications> = ({ staffId, token }) => {
   // fetching wfh applications currently existing
- 
-  const [wfhApproved, setwfhApproved] = useState(Array)
-  const [wfhPending, setwfhPending] = useState(Array)
-  useEffect(()=>{
-    async function fetchData(){
-      const headers = {"Authorization": `Bearer ${token}`};
-      const response = await fetch("http://localhost:8080/api/application/staff/"+staffId,  {headers})
-      const data  = await response.json()
-      var approvedApplications = new Array
-      var pendingApplications = new Array
-      console.log(data)
-      for (var application of data){
-        console.log(application)
-        if (application["status"]=="approved"){
-          approvedApplications.push(application["events"])
+  const [wfhApproved, setwfhApproved] = useState(Array);
+  const [wfhPending, setwfhPending] = useState(Array);
+  useEffect(() => {
+    async function fetchData() {
+      const headers = { Authorization: `Bearer ${token}` };
+      try {
+        const response = await fetch(
+          "http://localhost:8080/api/application/staff/" + staffId,
+          { headers }
+        );
+        if (!response.ok) {
+          throw new Error(`Application API validation ERROR`);
+        } else {
+          const data = await response.json();
+          var approvedApplications = new Array();
+          var pendingApplications = new Array();
+          console.log(data);
+          if (data.length < 1) {
+            approvedApplications = [];
+            pendingApplications = [];
+          } else {
+            for (var application of data) {
+              console.log(application);
+              // check if application is approved or pending and add them to the array variables
+              if (application["status"] == "approved") {
+                for (var event of application["events"]) {
+                  approvedApplications.push(event["requested_date"]);
+                }
+              } else if (application["status"] == "pending") {
+                for (var event of application["events"]) {
+                  pendingApplications.push(event["requested_date"]);
+                }
+              }
+            }
+            setwfhApproved(approvedApplications);
+            setwfhPending(pendingApplications);
+          }
         }
-        else if (application["status"]=="pending"){
-          pendingApplications.push(application["events"])
-        }
+      } catch (error: any) {
+        console.log("API fetching error.", error.message);
       }
-      setwfhApproved(approvedApplications)
-      setwfhPending(pendingApplications)
     }
     fetchData();
-    },[])
-    console.log(wfhApproved)
-  //set all wfh applications 
-  // const wfh_Applications = wfhData[0]["events"]
-  // function checkExistingwfh(date:string){
-  //   for (var i of wfh_Applications){
-  //     if (i["requested_date"]===date){
-  //       return false
-  //     }
-  //     else{
-  //       return true
-  //     }
-  // }}
-
+  }, []);
+  console.log(wfhApproved);
+  console.log(wfhPending);
+  //function to check if the date selected has a wfh arrangement
+  function checkwfhApproved(date:string){
+    for (var arrangement of wfhApproved){
+      if (arrangement===date){
+        return true
+      }
+      else{
+        return false
+      }
+  }}
+  //function to check if the date selected has a wfh arrangement
+  function checkwfhPending(date:string){
+    for (var arrangement of wfhPending){
+      if (arrangement===date){
+        return true
+      }
+      else{
+        return false
+      }
+  }}
 
   // restricted calendar
   const [fromDate, setFromDate] = useState<Date>(new Date());
@@ -121,6 +155,65 @@ const Applications: React.FC<IApplications> = ({ staffId, token}) => {
     setToDate(addMonths(currentDate, 3));
   }, []);
 
+  // disable weekends
+  const isDateDisabled = (date:Date)=>{
+    return isWeekend(date) || date <fromDate || date > toDate
+  }
+
+  //alert variable for existing approved and pending arrangements
+  const [showAlertApproved, setShowAlertApproved] = useState(false)
+  const [showAlertPending, setShowAlertPending] = useState(false)
+  var alertApprovedDates = new String();
+  var alertPendingDates = new String();
+
+
+  //check if selected date has already been approved
+  const checkForAlertApproved = (date: Date | Date[] | undefined) => {
+      //all dates to be alerted
+    alertApprovedDates = "";
+    if (Array.isArray(date)){
+      for (var d of date){
+        if (wfhApproved.includes(d)){
+          setShowAlertApproved(false)
+          alertApprovedDates.concat(d.toString())
+          alertPendingDates.concat(" ")
+        }
+      }
+    }
+    else if (date){
+      if (wfhApproved.includes(date)){
+        setShowAlertApproved(false)
+        alertApprovedDates.concat(date.toString())
+      }
+    }
+    else{
+      setShowAlertApproved(false);
+    }
+  }
+  //check if selected date has a pending application
+  const checkForAlertPending = (date: Date | Date[] | undefined) => {
+    //all dates to be alerted
+  alertPendingDates = ""
+  if (Array.isArray(date)){
+    for (var d of date){
+      if (wfhPending.includes(d)){
+        setShowAlertPending(false)
+        alertPendingDates.concat(d.toString())
+        alertPendingDates.concat(" ")
+      }
+    }
+  }
+  else if (date){
+    if (wfhPending.includes(date)){
+      setShowAlertPending(false)
+      alertPendingDates.concat(date.toString())
+    }
+  }
+  else{
+    setShowAlertPending(false)
+  }
+}
+
   //Apply form
   const applyForm = useForm<z.infer<typeof applyFormSchema>>({
     resolver: zodResolver(applyFormSchema),
@@ -132,9 +225,10 @@ const Applications: React.FC<IApplications> = ({ staffId, token}) => {
   });
 
   //Submission for apply form
-  function applySubmit(values: z.infer<typeof applyFormSchema>) {}
+  function applySubmit(values: z.infer<typeof applyFormSchema>) {
 
-  //check if selcted date conflicts with existing arrangements
+  }
+
 
   return (
     <div className="container mx-auto p-4">
@@ -159,6 +253,25 @@ const Applications: React.FC<IApplications> = ({ staffId, token}) => {
                     <Label>Arrangement Type:</Label> <br></br>
                     <Label className="font-bold">WFH</Label>
                   </div>
+                  {showAlertApproved && (
+                    <Alert variant="destructive">
+                      <AlertTriangle className="h-4 w-4"/>
+                      <AlertTitle>Warning</AlertTitle>
+                      <AlertDescription>
+                      You have selected {alertApprovedDates}. The date(s) cannot be selected as they have existing WFH arrangements.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  {showAlertPending && (
+                    <Alert variant="destructive">
+                      <AlertTriangle className="h-4 w-4"/>
+                      <AlertTitle>Warning</AlertTitle>
+                      <AlertDescription>
+                      You have selected {alertPendingDates}. The date(s) cannot be selected as they have pending WFH arrangement applications yet to be approved.
+                      </AlertDescription>
+                    </Alert>
+                  )
+                  }
                   <FormField
                     control={applyForm.control}
                     name="isMultiple"
@@ -170,9 +283,13 @@ const Applications: React.FC<IApplications> = ({ staffId, token}) => {
                             onValueChange={(value) => {
                               field.onChange(value);
                               if (value === "No") {
-                                applyForm.setValue("multipleDate", undefined);
+                                applyForm.setValue("multipleDate", undefined)
+                                checkForAlertApproved(applyForm.getValues("singleDate"))
+                                checkForAlertPending(applyForm.getValues("singleDate"))
                               } else {
-                                applyForm.setValue("singleDate", undefined);
+                                applyForm.setValue("singleDate", undefined)
+                                checkForAlertApproved(applyForm.getValues("multipleDate"))
+                                checkForAlertPending(applyForm.getValues("multipleDate"))
                               }
                             }}
                             defaultValue={field.value}
@@ -225,9 +342,14 @@ const Applications: React.FC<IApplications> = ({ staffId, token}) => {
                               <Calendar
                                 mode="single"
                                 selected={field.value}
-                                onSelect={field.onChange}
+                                onSelect={(date)=>{
+                                  field.onChange(date)
+                                  checkForAlertApproved(date)
+                                  checkForAlertPending(date)
+                                }}
                                 fromDate={fromDate}
                                 toDate={toDate}
+                                disabled = {isDateDisabled}
                                 initialFocus
                               />
                               <div className="p-3 border-t">
@@ -273,9 +395,14 @@ const Applications: React.FC<IApplications> = ({ staffId, token}) => {
                               <Calendar
                                 mode="multiple"
                                 selected={field.value}
-                                onSelect={field.onChange}
+                                onSelect={(dates)=>{
+                                  field.onChange(dates)
+                                  checkForAlertApproved(dates)
+                                  checkForAlertPending(dates)
+                                }}
                                 fromDate={fromDate}
                                 toDate={toDate}
+                                disabled = {isDateDisabled}
                                 initialFocus
                               />
                               <div className="p-3 border-t">
