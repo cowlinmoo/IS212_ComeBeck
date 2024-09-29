@@ -62,12 +62,44 @@ interface IApplications {
 }
 const Applications: React.FC<IApplications> = ({ staffId, token}) => {
   // fetching wfh applications currently existing
-  console.log(staffId)
-  console.log(token)
-  const bearer = "www-authenticate:" + token
-  const data = fetch("http://localhost:8080/api/application/staff/"+staffId,  {headers: { bearer },})
-  // const wfh_Applications = data.json()
-  console.log(data)
+ 
+  const [wfhApproved, setwfhApproved] = useState(Array)
+  const [wfhPending, setwfhPending] = useState(Array)
+  useEffect(()=>{
+    async function fetchData(){
+      const headers = {"Authorization": `Bearer ${token}`};
+      const response = await fetch("http://localhost:8080/api/application/staff/"+staffId,  {headers})
+      const data  = await response.json()
+      var approvedApplications = new Array
+      var pendingApplications = new Array
+      console.log(data)
+      for (var application of data){
+        console.log(application)
+        if (application["status"]=="approved"){
+          approvedApplications.push(application["events"])
+        }
+        else if (application["status"]=="pending"){
+          pendingApplications.push(application["events"])
+        }
+      }
+      setwfhApproved(approvedApplications)
+      setwfhPending(pendingApplications)
+    }
+    fetchData();
+    },[])
+    console.log(wfhApproved)
+  //set all wfh applications 
+  // const wfh_Applications = wfhData[0]["events"]
+  // function checkExistingwfh(date:string){
+  //   for (var i of wfh_Applications){
+  //     if (i["requested_date"]===date){
+  //       return false
+  //     }
+  //     else{
+  //       return true
+  //     }
+  // }}
+
 
   // restricted calendar
   const [fromDate, setFromDate] = useState<Date>(new Date());
