@@ -26,6 +26,10 @@ class EnvironmentSettings(BaseSettings):
     POSTGRES_PORT: int
     POSTGRES_USER: str
     DEBUG_MODE: bool
+    SMTP_SERVER: str
+    SMTP_PORT: int
+    SENDER_EMAIL: str
+    SENDER_PASSWORD: str
 
     class Config:
         extra = 'allow'
