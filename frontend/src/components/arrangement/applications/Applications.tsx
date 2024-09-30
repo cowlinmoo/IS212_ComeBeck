@@ -17,7 +17,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { format, addMonths, subMonths,isWeekend } from "date-fns";
+import { format, addMonths, subMonths, isWeekend,isSameDay } from "date-fns";
 import {
   Popover,
   PopoverContent,
@@ -35,8 +35,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
-import {AlertTriangle} from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 
 //formschema
 const applyFormSchema = z.object({
@@ -47,17 +47,19 @@ const applyFormSchema = z.object({
   singleDate: z
     .date({
       required_error: "Please select a date.",
-    }).refine(
-      (date)=>!isWeekend(date), 
-      {message:"Weekends are not allowed"}
-    )
+    })
+    .refine((date) => !isWeekend(date), { message: "Weekends are not allowed" })
     .optional(),
   multipleDate: z
-    .array(z.date({
-      required_error: "Please select dates (at least 2), excluding weekends."
-    }))
-    .refine((dates) => dates.length > 1 && dates.every(date=>!isWeekend(date)), 
-    {message: "Please select dates (at least 2), excluding weekends.",})
+    .array(
+      z.date({
+        required_error: "Please select dates (at least 2), excluding weekends.",
+      })
+    )
+    .refine(
+      (dates) => dates.length > 1 && dates.every((date) => !isWeekend(date)),
+      { message: "Please select dates (at least 2), excluding weekends." }
+    )
     .optional(),
   reason: z.string(),
 });
@@ -67,6 +69,7 @@ interface IApplications {
   token: string;
 }
 const Applications: React.FC<IApplications> = ({ staffId, token }) => {
+
   // fetching wfh applications currently existing
   const [wfhApproved, setwfhApproved] = useState(Array);
   const [wfhPending, setwfhPending] = useState(Array);
@@ -84,7 +87,6 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
           const data = await response.json();
           var approvedApplications = new Array();
           var pendingApplications = new Array();
-          console.log(data);
           if (data.length < 1) {
             approvedApplications = [];
             pendingApplications = [];
@@ -112,28 +114,6 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
     }
     fetchData();
   }, []);
-  console.log(wfhApproved);
-  console.log(wfhPending);
-  //function to check if the date selected has a wfh arrangement
-  function checkwfhApproved(date:string){
-    for (var arrangement of wfhApproved){
-      if (arrangement===date){
-        return true
-      }
-      else{
-        return false
-      }
-  }}
-  //function to check if the date selected has a wfh arrangement
-  function checkwfhPending(date:string){
-    for (var arrangement of wfhPending){
-      if (arrangement===date){
-        return true
-      }
-      else{
-        return false
-      }
-  }}
 
   // restricted calendar
   const [fromDate, setFromDate] = useState<Date>(new Date());
@@ -156,63 +136,71 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
   }, []);
 
   // disable weekends
-  const isDateDisabled = (date:Date)=>{
-    return isWeekend(date) || date <fromDate || date > toDate
-  }
+  const isDateDisabled = (date: Date) => {
+    return isWeekend(date) || date < fromDate || date > toDate;
+  };
 
   //alert variable for existing approved and pending arrangements
-  const [showAlertApproved, setShowAlertApproved] = useState(false)
-  const [showAlertPending, setShowAlertPending] = useState(false)
-  var alertApprovedDates = new String();
-  var alertPendingDates = new String();
+  const [showAlertApproved, setShowAlertApproved] = useState(false);
+  const [showAlertPending, setShowAlertPending] = useState(false);
+  const [alertApprovedDates, setAlertApprovedDates] = useState("");
+  const [alertPendingDates, setAlertPendingDates] = useState("");
 
+  //variable to check if user selected more than 1 date for multiple dates calendar
+  const [showMultipleDateAlert, setShowMultipleDateAlert] = useState(false)
 
-  //check if selected date has already been approved
+  //check if selected date has already been approved user selected more than 1 date for multiple dates calendar
   const checkForAlertApproved = (date: Date | Date[] | undefined) => {
-      //all dates to be alerted
-    alertApprovedDates = "";
-    if (Array.isArray(date)){
-      for (var d of date){
-        if (wfhApproved.includes(d)){
-          setShowAlertApproved(false)
-          alertApprovedDates.concat(d.toString())
-          alertPendingDates.concat(" ")
+    //all dates to be alerted
+    setAlertApprovedDates("")
+    setShowAlertApproved(false)
+    setShowMultipleDateAlert(false)
+    console.log(date)
+    console.log(isSameDay(date,"2024-10-10"))
+    if (Array.isArray(date)) {
+      setShowMultipleDateAlert(date.length<2)
+      for (var d of date) {
+        for (var i of wfhApproved){
+          if (isSameDay(i,d)){
+            setShowAlertApproved(true);
+            setAlertApprovedDates(alertApprovedDates + " " + d.toLocaleDateString() )
+          }
         }
       }
-    }
-    else if (date){
-      if (wfhApproved.includes(date)){
-        setShowAlertApproved(false)
-        alertApprovedDates.concat(date.toString())
+    } else if (date) {
+      for (var i of wfhApproved){
+        if (isSameDay(i,date)){
+          setShowAlertApproved(true)
+          setAlertApprovedDates(alertApprovedDates + " " + date.toLocaleDateString() )
+          console.log(alertApprovedDates)
+        }
       }
+    } else {
+      setShowAlertApproved(false)
     }
-    else{
-      setShowAlertApproved(false);
-    }
-  }
+  };
   //check if selected date has a pending application
   const checkForAlertPending = (date: Date | Date[] | undefined) => {
+    setShowAlertPending(false);
+    setAlertPendingDates("")
     //all dates to be alerted
-  alertPendingDates = ""
-  if (Array.isArray(date)){
-    for (var d of date){
-      if (wfhPending.includes(d)){
-        setShowAlertPending(false)
-        alertPendingDates.concat(d.toString())
-        alertPendingDates.concat(" ")
+    if (Array.isArray(date)) {
+      for (var d of date) {
+        if (wfhPending.includes(d)) {
+          setShowAlertPending(true);
+          setAlertPendingDates(alertPendingDates + " " + d.toLocaleDateString())
+        }
       }
+    } else if (date) {
+      if (wfhPending.includes(date)) {
+        setShowAlertPending(true);
+        setAlertPendingDates(alertPendingDates + " " + date.toLocaleDateString())
+      }
+    } else {
+      setShowAlertPending(false);
     }
-  }
-  else if (date){
-    if (wfhPending.includes(date)){
-      setShowAlertPending(false)
-      alertPendingDates.concat(date.toString())
-    }
-  }
-  else{
-    setShowAlertPending(false)
-  }
-}
+  };
+
 
   //Apply form
   const applyForm = useForm<z.infer<typeof applyFormSchema>>({
@@ -255,23 +243,35 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                   </div>
                   {showAlertApproved && (
                     <Alert variant="destructive">
-                      <AlertTriangle className="h-4 w-4"/>
+                      <AlertTriangle className="h-4 w-4" />
                       <AlertTitle>Warning</AlertTitle>
                       <AlertDescription>
-                      You have selected {alertApprovedDates}. The date(s) cannot be selected as they have existing WFH arrangements.
+                        You have selected {alertApprovedDates}. The date(s)
+                        cannot be selected as they have existing WFH
+                        arrangements.
                       </AlertDescription>
                     </Alert>
                   )}
                   {showAlertPending && (
                     <Alert variant="destructive">
-                      <AlertTriangle className="h-4 w-4"/>
+                      <AlertTriangle className="h-4 w-4" />
                       <AlertTitle>Warning</AlertTitle>
                       <AlertDescription>
-                      You have selected {alertPendingDates}. The date(s) cannot be selected as they have pending WFH arrangement applications yet to be approved.
+                        You have selected {alertPendingDates}. The date(s)
+                        cannot be selected as they have pending WFH arrangement
+                        applications yet to be approved.
                       </AlertDescription>
                     </Alert>
-                  )
-                  }
+                  )}
+                  {showMultipleDateAlert && (
+                    <Alert variant="destructive">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertTitle>Warning</AlertTitle>
+                      <AlertDescription>
+                        Please select at least 2 dates for the multiple dates calendar option.
+                      </AlertDescription>
+                    </Alert>
+                  )}
                   <FormField
                     control={applyForm.control}
                     name="isMultiple"
@@ -281,15 +281,23 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                         <FormControl>
                           <RadioGroup
                             onValueChange={(value) => {
-                              field.onChange(value);
+                              field.onChange(value)
                               if (value === "No") {
-                                applyForm.setValue("multipleDate", undefined)
-                                checkForAlertApproved(applyForm.getValues("singleDate"))
-                                checkForAlertPending(applyForm.getValues("singleDate"))
+                                applyForm.setValue("multipleDate", undefined);
+                                checkForAlertApproved(
+                                  applyForm.getValues("singleDate")
+                                );
+                                checkForAlertPending(
+                                  applyForm.getValues("singleDate")
+                                );
                               } else {
-                                applyForm.setValue("singleDate", undefined)
-                                checkForAlertApproved(applyForm.getValues("multipleDate"))
-                                checkForAlertPending(applyForm.getValues("multipleDate"))
+                                applyForm.setValue("singleDate", undefined);
+                                checkForAlertApproved(
+                                  applyForm.getValues("multipleDate")
+                                );
+                                checkForAlertPending(
+                                  applyForm.getValues("multipleDate")
+                                );
                               }
                             }}
                             defaultValue={field.value}
@@ -342,14 +350,14 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                               <Calendar
                                 mode="single"
                                 selected={field.value}
-                                onSelect={(date)=>{
+                                onSelect={(date) => {
                                   field.onChange(date)
                                   checkForAlertApproved(date)
                                   checkForAlertPending(date)
                                 }}
                                 fromDate={fromDate}
                                 toDate={toDate}
-                                disabled = {isDateDisabled}
+                                disabled={isDateDisabled}
                                 initialFocus
                               />
                               <div className="p-3 border-t">
@@ -395,14 +403,14 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                               <Calendar
                                 mode="multiple"
                                 selected={field.value}
-                                onSelect={(dates)=>{
+                                onSelect={(dates) => {
                                   field.onChange(dates)
                                   checkForAlertApproved(dates)
                                   checkForAlertPending(dates)
                                 }}
                                 fromDate={fromDate}
                                 toDate={toDate}
-                                disabled = {isDateDisabled}
+                                disabled={isDateDisabled}
                                 initialFocus
                               />
                               <div className="p-3 border-t">
