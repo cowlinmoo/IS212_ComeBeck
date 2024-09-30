@@ -94,11 +94,11 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
             for (var application of data) {
               console.log(application);
               // check if application is approved or pending and add them to the array variables
-              if (application["status"] == "approved") {
+              if (application["status"] === "approved") {
                 for (var event of application["events"]) {
                   approvedApplications.push(event["requested_date"]);
                 }
-              } else if (application["status"] == "pending") {
+              } else if (application["status"] === "pending") {
                 for (var event of application["events"]) {
                   pendingApplications.push(event["requested_date"]);
                 }
@@ -201,6 +201,8 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
     }
   };
 
+  //Alert variable if reason text area is not filled
+  const [showEmptyReasonAlert, setShowEmptyReasonAlert] = useState(false)
 
   //Apply form
   const applyForm = useForm<z.infer<typeof applyFormSchema>>({
@@ -214,7 +216,18 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
 
   //Submission for apply form
   function applySubmit(values: z.infer<typeof applyFormSchema>) {
+    if (values.reason.trim()===""){
+      setShowEmptyReasonAlert(true)
+    }
+    else{
+      setShowEmptyReasonAlert(false)
+    }
+    if (showEmptyReasonAlert===true || showMultipleDateAlert === true || showAlertApproved === true || showAlertPending === true){
 
+    }
+    else{
+
+    }
   }
 
 
@@ -269,6 +282,15 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                       <AlertTitle>Warning</AlertTitle>
                       <AlertDescription>
                         Please select at least 2 dates for the multiple dates calendar option.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  {showEmptyReasonAlert && (
+                    <Alert variant="destructive">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertTitle>Warning</AlertTitle>
+                      <AlertDescription>
+                        Please indicate the reason for your application.
                       </AlertDescription>
                     </Alert>
                   )}
@@ -433,7 +455,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                       <FormItem>
                         <FormLabel>Reason for arrangement:</FormLabel>
                         <FormControl>
-                          <Input
+                          <Textarea
                             placeholder="Please provide a reason for your arrangement request."
                             {...field}
                           />
