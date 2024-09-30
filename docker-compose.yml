@@ -13,6 +13,8 @@ services:
       - ./postgres/data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U admin -d spm"]
+    profiles:
+      - dev
 
   backend:
     build:
@@ -26,12 +28,18 @@ services:
       --host 0.0.0.0 --port 8080 --reload
     environment:
       - DATABASE_HOSTNAME=postgres
+    env_file:
       - .env
     image: backend_api
     container_name: backend_api
     depends_on:
       postgres:
         condition: service_healthy
+        required: false
+    profiles:
+      - dev
+      - prod
+
   pgadmin:
     image: dpage/pgadmin4
     container_name: pg_admin
@@ -45,5 +53,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    profiles:
+      - dev
 volumes:
   pgadmin-data:
