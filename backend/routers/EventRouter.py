@@ -15,3 +15,8 @@ EventRouter = APIRouter(
 def get_all_events(event_service: EventService = Depends(),
                     current_user: dict = Depends(role_required(EmployeeRole.HR, EmployeeRole.MANAGER, EmployeeRole.STAFF))):
     return event_service.get_all_events()
+
+@EventRouter.get("/{event_id}", response_model=EventSchema)
+def get_event_by_event_id(event_id: int, event_service: EventService = Depends(),
+                          current_user: dict = Depends(role_required(EmployeeRole.HR, EmployeeRole.MANAGER, EmployeeRole.STAFF))):
+    return event_service.get_event_by_event_id(event_id)

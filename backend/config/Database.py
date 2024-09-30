@@ -14,8 +14,11 @@ if env.CURRENT_ENV == 'PROD':
     # Use credentials from env if available, otherwise fall back to environment variables
     production_username = env.PRODUCTION_DB_USER
     production_password = env.PRODUCTION_DB_PASSWORD
+    production_hostname = env.PRODUCTION_DB_HOSTNAME
+    production_port = env.PRODUCTION_DB_PORT
+    production_db = env.PRODUCTION_DB_NAME
 
-    DATABASE_URL = f'postgresql://{production_username}:{production_password}@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres'
+    DATABASE_URL = f"postgresql://{production_username}:{production_password}@{production_hostname}:{production_port}/{production_db}"
 else:  # Assuming 'development' or other environments
     DATABASE_URL = (
         f"{env.DATABASE_DIALECT}://{env.POSTGRES_USER}:{env.POSTGRES_PASSWORD}"
