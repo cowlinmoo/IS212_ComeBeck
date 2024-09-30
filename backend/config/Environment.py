@@ -16,11 +16,11 @@ def get_env_filename():
 
 class EnvironmentSettings(BaseSettings):
     CURRENT_ENV: str = 'DEV' # Default to 'DEV' if not provided
-    PRODUCTION_DB_USER: str = None # Optional
-    PRODUCTION_DB_PASSWORD: str = None # Optional
-    PRODUCTION_DB_HOSTNAME: str = None # Optional
-    PRODUCTION_DB_PORT: int = None # Optional
-    PRODUCTION_DB_NAME: str = None # Optional
+    PRODUCTION_DB_USER: str = "" # Optional
+    PRODUCTION_DB_PASSWORD: str = "" # Optional
+    PRODUCTION_DB_HOSTNAME: str = "" # Optional
+    PRODUCTION_DB_PORT: int = "" # Optional
+    PRODUCTION_DB_NAME: str = "" # Optional
     DATABASE_DIALECT: str
     DATABASE_HOSTNAME: str
     POSTGRES_DB: str
