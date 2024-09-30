@@ -24,6 +24,7 @@ COPY poetry.lock pyproject.toml ./
 
 COPY backend backend
 COPY tests tests
+COPY postgres/init.sql postgres/init.sql
 
 # Install all dependencies
 RUN poetry install
