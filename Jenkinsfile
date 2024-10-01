@@ -145,32 +145,42 @@ pipeline {
 }
 
 def updateGithubStatus(state, description, context) {
-    withCredentials([string(credentialsId: 'GITHUB_TOKEN', variable: 'GITHUB_TOKEN')]) {
-        def jenkinsUrl = "${env.JENKINS_URL}job/${env.JOB_NAME}/${env.BUILD_NUMBER}/"
-        def repoUrl = "https://api.github.com/repos/cowlinmoo/IS212_ComeBeck/statuses/${env.GIT_COMMIT}"
-        
-        echo "Updating GitHub status:"
-        echo "State: ${state}"
-        echo "Description: ${description}"
-        echo "Context: ${context}"
-        
-        def curlCommand = """
-            curl -v -H 'Authorization: token ${GITHUB_TOKEN}' \
-                 -X POST \
-                 -H 'Accept: application/vnd.github.v3+json' \
-                 ${repoUrl} \
-                 -d '{"state":"${state}","context":"${context}","description":"${description}","target_url":"${jenkinsUrl}"}'
-        """
-        
-        def response = sh(script: curlCommand, returnStdout: true).trim()
-        
-        echo "Full GitHub API response:"
-        echo response
-        
-        if (!response.contains('"state":"${state}"')) {
-            error("Failed to update GitHub status. Response: ${response}")
-        } else {
-            echo "GitHub status updated successfully"
-        }
+  withCredentials([string(credentialsId: 'GITHUB_TOKEN', variable: 'GITHUB_TOKEN')]) {
+    def jenkinsUrl = "${env.JENKINS_URL}job/${env.JOB_NAME}/${env.BUILD_NUMBER}/"
+    def repoUrl = "https://api.github.com/repos/cowlinmoo/IS212_ComeBeck/statuses/${env.GIT_COMMIT}"
+
+    echo "Updating GitHub status:"
+    echo "State: ${state}"
+    echo "Description: ${description}"
+    echo "Context: ${context}"
+
+    def maxRetries = 3 // Maximum number of retries for rate limiting
+    def retryDelay = 10 // Delay (seconds) between retries
+
+    for (int i = 0; i < maxRetries; i++) {
+      def curlCommand = """
+        curl -v -H 'Authorization: token ${GITHUB_TOKEN}' \
+          -X POST \
+          -H 'Accept: application/vnd.github.v3+json' \
+          ${repoUrl} \
+          -d '{"state":"${state}","context":"${context}","description":"${description}","target_url":"${jenkinsUrl}"}'
+      """
+
+      def response = sh(script: curlCommand, returnStdout: true).trim()
+
+      echo "Full GitHub API response:"
+      echo response
+
+      if (response.contains('"state":"${state}"')) {
+        echo "GitHub status updated successfully"
+        return // Exit the loop on successful update
+      } else if (response.contains('429 Too Many Requests')) {
+        echo "Rate limit exceeded. Retrying in ${retryDelay} seconds..."
+        sleep(retryDelay * 1000) // Wait before retrying
+      } else {
+        error("Failed to update GitHub status. Response: ${response}")
+        break // Exit the loop on non-retryable error
+      }
     }
+  }
 }
