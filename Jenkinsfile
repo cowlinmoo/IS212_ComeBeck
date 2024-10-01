@@ -151,7 +151,8 @@ def updateGithubStatus(state, description, context) {
                      ${repoUrl} \
                      -d '{"state":"${state}","context":"${context}","description":"${description}","target_url":"${jenkinsUrl}"}'
             """
-            echo "Executing curl command: ${curlCommand}"
+            echo "Executing curl command (token masked):"
+            echo curlCommand.replaceAll(GITHUB_TOKEN, "****")
             
             def response = sh(script: curlCommand, returnStdout: true).trim()
 
@@ -166,7 +167,6 @@ def updateGithubStatus(state, description, context) {
             }
         } catch (Exception e) {
             echo "Error updating GitHub status: ${e.message}"
-            echo "Stack trace: ${e.getStackTrace().join('\n')}"
             error("Failed to update GitHub status: ${e.message}")
         }
     }
