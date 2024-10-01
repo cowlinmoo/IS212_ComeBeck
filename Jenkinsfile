@@ -1,150 +1,134 @@
 pipeline {
-  agent any
+    agent any
 
-  options {
-    buildDiscarder(logRotator(daysToKeepStr: '60', numToKeepStr: '10'))
-    disableConcurrentBuilds()
-  }
-
-  triggers {
-    githubPullRequests(
-      spec: '',
-      triggerMode: 'HEAVY_HOOKS',
-      events: [
-        [
-          $class: 'org.jenkinsci.plugins.github.pullrequest.events.impl.GitHubPROpenEvent'
-        ],
-        [
-          $class: 'org.jenkinsci.plugins.github.pullrequest.events.impl.GitHubPRCommitEvent'
-        ]
-      ],
-      preStatus: true,
-      branchRestriction: [
-        targetBranch: 'main'
-      ],
-      cancelQueued: true,
-      abortRunning: false
-    )
-  }
-
-  environment {
-    BUILD_CONTEXT = "Jenkins: 1. Build"
-    PUBLISH_CONTEXT = "Jenkins: 2. Publish"
-    DEPLOY_CONTEXT = "Jenkins: 3. Deploy"
-    PIPELINE_CONTEXT = "Jenkins: Pipeline"
-    GITHUB_REPO = "cowlinmoo/IS212_ComeBeck"
-  }
-
-  stages {
-    stage('Checkout SCM') {
-      steps {
-        script {
-          def scmVars = checkout scm
-          env.GIT_COMMIT = scmVars.GIT_COMMIT
-          env.GIT_BRANCH = scmVars.GIT_BRANCH
-        }
-        githubNotify context: "Jenkins: Checkout", description: "Checked out source code", status: "SUCCESS", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", account: "${GITHUB_REPO.split('/')[0]}", repo: "${GITHUB_REPO.split('/')[1]}", targetUrl: "${env.BUILD_URL}"
-      }
+    triggers {
+        githubPullRequests(
+            spec: '',
+            triggerMode: 'HEAVY_HOOKS',
+            events: [
+                [
+                    $class: 'org.jenkinsci.plugins.github.pullrequest.events.impl.GitHubPROpenEvent'
+                ],
+                [
+                    $class: 'org.jenkinsci.plugins.github.pullrequest.events.impl.GitHubPRCommitEvent'
+                ]
+            ],
+            preStatus: true,
+            branchRestriction: [
+                targetBranch: 'main'
+            ],
+            cancelQueued: true,
+            abortRunning: false
+        )
     }
 
-    stage('Build, Publish, and Deploy') {
-      steps {
-        withCredentials([
-          string(credentialsId: 'ACR_NAME', variable: 'ACR_NAME'),
-          string(credentialsId: 'ACR_PASSWORD', variable: 'ACR_PASSWORD'),
-          string(credentialsId: 'ACR_USERNAME', variable: 'ACR_USERNAME'),
-          string(credentialsId: 'TENANT_ID', variable: 'TENANT_ID'),
-          string(credentialsId: 'CONTAINER_APP_NAME', variable: 'CONTAINER_APP_NAME'),
-          string(credentialsId: 'RESOURCE_GROUP', variable: 'RESOURCE_GROUP'),
-          string(credentialsId: 'IMAGE_NAME', variable: 'IMAGE_NAME')
-        ]) {
-          script {
-            try {
-              // Set initial pending status for all steps
-              githubNotify context: "${env.BUILD_CONTEXT}", description: "Building Docker image", status: "PENDING", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", account: "${GITHUB_REPO.split('/')[0]}", repo: "${GITHUB_REPO.split('/')[1]}", targetUrl: "${env.BUILD_URL}"
-              githubNotify context: "${env.PUBLISH_CONTEXT}", description: "Publishing to ACR", status: "PENDING", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", account: "${GITHUB_REPO.split('/')[0]}", repo: "${GITHUB_REPO.split('/')[1]}", targetUrl: "${env.BUILD_URL}"
-              githubNotify context: "${env.DEPLOY_CONTEXT}", description: "Deploying to Azure", status: "PENDING", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", account: "${GITHUB_REPO.split('/')[0]}", repo: "${GITHUB_REPO.split('/')[1]}", targetUrl: "${env.BUILD_URL}"
+    environment {
+        ACR_NAME = credentials('ACR_NAME')
+        IMAGE_NAME = credentials('IMAGE_NAME')
+        ACR_USERNAME = credentials('ACR_USERNAME')
+        ACR_PASSWORD = credentials('ACR_PASSWORD')
+        TENANT_ID = credentials('TENANT_ID')
+        CONTAINER_APP_NAME = credentials('CONTAINER_APP_NAME')
+        RESOURCE_GROUP = credentials('RESOURCE_GROUP')
+        GITHUB_TOKEN = credentials('GITHUB_TOKEN')
+    }
 
-              // Execute the shell script
-              sh '''#!/bin/bash
-set -e
-
-echo "Deleting Old Docker resources..."
-docker system prune -af
-
-# Step 1: Build the Docker image
-echo "Building Docker image..."
-docker build -t ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER} .
-
-# Step 2: Publish to Azure Container Registry
-echo "Logging in to Azure Container Registry..."
-echo ${ACR_PASSWORD} | docker login ${ACR_NAME}.azurecr.io -u ${ACR_USERNAME} --password-stdin
-
-echo "Pushing image to Azure Container Registry..."
-docker push ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER}
-
-# Step 3: Deploy application to Azure Container Apps
-# Check if Azure CLI is installed
-if ! command -v az &> /dev/null
-then
-    echo "Azure CLI not found. Installing..."
-    curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-    
-    # Azure CLI installation script
-    sudo bash -c '
-    set -e
-    export DEBIAN_FRONTEND=noninteractive
-    apt-get update
-    apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
-    mkdir -p /etc/apt/keyrings
-    curl -sLS https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/keyrings/microsoft.gpg
-    chmod go+r /etc/apt/keyrings/microsoft.gpg
-    CLI_REPO=$(lsb_release -cs)
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/azure-cli/ $CLI_REPO main" | tee /etc/apt/sources.list.d/azure-cli.list > /dev/null
-    apt-get update
-    apt-get install -y azure-cli
-    '
-else
-    echo "Azure CLI is already installed."
-fi
-
-echo "Logging in to Azure..."
-az login --service-principal -u ${ACR_USERNAME} -p ${ACR_PASSWORD} --tenant ${TENANT_ID}
-
-echo "Updating Container App..."
-az containerapp update \
-  --name ${CONTAINER_APP_NAME} \
-  --resource-group ${RESOURCE_GROUP} \
-  --image ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER}
-
-echo "Logging out from Azure..."
-az logout
-
-echo "Script completed successfully."
-'''
-              // Update success status for all steps
-              githubNotify context: "${env.BUILD_CONTEXT}", description: "Docker image built successfully", status: "SUCCESS", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", account: "${GITHUB_REPO.split('/')[0]}", repo: "${GITHUB_REPO.split('/')[1]}", targetUrl: "${env.BUILD_URL}"
-              githubNotify context: "${env.PUBLISH_CONTEXT}", description: "Image published to ACR successfully", status: "SUCCESS", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", account: "${GITHUB_REPO.split('/')[0]}", repo: "${GITHUB_REPO.split('/')[1]}", targetUrl: "${env.BUILD_URL}"
-              githubNotify context: "${env.DEPLOY_CONTEXT}", description: "Application deployed to Azure successfully", status: "SUCCESS", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", account: "${GITHUB_REPO.split('/')[0]}", repo: "${GITHUB_REPO.split('/')[1]}", targetUrl: "${env.BUILD_URL}"
-            } catch (Exception e) {
-              // Update failure status for all steps
-              githubNotify context: "${env.BUILD_CONTEXT}", description: "Build failed: ${e.message}", status: "FAILURE", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", account: "${GITHUB_REPO.split('/')[0]}", repo: "${GITHUB_REPO.split('/')[1]}", targetUrl: "${env.BUILD_URL}"
-              githubNotify context: "${env.PUBLISH_CONTEXT}", description: "Publish failed: ${e.message}", status: "FAILURE", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", account: "${GITHUB_REPO.split('/')[0]}", repo: "${GITHUB_REPO.split('/')[1]}", targetUrl: "${env.BUILD_URL}"
-              githubNotify context: "${env.DEPLOY_CONTEXT}", description: "Deploy failed: ${e.message}", status: "FAILURE", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", account: "${GITHUB_REPO.split('/')[0]}", repo: "${GITHUB_REPO.split('/')[1]}", targetUrl: "${env.BUILD_URL}"
-              error("Pipeline failed: ${e.message}")
+    stages {
+        stage('Initialize') {
+            steps {
+                script {
+                    env.BUILD_CONTEXT = "Jenkins: 1. Build"
+                    env.PUBLISH_CONTEXT = "Jenkins: 2. Publish"
+                    env.DEPLOY_CONTEXT = "Jenkins: 3. Deploy"
+                    
+                    updateGithubStatus('pending', 'Building Docker image', env.BUILD_CONTEXT)
+                    updateGithubStatus('pending', 'Publishing to ACR', env.PUBLISH_CONTEXT)
+                    updateGithubStatus('pending', 'Deploying to Azure', env.DEPLOY_CONTEXT)
+                }
             }
-          }
         }
-      }
-    }
-  }
 
-  post {
-    success {
-      githubNotify context: "${env.PIPELINE_CONTEXT}", description: "All stages completed successfully", status: "SUCCESS", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", account: "${GITHUB_REPO.split('/')[0]}", repo: "${GITHUB_REPO.split('/')[1]}", targetUrl: "${env.BUILD_URL}"
+        stage('Build') {
+            steps {
+                script {
+                    try {
+                        sh "docker build -t ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER} ."
+                        updateGithubStatus('success', 'Docker image built successfully', env.BUILD_CONTEXT)
+                    } catch (Exception e) {
+                        updateGithubStatus('failure', "Failed during: Build", env.BUILD_CONTEXT)
+                        error("Build stage failed: ${e.message}")
+                    }
+                }
+            }
+        }
+
+        stage('Publish') {
+            steps {
+                script {
+                    try {
+                        sh "echo ${ACR_PASSWORD} | docker login ${ACR_NAME}.azurecr.io -u ${ACR_USERNAME} --password-stdin"
+                        sh "docker push ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER}"
+                        updateGithubStatus('success', 'Image published to ACR successfully', env.PUBLISH_CONTEXT)
+                    } catch (Exception e) {
+                        updateGithubStatus('failure', "Failed during: Publish", env.PUBLISH_CONTEXT)
+                        error("Publish stage failed: ${e.message}")
+                    }
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                script {
+                    try {
+                        sh '''
+                            if ! command -v az &> /dev/null
+                            then
+                                echo "Azure CLI not found. Installing..."
+                                curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+                            else
+                                echo "Azure CLI is already installed."
+                            fi
+
+                            echo "Logging in to Azure..."
+                            az login --service-principal -u ${ACR_USERNAME} -p ${ACR_PASSWORD} --tenant ${TENANT_ID}
+
+                            echo "Updating Container App..."
+                            az containerapp update \
+                              --name ${CONTAINER_APP_NAME} \
+                              --resource-group ${RESOURCE_GROUP} \
+                              --image ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER}
+
+                            echo "Logging out from Azure..."
+                            az logout
+                        '''
+                        updateGithubStatus('success', 'Application deployed to Azure successfully', env.DEPLOY_CONTEXT)
+                    } catch (Exception e) {
+                        updateGithubStatus('failure', "Failed during: Deploy", env.DEPLOY_CONTEXT)
+                        error("Deploy stage failed: ${e.message}")
+                    }
+                }
+            }
+        }
     }
-    failure {
-      githubNotify context: "${env.PIPELINE_CONTEXT}", description: "Pipeline failed", status: "FAILURE", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", account: "${GITHUB_REPO.split('/')[0]}", repo: "${GITHUB_REPO.split('/')[1]}", targetUrl: "${env.BUILD_URL}"
+
+    post {
+        success {
+            echo "Pipeline completed successfully"
+        }
+        failure {
+            echo "Pipeline failed"
+        }
     }
-  }
+}
+
+def updateGithubStatus(state, description, context) {
+    def jenkinsUrl = "${env.JENKINS_URL}job/${env.JOB_NAME}/${env.BUILD_NUMBER}/"
+    sh """
+        curl -s -H "Authorization: token ${GITHUB_TOKEN}" \
+             -X POST \
+             -H "Accept: application/vnd.github.v3+json" \
+             https://api.github.com/repos/cowlinmoo/IS212_ComeBeck/statuses/${GIT_COMMIT} \
+             -d '{"state":"${state}","context":"${context}","description":"${description}","target_url":"${jenkinsUrl}"}'
+    """
 }
