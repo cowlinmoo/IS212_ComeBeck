@@ -24,12 +24,10 @@ pipeline {
         CONTAINER_APP_NAME = credentials('CONTAINER_APP_NAME')
         RESOURCE_GROUP = credentials('RESOURCE_GROUP')
         GITHUB_TOKEN = credentials('GITHUB_TOKEN')
-        VERCEL_TOKEN = credentials('VERCEL_TOKEN')
         GIT_COMMIT = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
         BUILD_CONTEXT = "Jenkins: 1. Build"
         PUBLISH_CONTEXT = "Jenkins: 2. Publish"
         DEPLOY_CONTEXT = "Jenkins: 3. Deploy"
-        VERCEL_CONTEXT = "Jenkins: 4. Vercel Deploy"
     }
 
     stages {
@@ -39,7 +37,6 @@ pipeline {
                     updateGithubStatus('pending', 'Building Docker image', env.BUILD_CONTEXT)
                     updateGithubStatus('pending', 'Publishing to ACR', env.PUBLISH_CONTEXT)
                     updateGithubStatus('pending', 'Deploying to Azure', env.DEPLOY_CONTEXT)
-                    updateGithubStatus('pending', 'Deploying to Vercel', env.VERCEL_CONTEXT)
                 }
             }
         }
@@ -107,23 +104,6 @@ pipeline {
                 }
             }
         }
-
-        stage('Deploy to Vercel') {
-            steps {
-                script {
-                    try {
-                        sh '''
-                            npm install -g vercel
-                            vercel --token ${VERCEL_TOKEN} --prod
-                        '''
-                        updateGithubStatus('success', 'Deployed to Vercel successfully', env.VERCEL_CONTEXT)
-                    } catch (Exception e) {
-                        updateGithubStatus('failure', "Failed to deploy to Vercel", env.VERCEL_CONTEXT)
-                        error("Vercel deployment failed: ${e.message}")
-                    }
-                }
-            }
-        }
     }
 
     post {
@@ -132,7 +112,6 @@ pipeline {
                 updateGithubStatus('success', "Pipeline completed successfully", env.BUILD_CONTEXT)
                 updateGithubStatus('success', "Pipeline completed successfully", env.PUBLISH_CONTEXT)
                 updateGithubStatus('success', "Pipeline completed successfully", env.DEPLOY_CONTEXT)
-                updateGithubStatus('success', "Pipeline completed successfully", env.VERCEL_CONTEXT)
             }
         }
         failure {
@@ -140,7 +119,6 @@ pipeline {
                 updateGithubStatus('failure', "Pipeline failed", env.BUILD_CONTEXT)
                 updateGithubStatus('failure', "Pipeline failed", env.PUBLISH_CONTEXT)
                 updateGithubStatus('failure', "Pipeline failed", env.DEPLOY_CONTEXT)
-                updateGithubStatus('failure', "Pipeline failed", env.VERCEL_CONTEXT)
             }
         }
     }
