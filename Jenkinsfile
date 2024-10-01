@@ -36,11 +36,13 @@ pipeline {
       }
     }
 
-    stage('Checkout SCM') {
-      steps {
-        checkout scm
-      }
-    }
+        stage('Checkout SCM') {
+          steps {
+            checkout([$class: 'GitSCM', 
+                      branches: [[name: '*/Jenkinspipeline']],
+                      userRemoteConfigs: [[url: 'https://github.com/cowlinmoo/IS212_ComeBeck.git']]])
+          }
+        }
 
     stage('Build, Publish, and Deploy') {
       steps {
