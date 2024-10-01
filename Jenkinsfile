@@ -132,44 +132,29 @@ pipeline {
 }
 
 def updateGithubStatus(state, description, context) {
-    script {
-        def jenkinsUrl = "${env.JENKINS_URL}job/${env.JOB_NAME}/${env.BUILD_NUMBER}/"
-        def repoUrl = "https://api.github.com/repos/cowlinmoo/IS212_ComeBeck/statuses/${env.GIT_COMMIT}"
-        
-        echo "Updating GitHub status:"
-        echo "State: ${state}"
-        echo "Description: ${description}"
-        echo "Context: ${context}"
-        echo "Jenkins URL: ${jenkinsUrl}"
-        echo "Repo URL: ${repoUrl}"
-        
-        try {
-            def curlCommand = """
-                curl -v -s -H "Authorization: token ${GITHUB_TOKEN}" \
-                     -X POST \
-                     -H "Accept: application/vnd.github.v3+json" \
-                     ${repoUrl} \
-                     -d '{"state":"${state}","context":"${context}","description":"${description}","target_url":"${jenkinsUrl}"}'
-            """
-            echo "Executing curl command (token masked):"
-            echo curlCommand.replaceAll(GITHUB_TOKEN, "****")
-            
-            def response = sh(script: curlCommand, returnStdout: true).trim()
-
-            echo "Full curl response:"
-            echo response
-
-            def statusCode = sh(script: "echo '${response}' | grep 'HTTP/' | awk '{print \$2}'", returnStdout: true).trim()
-            echo "GitHub API response code: ${statusCode}"
-
-            if (statusCode.toInteger() != 201) {
-                error("Failed to update GitHub status. Status code: ${statusCode}, Full response: ${response}")
-            } else {
-                echo "GitHub status updated successfully"
-            }
-        } catch (Exception e) {
-            echo "Error updating GitHub status: ${e.message}"
-            error("Failed to update GitHub status: ${e.message}")
-        }
+    def jenkinsUrl = "${env.JENKINS_URL}job/${env.JOB_NAME}/${env.BUILD_NUMBER}/"
+    def repoUrl = "https://api.github.com/repos/cowlinmoo/IS212_ComeBeck/statuses/${env.GIT_COMMIT}"
+    
+    echo "Updating GitHub status:"
+    echo "State: ${state}"
+    echo "Description: ${description}"
+    echo "Context: ${context}"
+    
+    def curlCommand = """
+        curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token ${GITHUB_TOKEN}" \
+             -X POST \
+             -H "Accept: application/vnd.github.v3+json" \
+             ${repoUrl} \
+             -d '{"state":"${state}","context":"${context}","description":"${description}","target_url":"${jenkinsUrl}"}'
+    """
+    
+    def statusCode = sh(script: curlCommand, returnStdout: true).trim()
+    
+    echo "GitHub API response code: ${statusCode}"
+    
+    if (statusCode != "201") {
+        error("Failed to update GitHub status. Status code: ${statusCode}")
+    } else {
+        echo "GitHub status updated successfully"
     }
 }
