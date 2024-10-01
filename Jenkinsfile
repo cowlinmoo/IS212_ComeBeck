@@ -31,9 +31,22 @@ pipeline {
         CONTAINER_APP_NAME = credentials('CONTAINER_APP_NAME')
         RESOURCE_GROUP = credentials('RESOURCE_GROUP')
         GITHUB_TOKEN = credentials('GITHUB_TOKEN')
+        GIT_COMMIT = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
     }
 
     stages {
+        stage('Debug') {
+            steps {
+                script {
+                    echo "DEBUG: GIT_COMMIT = ${env.GIT_COMMIT}"
+                    echo "DEBUG: GITHUB_TOKEN is set: ${env.GITHUB_TOKEN != null}"
+                    echo "DEBUG: JOB_NAME = ${env.JOB_NAME}"
+                    echo "DEBUG: BUILD_NUMBER = ${env.BUILD_NUMBER}"
+                    echo "DEBUG: JENKINS_URL = ${env.JENKINS_URL}"
+                }
+            }
+        }
+
         stage('Initialize') {
             steps {
                 script {
@@ -132,29 +145,32 @@ pipeline {
 }
 
 def updateGithubStatus(state, description, context) {
-    def jenkinsUrl = "${env.JENKINS_URL}job/${env.JOB_NAME}/${env.BUILD_NUMBER}/"
-    def repoUrl = "https://api.github.com/repos/cowlinmoo/IS212_ComeBeck/statuses/${env.GIT_COMMIT}"
-    
-    echo "Updating GitHub status:"
-    echo "State: ${state}"
-    echo "Description: ${description}"
-    echo "Context: ${context}"
-    
-    def curlCommand = """
-        curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token ${GITHUB_TOKEN}" \
-             -X POST \
-             -H "Accept: application/vnd.github.v3+json" \
-             ${repoUrl} \
-             -d '{"state":"${state}","context":"${context}","description":"${description}","target_url":"${jenkinsUrl}"}'
-    """
-    
-    def statusCode = sh(script: curlCommand, returnStdout: true).trim()
-    
-    echo "GitHub API response code: ${statusCode}"
-    
-    if (statusCode != "201") {
-        error("Failed to update GitHub status. Status code: ${statusCode}")
-    } else {
-        echo "GitHub status updated successfully"
+    withCredentials([string(credentialsId: 'GITHUB_TOKEN', variable: 'GITHUB_TOKEN')]) {
+        def jenkinsUrl = "${env.JENKINS_URL}job/${env.JOB_NAME}/${env.BUILD_NUMBER}/"
+        def repoUrl = "https://api.github.com/repos/cowlinmoo/IS212_ComeBeck/statuses/${env.GIT_COMMIT}"
+        
+        echo "Updating GitHub status:"
+        echo "State: ${state}"
+        echo "Description: ${description}"
+        echo "Context: ${context}"
+        
+        def curlCommand = """
+            curl -v -H 'Authorization: token ${GITHUB_TOKEN}' \
+                 -X POST \
+                 -H 'Accept: application/vnd.github.v3+json' \
+                 ${repoUrl} \
+                 -d '{"state":"${state}","context":"${context}","description":"${description}","target_url":"${jenkinsUrl}"}'
+        """
+        
+        def response = sh(script: curlCommand, returnStdout: true).trim()
+        
+        echo "Full GitHub API response:"
+        echo response
+        
+        if (!response.contains('"state":"${state}"')) {
+            error("Failed to update GitHub status. Response: ${response}")
+        } else {
+            echo "GitHub status updated successfully"
+        }
     }
 }
