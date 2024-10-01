@@ -6,17 +6,11 @@ pipeline {
             spec: '',
             triggerMode: 'HEAVY_HOOKS',
             events: [
-                [
-                    $class: 'org.jenkinsci.plugins.github.pullrequest.events.impl.GitHubPROpenEvent'
-                ],
-                [
-                    $class: 'org.jenkinsci.plugins.github.pullrequest.events.impl.GitHubPRCommitEvent'
-                ]
+                [$class: 'org.jenkinsci.plugins.github.pullrequest.events.impl.GitHubPROpenEvent'],
+                [$class: 'org.jenkinsci.plugins.github.pullrequest.events.impl.GitHubPRCommitEvent']
             ],
             preStatus: true,
-            branchRestriction: [
-                targetBranch: 'main'
-            ],
+            branchRestriction: [targetBranch: 'main'],
             cancelQueued: true,
             abortRunning: false
         )
@@ -32,28 +26,15 @@ pipeline {
         RESOURCE_GROUP = credentials('RESOURCE_GROUP')
         GITHUB_TOKEN = credentials('GITHUB_TOKEN')
         GIT_COMMIT = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+        BUILD_CONTEXT = "Jenkins: 1. Build"
+        PUBLISH_CONTEXT = "Jenkins: 2. Publish"
+        DEPLOY_CONTEXT = "Jenkins: 3. Deploy"
     }
 
     stages {
-        stage('Debug') {
-            steps {
-                script {
-                    echo "DEBUG: GIT_COMMIT = ${env.GIT_COMMIT}"
-                    echo "DEBUG: GITHUB_TOKEN is set: ${env.GITHUB_TOKEN != null}"
-                    echo "DEBUG: JOB_NAME = ${env.JOB_NAME}"
-                    echo "DEBUG: BUILD_NUMBER = ${env.BUILD_NUMBER}"
-                    echo "DEBUG: JENKINS_URL = ${env.JENKINS_URL}"
-                }
-            }
-        }
-
         stage('Initialize') {
             steps {
                 script {
-                    env.BUILD_CONTEXT = "Jenkins: 1. Build"
-                    env.PUBLISH_CONTEXT = "Jenkins: 2. Publish"
-                    env.DEPLOY_CONTEXT = "Jenkins: 3. Deploy"
-                    
                     updateGithubStatus('pending', 'Building Docker image', env.BUILD_CONTEXT)
                     updateGithubStatus('pending', 'Publishing to ACR', env.PUBLISH_CONTEXT)
                     updateGithubStatus('pending', 'Deploying to Azure', env.DEPLOY_CONTEXT)
@@ -99,7 +80,7 @@ pipeline {
                             if ! command -v az &> /dev/null
                             then
                                 echo "Azure CLI not found. Installing..."
-                                curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+                                curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
                             else
                                 echo "Azure CLI is already installed."
                             fi
@@ -127,61 +108,27 @@ pipeline {
     }
 
     post {
-        success {
-            echo "Pipeline completed successfully"
-        }
         failure {
-            echo "Pipeline failed"
-        }
-        always {
-            echo "Cleaning up and printing debug information"
             script {
-                sh "env | sort"
-                echo "GIT_COMMIT: ${env.GIT_COMMIT}"
-                echo "GITHUB_TOKEN: ${env.GITHUB_TOKEN != null ? 'Set' : 'Not Set'}"
+                updateGithubStatus('failure', "Pipeline failed", env.BUILD_CONTEXT)
+                updateGithubStatus('failure', "Pipeline failed", env.PUBLISH_CONTEXT)
+                updateGithubStatus('failure', "Pipeline failed", env.DEPLOY_CONTEXT)
             }
         }
     }
 }
 
 def updateGithubStatus(state, description, context) {
-  withCredentials([string(credentialsId: 'GITHUB_TOKEN', variable: 'GITHUB_TOKEN')]) {
-    def jenkinsUrl = "${env.JENKINS_URL}job/${env.JOB_NAME}/${env.BUILD_NUMBER}/"
-    def repoUrl = "https://api.github.com/repos/cowlinmoo/IS212_ComeBeck/statuses/${env.GIT_COMMIT}"
+    withCredentials([string(credentialsId: 'GITHUB_TOKEN', variable: 'GITHUB_TOKEN')]) {
+        def jenkinsUrl = "https://jenkins.comebeckwfhtracker.systems/job/comebeckjenkins/${BUILD_NUMBER}/"
+        def repoUrl = "https://api.github.com/repos/cowlinmoo/IS212_ComeBeck/statuses/${env.GIT_COMMIT}"
 
-    echo "Updating GitHub status:"
-    echo "State: ${state}"
-    echo "Description: ${description}"
-    echo "Context: ${context}"
-
-    def maxRetries = 3 // Maximum number of retries for rate limiting
-    def retryDelay = 10 // Delay (seconds) between retries
-
-    for (int i = 0; i < maxRetries; i++) {
-      def curlCommand = """
-        curl -s -w "%{http_code}" -H 'Authorization: token ${GITHUB_TOKEN}' \
-          -X POST \
-          -H 'Accept: application/vnd.github.v3+json' \
-          ${repoUrl} \
-          -d '{"state":"${state}","context":"${context}","description":"${description}","target_url":"${jenkinsUrl}"}'
-      """
-
-      def (response, statusCode) = sh(script: curlCommand, returnStdout: true).trim().tokenize('\n')
-
-      echo "GitHub API response status code: ${statusCode}"
-      echo "Full GitHub API response:"
-      echo response
-
-      if (statusCode == "201") {
-        echo "GitHub status updated successfully"
-        return // Exit the loop on successful update
-      } else if (statusCode == "429") {
-        echo "Rate limit exceeded. Retrying in ${retryDelay} seconds..."
-        sleep(retryDelay * 1000) // Wait before retrying
-      } else {
-        error("Failed to update GitHub status. Status code: ${statusCode}, Response: ${response}")
-        break // Exit the loop on non-retryable error
-      }
+        sh """
+            curl -s -H "Authorization: token ${GITHUB_TOKEN}" \
+                 -X POST \
+                 -H "Accept: application/vnd.github.v3+json" \
+                 ${repoUrl} \
+                 -d '{"state":"${state}","context":"${context}","description":"${description}","target_url":"${jenkinsUrl}"}'
+        """
     }
-  }
 }
