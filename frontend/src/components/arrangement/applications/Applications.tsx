@@ -248,14 +248,15 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
       showAlertApproved === false ||
       showAlertPending === false
     ) {
-      const headers = { Authorization: `Bearer ${token}` };
+      const headers = { "Authorization": `Bearer ${token}`, "Content-Type": "application/json", "accept": "application/json"};
       if (values.singleDate) {
         console.log(typeof values.reason);
         console.log(values.singleDate);
         console.log(values.singleDate instanceof Date);
-        var content = {
+        const content = {
           location: "Home",
           reason: values.reason,
+          description: "",
           requested_date: format(values.singleDate, "yyyy-MM-dd"),
           staff_id: staffId,
           recurring: false,
@@ -263,7 +264,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
         console.log(content);
         try {
           const response = await fetch(
-            "http://localhost:8080/api/application",
+            "http://localhost:8080/api/application/",
             { headers: headers, method: "POST", body: JSON.stringify(content) }
           );
           if (!response.ok) {
@@ -293,7 +294,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
           location: "Home",
           reason: values.reason,
           requested_date: values.multipleDate[0],
-          description: values.reason,
+          description: "",
           staff_id: staffId,
           recurring: false,
           recurrence_type: "",
@@ -302,7 +303,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
         };
         try {
           const response = await fetch(
-            "http://localhost:8080/api/application",
+            "http://localhost:8080/api/application/",
             {
               headers: headers,
               method: "POST",
