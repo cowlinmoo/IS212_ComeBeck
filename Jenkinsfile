@@ -25,55 +25,109 @@ pipeline {
         RESOURCE_GROUP = credentials('RESOURCE_GROUP')
         GITHUB_TOKEN = credentials('GITHUB_TOKEN')
         GIT_COMMIT = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
-        BUILD_CONTEXT = "Jenkins: 1. Build"
-        PUBLISH_CONTEXT = "Jenkins: 2. Publish"
-        DEPLOY_CONTEXT = "Jenkins: 3. Deploy"
         GITHUB_REPO = "cowlinmoo/IS212_ComeBeck"
     }
 
     stages {
         stage('Build') {
             steps {
-                withChecks(name: 'Build', includeStage: true) {
-                    sh "docker build -t ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER} ."
+                script {
+                    publishChecks name: 'Jenkins: Build',
+                                  title: 'Building Docker Image',
+                                  summary: 'Building the Docker image for the application',
+                                  text: 'This step builds the Docker image using the Dockerfile in the repository.',
+                                  status: 'IN_PROGRESS'
+                    
+                    try {
+                        sh "docker build -t ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER} ."
+                        publishChecks name: 'Jenkins: Build',
+                                      conclusion: 'SUCCESS',
+                                      title: 'Docker Image Built Successfully',
+                                      summary: 'The Docker image was built without any issues.'
+                    } catch (Exception e) {
+                        publishChecks name: 'Jenkins: Build',
+                                      conclusion: 'FAILURE',
+                                      title: 'Docker Image Build Failed',
+                                      summary: 'There was an error while building the Docker image.',
+                                      text: "Error: ${e.message}"
+                        throw e
+                    }
                 }
             }
         }
 
         stage('Publish') {
             steps {
-                withChecks(name: 'Publish', includeStage: true) {
-                    sh "echo ${ACR_PASSWORD} | docker login ${ACR_NAME}.azurecr.io -u ${ACR_USERNAME} --password-stdin"
-                    sh "docker push ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER}"
+                script {
+                    publishChecks name: 'Jenkins: Publish',
+                                  title: 'Publishing Docker Image',
+                                  summary: 'Publishing the Docker image to Azure Container Registry',
+                                  text: 'This step pushes the built Docker image to ACR.',
+                                  status: 'IN_PROGRESS'
+                    
+                    try {
+                        sh "echo ${ACR_PASSWORD} | docker login ${ACR_NAME}.azurecr.io -u ${ACR_USERNAME} --password-stdin"
+                        sh "docker push ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER}"
+                        publishChecks name: 'Jenkins: Publish',
+                                      conclusion: 'SUCCESS',
+                                      title: 'Docker Image Published Successfully',
+                                      summary: 'The Docker image was pushed to ACR without any issues.'
+                    } catch (Exception e) {
+                        publishChecks name: 'Jenkins: Publish',
+                                      conclusion: 'FAILURE',
+                                      title: 'Docker Image Publish Failed',
+                                      summary: 'There was an error while publishing the Docker image to ACR.',
+                                      text: "Error: ${e.message}"
+                        throw e
+                    }
                 }
             }
         }
 
         stage('Deploy') {
             steps {
-                withChecks(name: 'Deploy', includeStage: true) {
-                    sh '''#!/bin/bash
-                        set -e
-                        if ! command -v az &> /dev/null
-                        then
-                            echo "Azure CLI not found. Installing..."
-                            curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-                        else
-                            echo "Azure CLI is already installed."
-                        fi
+                script {
+                    publishChecks name: 'Jenkins: Deploy',
+                                  title: 'Deploying to Azure Container App',
+                                  summary: 'Updating the Azure Container App with the new image',
+                                  text: 'This step deploys the new image to Azure Container App.',
+                                  status: 'IN_PROGRESS'
+                    
+                    try {
+                        sh '''#!/bin/bash
+                            set -e
+                            if ! command -v az &> /dev/null
+                            then
+                                echo "Azure CLI not found. Installing..."
+                                curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+                            else
+                                echo "Azure CLI is already installed."
+                            fi
 
-                        echo "Logging in to Azure..."
-                        az login --service-principal -u ${ACR_USERNAME} -p ${ACR_PASSWORD} --tenant ${TENANT_ID}
+                            echo "Logging in to Azure..."
+                            az login --service-principal -u ${ACR_USERNAME} -p ${ACR_PASSWORD} --tenant ${TENANT_ID}
 
-                        echo "Updating Container App..."
-                        az containerapp update \
-                          --name ${CONTAINER_APP_NAME} \
-                          --resource-group ${RESOURCE_GROUP} \
-                          --image ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER}
+                            echo "Updating Container App..."
+                            az containerapp update \
+                              --name ${CONTAINER_APP_NAME} \
+                              --resource-group ${RESOURCE_GROUP} \
+                              --image ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER}
 
-                        echo "Logging out from Azure..."
-                        az logout
-                    '''
+                            echo "Logging out from Azure..."
+                            az logout
+                        '''
+                        publishChecks name: 'Jenkins: Deploy',
+                                      conclusion: 'SUCCESS',
+                                      title: 'Deployment Successful',
+                                      summary: 'The application was successfully deployed to Azure Container App.'
+                    } catch (Exception e) {
+                        publishChecks name: 'Jenkins: Deploy',
+                                      conclusion: 'FAILURE',
+                                      title: 'Deployment Failed',
+                                      summary: 'There was an error while deploying to Azure Container App.',
+                                      text: "Error: ${e.message}"
+                        throw e
+                    }
                 }
             }
         }
@@ -81,27 +135,13 @@ pipeline {
 
     post {
         always {
-            publishChecks name: 'Pipeline Summary', 
+            publishChecks name: 'Jenkins: Pipeline Summary', 
                           title: 'Pipeline Result', 
                           summary: "Pipeline finished with result: ${currentBuild.result}",
                           text: '''This is an overall summary of the pipeline execution.
                                    It includes the Build, Publish, and Deploy stages.''',
                           detailsURL: "${env.BUILD_URL}",
                           actions: [[label: 'Rerun', description: 'Rerun the pipeline', identifier: "rerun_${env.BUILD_NUMBER}"]]
-        }
-        success {
-            publishChecks name: 'Pipeline Status', 
-                          conclusion: 'SUCCESS',
-                          title: 'Pipeline Succeeded', 
-                          summary: 'All stages completed successfully.',
-                          text: 'The pipeline has successfully built, published, and deployed the application.'
-        }
-        failure {
-            publishChecks name: 'Pipeline Status', 
-                          conclusion: 'FAILURE',
-                          title: 'Pipeline Failed', 
-                          summary: 'One or more stages failed.',
-                          text: 'Please check the Jenkins console output for more details on the failure.'
         }
     }
 }
