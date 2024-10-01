@@ -120,16 +120,48 @@ pipeline {
         failure {
             echo "Pipeline failed"
         }
+        always {
+            echo "Cleaning up and printing debug information"
+            script {
+                sh "env | sort"
+                echo "GIT_COMMIT: ${env.GIT_COMMIT}"
+                echo "GITHUB_TOKEN: ${env.GITHUB_TOKEN != null ? 'Set' : 'Not Set'}"
+            }
+        }
     }
 }
 
 def updateGithubStatus(state, description, context) {
-    def jenkinsUrl = "${env.JENKINS_URL}job/${env.JOB_NAME}/${env.BUILD_NUMBER}/"
-    sh """
-        curl -s -H "Authorization: token ${GITHUB_TOKEN}" \
-             -X POST \
-             -H "Accept: application/vnd.github.v3+json" \
-             https://api.github.com/repos/cowlinmoo/IS212_ComeBeck/statuses/${GIT_COMMIT} \
-             -d '{"state":"${state}","context":"${context}","description":"${description}","target_url":"${jenkinsUrl}"}'
-    """
+    script {
+        def jenkinsUrl = "${env.JENKINS_URL}job/${env.JOB_NAME}/${env.BUILD_NUMBER}/"
+        def repoUrl = "https://api.github.com/repos/cowlinmoo/IS212_ComeBeck/statuses/${env.GIT_COMMIT}"
+        
+        echo "Updating GitHub status:"
+        echo "State: ${state}"
+        echo "Description: ${description}"
+        echo "Context: ${context}"
+        echo "Jenkins URL: ${jenkinsUrl}"
+        echo "Repo URL: ${repoUrl}"
+        
+        try {
+            def response = sh(script: """
+                curl -s -w "\\n%{http_code}" -H "Authorization: token ${GITHUB_TOKEN}" \
+                     -X POST \
+                     -H "Accept: application/vnd.github.v3+json" \
+                     ${repoUrl} \
+                     -d '{"state":"${state}","context":"${context}","description":"${description}","target_url":"${jenkinsUrl}"}'
+            """, returnStdout: true).trim()
+
+            def (body, statusCode) = response.tokenize('\n')
+            echo "GitHub API response code: ${statusCode}"
+            echo "GitHub API response body: ${body}"
+
+            if (statusCode.toInteger() != 201) {
+                error("Failed to update GitHub status. Status code: ${statusCode}")
+            }
+        } catch (Exception e) {
+            echo "Error updating GitHub status: ${e.message}"
+            error("Failed to update GitHub status")
+        }
+    }
 }
