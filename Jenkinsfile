@@ -144,24 +144,31 @@ def updateGithubStatus(state, description, context) {
         echo "Repo URL: ${repoUrl}"
         
         try {
-            def response = sh(script: """
-                curl -s -w "\\n%{http_code}" -H "Authorization: token ${GITHUB_TOKEN}" \
+            def curlCommand = """
+                curl -v -s -w "\\n%{http_code}" -H "Authorization: token ${GITHUB_TOKEN}" \
                      -X POST \
                      -H "Accept: application/vnd.github.v3+json" \
                      ${repoUrl} \
                      -d '{"state":"${state}","context":"${context}","description":"${description}","target_url":"${jenkinsUrl}"}'
-            """, returnStdout: true).trim()
+            """
+            echo "Executing curl command: ${curlCommand}"
+            
+            def response = sh(script: curlCommand, returnStdout: true).trim()
+
+            echo "Full curl response: ${response}"
 
             def (body, statusCode) = response.tokenize('\n')
             echo "GitHub API response code: ${statusCode}"
             echo "GitHub API response body: ${body}"
 
             if (statusCode.toInteger() != 201) {
-                error("Failed to update GitHub status. Status code: ${statusCode}")
+                error("Failed to update GitHub status. Status code: ${statusCode}, Body: ${body}")
             }
         } catch (Exception e) {
             echo "Error updating GitHub status: ${e.message}"
-            error("Failed to update GitHub status")
+            echo "Stack trace: ${e.getStackTrace().join('\n')}"
+            error("Failed to update GitHub status: ${e.message}")
         }
     }
+}
 }
