@@ -1,4 +1,4 @@
-                                     pipeline {
+pipeline {
   agent any
 
   options {
@@ -28,6 +28,14 @@
   }
 
   stages {
+    stage('Set Initial Status') {
+      steps {
+        script {
+          updateGitHubStatus('pending', 'Jenkins pipeline started', 'Jenkins: Overall')
+        }
+      }
+    }
+
     stage('Checkout SCM') {
       steps {
         checkout scm
@@ -126,5 +134,30 @@ update_github_status "pending" "Deploying to Azure" "${DEPLOY_CONTEXT}"
         }
       }
     }
+  }
+
+  post {
+    success {
+      script {
+        updateGitHubStatus('success', 'Jenkins pipeline succeeded', 'Jenkins: Overall')
+      }
+    }
+    failure {
+      script {
+        updateGitHubStatus('failure', 'Jenkins pipeline failed', 'Jenkins: Overall')
+      }
+    }
+  }
+}
+
+def updateGitHubStatus(state, description, context) {
+  withCredentials([string(credentialsId: 'GITHUB_TOKEN', variable: 'GITHUB_TOKEN')]) {
+    sh """
+      curl -s -H "Authorization: token ${GITHUB_TOKEN}" \
+           -X POST \
+           -H "Accept: application/vnd.github.v3+json" \
+           https://api.github.com/repos/cowlinmoo/IS212_ComeBeck/statuses/${GIT_COMMIT} \
+           -d "{\\"state\\":\\"${state}\\",\\"context\\":\\"${context}\\",\\"description\\":\\"${description}\\",\\"target_url\\":\\"${BUILD_URL}\\"}"
+    """
   }
 }
