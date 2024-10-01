@@ -27,10 +27,17 @@ pipeline {
     )
   }
 
+  environment {
+    BUILD_CONTEXT = "Jenkins: 1. Build"
+    PUBLISH_CONTEXT = "Jenkins: 2. Publish"
+    DEPLOY_CONTEXT = "Jenkins: 3. Deploy"
+  }
+
   stages {
     stage('Checkout SCM') {
       steps {
         checkout scm
+        githubNotify context: "Jenkins: Checkout", description: "Checked out source code", status: "SUCCESS"
       }
     }
 
@@ -43,88 +50,78 @@ pipeline {
           string(credentialsId: 'ACR_USERNAME', variable: 'ACR_USERNAME'),
           string(credentialsId: 'TENANT_ID', variable: 'TENANT_ID')
         ]) {
-          sh '''#!/bin/bash
+          script {
+            try {
+              // Set initial pending status for all steps
+              githubNotify context: env.BUILD_CONTEXT, description: "Building Docker image", status: "PENDING"
+              githubNotify context: env.PUBLISH_CONTEXT, description: "Publishing to ACR", status: "PENDING"
+              githubNotify context: env.DEPLOY_CONTEXT, description: "Deploying to Azure", status: "PENDING"
+
+              // Execute the shell script
+              sh '''#!/bin/bash
 set -e
 
-update_github_status() {
-    local state=$1
-    local description=$2
-    local context=$3
+echo "Deleting Old Docker resources..."
+docker system prune -af
 
-    # Construct the Jenkins build URL
-    local jenkins_url="https://jenkins.comebeckwfhtracker.systems/job/comebeckjenkinspipeline/${BUILD_NUMBER}/"
+# Step 1: Build the Docker image
+echo "Building Docker image..."
+docker build -t ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER} .
 
-    curl -s -H "Authorization: token ${GITHUB_TOKEN}" \
-         -X POST \
-         -H "Accept: application/vnd.github.v3+json" \
-         https://api.github.com/repos/cowlinmoo/IS212_ComeBeck/statuses/${GIT_COMMIT} \
-         -d "{\\"state\\":\\"${state}\\",\\"context\\":\\"${context}\\",\\"description\\":\\"${description}\\",\\"target_url\\":\\"${jenkins_url}\\"}"
-}
+# Step 2: Publish to Azure Container Registry
+echo "Logging in to Azure Container Registry..."
+echo ${ACR_PASSWORD} | docker login ${ACR_NAME}.azurecr.io -u ${ACR_USERNAME} --password-stdin
 
-# Define the contexts
-BUILD_CONTEXT="Jenkins: 1. Build"
-PUBLISH_CONTEXT="Jenkins: 2. Publish"
-DEPLOY_CONTEXT="Jenkins: 3. Deploy"
+echo "Pushing image to Azure Container Registry..."
+docker push ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER}
 
-# Update initial status for all steps
-update_github_status "pending" "Building Docker image" "${BUILD_CONTEXT}"
-update_github_status "pending" "Publishing to ACR" "${PUBLISH_CONTEXT}"
-update_github_status "pending" "Deploying to Azure" "${DEPLOY_CONTEXT}"
+# Step 3: Deploy application to Azure Container Apps
+# Check if Azure CLI is installed
+if ! command -v az &> /dev/null
+then
+    echo "Azure CLI not found. Installing..."
+    curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+else
+    echo "Azure CLI is already installed."
+fi
 
-# Wrap the entire script in a try-catch block
-{
-    echo "Deleting Old Docker resources..."
-    docker system prune -af
+echo "Logging in to Azure..."
+az login --service-principal -u ${ACR_USERNAME} -p ${ACR_PASSWORD} --tenant ${TENANT_ID}
 
-    # Step 1: Build the Docker image
-    echo "Building Docker image..."
-    docker build -t ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER} .
-    update_github_status "success" "Docker image built successfully" "${BUILD_CONTEXT}"
+echo "Updating Container App..."
+az containerapp update \
+  --name ${CONTAINER_APP_NAME} \
+  --resource-group ${RESOURCE_GROUP} \
+  --image ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER}
 
-    # Step 2: Publish to Azure Container Registry
-    echo "Logging in to Azure Container Registry..."
-    echo ${ACR_PASSWORD} | docker login ${ACR_NAME}.azurecr.io -u ${ACR_USERNAME} --password-stdin
+echo "Logging out from Azure..."
+az logout
 
-    echo "Pushing image to Azure Container Registry..."
-    docker push ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER}
-    update_github_status "success" "Image published to ACR successfully" "${PUBLISH_CONTEXT}"
-
-    # Step 3: Deploy application to Azure Container Apps
-    # Check if Azure CLI is installed
-    if ! command -v az &> /dev/null
-    then
-        echo "Azure CLI not found. Installing..."
-        curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-    else
-        echo "Azure CLI is already installed."
-    fi
-
-    echo "Logging in to Azure..."
-    az login --service-principal -u ${ACR_USERNAME} -p ${ACR_PASSWORD} --tenant ${TENANT_ID}
-
-    echo "Updating Container App..."
-    az containerapp update \
-      --name ${CONTAINER_APP_NAME} \
-      --resource-group ${RESOURCE_GROUP} \
-      --image ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER}
-
-    echo "Logging out from Azure..."
-    az logout
-    update_github_status "success" "Application deployed to Azure successfully" "${DEPLOY_CONTEXT}"
-
-    echo "Script completed successfully."
-
-} || {
-    # This block executes if any command in the try block fails
-    failed_step=${FUNCNAME[1]:-UNKNOWN}
-    update_github_status "failure" "Failed during: ${failed_step}" "${BUILD_CONTEXT}"
-    update_github_status "failure" "Failed during: ${failed_step}" "${PUBLISH_CONTEXT}"
-    update_github_status "failure" "Failed during: ${failed_step}" "${DEPLOY_CONTEXT}"
-    echo "Script failed"
-    exit 1
-}'''
+echo "Script completed successfully."
+'''
+              // Update success status for all steps
+              githubNotify context: env.BUILD_CONTEXT, description: "Docker image built successfully", status: "SUCCESS"
+              githubNotify context: env.PUBLISH_CONTEXT, description: "Image published to ACR successfully", status: "SUCCESS"
+              githubNotify context: env.DEPLOY_CONTEXT, description: "Application deployed to Azure successfully", status: "SUCCESS"
+            } catch (Exception e) {
+              // Update failure status for all steps
+              githubNotify context: env.BUILD_CONTEXT, description: "Build failed: ${e.message}", status: "FAILURE"
+              githubNotify context: env.PUBLISH_CONTEXT, description: "Publish failed: ${e.message}", status: "FAILURE"
+              githubNotify context: env.DEPLOY_CONTEXT, description: "Deploy failed: ${e.message}", status: "FAILURE"
+              error("Pipeline failed: ${e.message}")
+            }
+          }
         }
       }
+    }
+  }
+
+  post {
+    success {
+      githubNotify context: "Jenkins: Pipeline", description: "All stages completed successfully", status: "SUCCESS"
+    }
+    failure {
+      githubNotify context: "Jenkins: Pipeline", description: "Pipeline failed", status: "FAILURE"
     }
   }
 }
