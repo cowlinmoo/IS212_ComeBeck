@@ -20,7 +20,7 @@
       ],
       preStatus: true,
       branchRestriction: [
-        targetBranch: 'main'
+        targetBranch: 'Jenkinspipeline'
       ],
       cancelQueued: true,
       abortRunning: false
