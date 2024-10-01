@@ -28,15 +28,16 @@ pipeline {
         BUILD_CONTEXT = "Jenkins: 1. Build"
         PUBLISH_CONTEXT = "Jenkins: 2. Publish"
         DEPLOY_CONTEXT = "Jenkins: 3. Deploy"
+        GITHUB_REPO = "cowlinmoo/IS212_ComeBeck"
     }
 
     stages {
         stage('Initialize') {
             steps {
                 script {
-                    githubNotify context: env.BUILD_CONTEXT, description: 'Building Docker image', status: 'PENDING'
-                    githubNotify context: env.PUBLISH_CONTEXT, description: 'Publishing to ACR', status: 'PENDING'
-                    githubNotify context: env.DEPLOY_CONTEXT, description: 'Deploying to Azure', status: 'PENDING'
+                    notifyGitHub('PENDING', 'Building Docker image', env.BUILD_CONTEXT)
+                    notifyGitHub('PENDING', 'Publishing to ACR', env.PUBLISH_CONTEXT)
+                    notifyGitHub('PENDING', 'Deploying to Azure', env.DEPLOY_CONTEXT)
                 }
             }
         }
@@ -46,9 +47,9 @@ pipeline {
                 script {
                     try {
                         sh "docker build -t ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER} ."
-                        githubNotify context: env.BUILD_CONTEXT, description: 'Docker image built successfully', status: 'SUCCESS'
+                        notifyGitHub('SUCCESS', 'Docker image built successfully', env.BUILD_CONTEXT)
                     } catch (Exception e) {
-                        githubNotify context: env.BUILD_CONTEXT, description: 'Failed during: Build', status: 'FAILURE'
+                        notifyGitHub('FAILURE', 'Failed during: Build', env.BUILD_CONTEXT)
                         error("Build stage failed: ${e.message}")
                     }
                 }
@@ -61,9 +62,9 @@ pipeline {
                     try {
                         sh "echo ${ACR_PASSWORD} | docker login ${ACR_NAME}.azurecr.io -u ${ACR_USERNAME} --password-stdin"
                         sh "docker push ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER}"
-                        githubNotify context: env.PUBLISH_CONTEXT, description: 'Image published to ACR successfully', status: 'SUCCESS'
+                        notifyGitHub('SUCCESS', 'Image published to ACR successfully', env.PUBLISH_CONTEXT)
                     } catch (Exception e) {
-                        githubNotify context: env.PUBLISH_CONTEXT, description: 'Failed during: Publish', status: 'FAILURE'
+                        notifyGitHub('FAILURE', 'Failed during: Publish', env.PUBLISH_CONTEXT)
                         error("Publish stage failed: ${e.message}")
                     }
                 }
@@ -96,9 +97,9 @@ pipeline {
                             echo "Logging out from Azure..."
                             az logout
                         '''
-                        githubNotify context: env.DEPLOY_CONTEXT, description: 'Application deployed to Azure successfully', status: 'SUCCESS'
+                        notifyGitHub('SUCCESS', 'Application deployed to Azure successfully', env.DEPLOY_CONTEXT)
                     } catch (Exception e) {
-                        githubNotify context: env.DEPLOY_CONTEXT, description: 'Failed during: Deploy', status: 'FAILURE'
+                        notifyGitHub('FAILURE', 'Failed during: Deploy', env.DEPLOY_CONTEXT)
                         error("Deploy stage failed: ${e.message}")
                     }
                 }
@@ -109,17 +110,27 @@ pipeline {
     post {
         success {
             script {
-                githubNotify context: env.BUILD_CONTEXT, description: 'Pipeline completed successfully', status: 'SUCCESS'
-                githubNotify context: env.PUBLISH_CONTEXT, description: 'Pipeline completed successfully', status: 'SUCCESS'
-                githubNotify context: env.DEPLOY_CONTEXT, description: 'Pipeline completed successfully', status: 'SUCCESS'
+                notifyGitHub('SUCCESS', 'Pipeline completed successfully', env.BUILD_CONTEXT)
+                notifyGitHub('SUCCESS', 'Pipeline completed successfully', env.PUBLISH_CONTEXT)
+                notifyGitHub('SUCCESS', 'Pipeline completed successfully', env.DEPLOY_CONTEXT)
             }
         }
         failure {
             script {
-                githubNotify context: env.BUILD_CONTEXT, description: 'Pipeline failed', status: 'FAILURE'
-                githubNotify context: env.PUBLISH_CONTEXT, description: 'Pipeline failed', status: 'FAILURE'
-                githubNotify context: env.DEPLOY_CONTEXT, description: 'Pipeline failed', status: 'FAILURE'
+                notifyGitHub('FAILURE', 'Pipeline failed', env.BUILD_CONTEXT)
+                notifyGitHub('FAILURE', 'Pipeline failed', env.PUBLISH_CONTEXT)
+                notifyGitHub('FAILURE', 'Pipeline failed', env.DEPLOY_CONTEXT)
             }
         }
     }
+}
+
+def notifyGitHub(status, description, context) {
+    githubNotify account: 'cowlinmoo', 
+                 credentialsId: 'GITHUB_TOKEN',
+                 description: description, 
+                 context: context,
+                 sha: env.GIT_COMMIT,
+                 repo: env.GITHUB_REPO,
+                 status: status
 }
