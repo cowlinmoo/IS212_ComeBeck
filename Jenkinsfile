@@ -145,7 +145,7 @@ def updateGithubStatus(state, description, context) {
         
         try {
             def curlCommand = """
-                curl -v -s -w "\\n%{http_code}" -H "Authorization: token ${GITHUB_TOKEN}" \
+                curl -v -s -H "Authorization: token ${GITHUB_TOKEN}" \
                      -X POST \
                      -H "Accept: application/vnd.github.v3+json" \
                      ${repoUrl} \
@@ -156,14 +156,16 @@ def updateGithubStatus(state, description, context) {
             
             def response = sh(script: curlCommand, returnStdout: true).trim()
 
-            echo "Full curl response: ${response}"
+            echo "Full curl response:"
+            echo response
 
-            def (body, statusCode) = response.tokenize('\n')
+            def statusCode = sh(script: "echo '${response}' | grep 'HTTP/' | awk '{print \$2}'", returnStdout: true).trim()
             echo "GitHub API response code: ${statusCode}"
-            echo "GitHub API response body: ${body}"
 
             if (statusCode.toInteger() != 201) {
-                error("Failed to update GitHub status. Status code: ${statusCode}, Body: ${body}")
+                error("Failed to update GitHub status. Status code: ${statusCode}, Full response: ${response}")
+            } else {
+                echo "GitHub status updated successfully"
             }
         } catch (Exception e) {
             echo "Error updating GitHub status: ${e.message}"
