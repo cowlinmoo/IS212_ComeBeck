@@ -61,7 +61,7 @@ pipeline {
               sh '''#!/bin/bash
 set -e
 
-echo "Deleting Old Docker resources..."
+echo "Deleting Old Docker resource..."
 docker system prune -af
 
 # Step 1: Build the Docker image
