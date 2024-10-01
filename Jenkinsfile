@@ -171,4 +171,3 @@ def updateGithubStatus(state, description, context) {
         }
     }
 }
-}
