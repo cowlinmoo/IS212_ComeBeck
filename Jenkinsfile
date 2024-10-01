@@ -34,19 +34,38 @@ pipeline {
     stages {
         stage('Build') {
             steps {
+                githubChecks(context: env.BUILD_CONTEXT, status: 'PENDING')
                 sh "docker build -t ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER} ."
+            }
+            post {
+                success {
+                    githubChecks(context: env.BUILD_CONTEXT, status: 'SUCCESS')
+                }
+                failure {
+                    githubChecks(context: env.BUILD_CONTEXT, status: 'FAILURE')
+                }
             }
         }
 
         stage('Publish') {
             steps {
+                githubChecks(context: env.PUBLISH_CONTEXT, status: 'PENDING')
                 sh "echo ${ACR_PASSWORD} | docker login ${ACR_NAME}.azurecr.io -u ${ACR_USERNAME} --password-stdin"
                 sh "docker push ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER}"
+            }
+            post {
+                success {
+                    githubChecks(context: env.PUBLISH_CONTEXT, status: 'SUCCESS')
+                }
+                failure {
+                    githubChecks(context: env.PUBLISH_CONTEXT, status: 'FAILURE')
+                }
             }
         }
 
         stage('Deploy') {
             steps {
+                githubChecks(context: env.DEPLOY_CONTEXT, status: 'PENDING')
                 sh '''#!/bin/bash
                     set -e
                     if ! command -v az &> /dev/null
@@ -70,6 +89,20 @@ pipeline {
                     az logout
                 '''
             }
+            post {
+                success {
+                    githubChecks(context: env.DEPLOY_CONTEXT, status: 'SUCCESS')
+                }
+                failure {
+                    githubChecks(context: env.DEPLOY_CONTEXT, status: 'FAILURE')
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            githubChecks(context: 'Jenkins: Pipeline', conclusion: currentBuild.resultIsBetterOrEqualTo('SUCCESS') ? 'SUCCESS' : 'FAILURE')
         }
     }
 }
