@@ -17,7 +17,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { format, addMonths, subMonths, isWeekend,isSameDay } from "date-fns";
+import { format, addMonths, subMonths, isWeekend, isSameDay } from "date-fns";
 import {
   Popover,
   PopoverContent,
@@ -37,6 +37,7 @@ import * as z from "zod";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 
 //formschema
 const applyFormSchema = z.object({
@@ -69,7 +70,6 @@ interface IApplications {
   token: string;
 }
 const Applications: React.FC<IApplications> = ({ staffId, token }) => {
-
   // fetching wfh applications currently existing
   const [wfhApproved, setwfhApproved] = useState(Array);
   const [wfhPending, setwfhPending] = useState(Array);
@@ -82,7 +82,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
           { headers }
         );
         if (!response.ok) {
-          throw new Error(`Application API validation ERROR`);
+          throw new Error(`GET Application API validation ERROR`);
         } else {
           const data = await response.json();
           var approvedApplications = new Array();
@@ -109,7 +109,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
           }
         }
       } catch (error: any) {
-        console.log("API fetching error.", error.message);
+        console.log("GET API fetching error.", error.message);
       }
     }
     fetchData();
@@ -147,62 +147,75 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
   const [alertPendingDates, setAlertPendingDates] = useState("");
 
   //variable to check if user selected more than 1 date for multiple dates calendar
-  const [showMultipleDateAlert, setShowMultipleDateAlert] = useState(false)
+  const [showMultipleDateAlert, setShowMultipleDateAlert] = useState(false);
 
   //check if selected date has already been approved user selected more than 1 date for multiple dates calendar
   const checkForAlertApproved = (date: Date | Date[] | undefined) => {
     //all dates to be alerted
-    setAlertApprovedDates("")
-    setShowAlertApproved(false)
-    setShowMultipleDateAlert(false)
-    console.log(date)
-    console.log(isSameDay(date,"2024-10-10"))
+    setAlertApprovedDates("");
+    setShowAlertApproved(false);
+    setShowMultipleDateAlert(false);
     if (Array.isArray(date)) {
-      setShowMultipleDateAlert(date.length<2)
+      setShowMultipleDateAlert(date.length < 2);
       for (var d of date) {
-        for (var i of wfhApproved){
-          if (isSameDay(i,d)){
+        for (var i of wfhApproved) {
+          if (isSameDay(i, d)) {
             setShowAlertApproved(true);
-            setAlertApprovedDates(alertApprovedDates + " " + d.toLocaleDateString() )
+            setAlertApprovedDates(
+              alertApprovedDates + " " + d.toLocaleDateString()
+            );
           }
         }
       }
     } else if (date) {
-      for (var i of wfhApproved){
-        if (isSameDay(i,date)){
-          setShowAlertApproved(true)
-          setAlertApprovedDates(alertApprovedDates + " " + date.toLocaleDateString() )
-          console.log(alertApprovedDates)
+      for (var i of wfhApproved) {
+        if (isSameDay(i, date)) {
+          setShowAlertApproved(true);
+          setAlertApprovedDates(
+            alertApprovedDates + " " + date.toLocaleDateString()
+          );
+          console.log(alertApprovedDates);
         }
       }
     } else {
-      setShowAlertApproved(false)
+      setShowAlertApproved(false);
     }
   };
   //check if selected date has a pending application
   const checkForAlertPending = (date: Date | Date[] | undefined) => {
     setShowAlertPending(false);
-    setAlertPendingDates("")
+    setAlertPendingDates("");
     //all dates to be alerted
     if (Array.isArray(date)) {
       for (var d of date) {
-        if (wfhPending.includes(d)) {
-          setShowAlertPending(true);
-          setAlertPendingDates(alertPendingDates + " " + d.toLocaleDateString())
+        for (var i of wfhPending) {
+          if (isSameDay(i, d)) {
+            setShowAlertPending(true);
+            setAlertPendingDates(
+              alertPendingDates + " " + d.toLocaleDateString()
+            );
+          }
         }
       }
     } else if (date) {
-      if (wfhPending.includes(date)) {
-        setShowAlertPending(true);
-        setAlertPendingDates(alertPendingDates + " " + date.toLocaleDateString())
+      for (var i of wfhPending) {
+        if (isSameDay(i, date)) {
+          setShowAlertPending(true);
+          setAlertPendingDates(
+            alertPendingDates + " " + date.toLocaleDateString()
+          );
+        }
       }
     } else {
       setShowAlertPending(false);
     }
   };
 
+  //Alert variable if no date selected when form is submitted
+  const [showEmptyDateAlert, setShowEmptyDateAlert] = useState(false);
+
   //Alert variable if reason text area is not filled
-  const [showEmptyReasonAlert, setShowEmptyReasonAlert] = useState(false)
+  const [showEmptyReasonAlert, setShowEmptyReasonAlert] = useState(false);
 
   //Apply form
   const applyForm = useForm<z.infer<typeof applyFormSchema>>({
@@ -214,22 +227,105 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
     },
   });
 
+  //Success alert if form has been successfully submitted
+  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+
   //Submission for apply form
-  function applySubmit(values: z.infer<typeof applyFormSchema>) {
-    if (values.reason.trim()===""){
-      setShowEmptyReasonAlert(true)
+  async function applySubmit(values: z.infer<typeof applyFormSchema>) {
+    if (values.reason.trim() === "") {
+      setShowEmptyReasonAlert(true);
+    } else {
+      setShowEmptyReasonAlert(false);
     }
-    else{
-      setShowEmptyReasonAlert(false)
-    }
-    if (showEmptyReasonAlert===true || showMultipleDateAlert === true || showAlertApproved === true || showAlertPending === true){
-
-    }
-    else{
-
+    setShowEmptyDateAlert(
+      (values.isMultiple === "No" && !values.singleDate) ||
+        (values.isMultiple === "Yes" &&
+          (!values.multipleDate || values.multipleDate.length === 0))
+    );
+    if (
+      showEmptyReasonAlert === false ||
+      showMultipleDateAlert === false ||
+      showAlertApproved === false ||
+      showAlertPending === false
+    ) {
+      const headers = { Authorization: `Bearer ${token}` };
+      if (values.singleDate) {
+        console.log(typeof values.reason);
+        console.log(values.singleDate);
+        console.log(values.singleDate instanceof Date);
+        var content = {
+          location: "Home",
+          reason: values.reason,
+          requested_date: format(values.singleDate, "yyyy-MM-dd"),
+          staff_id: staffId,
+          recurring: false,
+        };
+        console.log(content);
+        try {
+          const response = await fetch(
+            "http://localhost:8080/api/application",
+            { headers: headers, method: "POST", body: JSON.stringify(content) }
+          );
+          if (!response.ok) {
+            console.log(await response.json());
+            throw new Error(`POST Application API validation ERROR`);
+          } else {
+            console.log(response.json());
+            setShowSuccessAlert(true);
+            //reset form once submission is successful
+            applyForm.reset();
+            //set timeout for alert
+            setTimeout(() => setShowSuccessAlert(false), 5000);
+          }
+        } catch (error: any) {
+          console.log("POST API fetching error.", error.message);
+        }
+      } else if (values.multipleDate) {
+        var events = [];
+        var count = 0;
+        for (var d of values.multipleDate) {
+          count += 1;
+          if (count !== 1) {
+            events.push(d);
+          }
+        }
+        var multiContent = {
+          location: "Home",
+          reason: values.reason,
+          requested_date: values.multipleDate[0],
+          description: values.reason,
+          staff_id: staffId,
+          recurring: false,
+          recurrence_type: "",
+          end_date: "",
+          events: events,
+        };
+        try {
+          const response = await fetch(
+            "http://localhost:8080/api/application",
+            {
+              headers: headers,
+              method: "POST",
+              body: JSON.stringify(multiContent),
+            }
+          );
+          if (!response.ok) {
+            console.log(await response.json());
+            throw new Error(`POST Application API validation ERROR`);
+          } else {
+            console.log(response.json());
+            setShowSuccessAlert(true);
+            //reset form once submission is successful
+            applyForm.reset();
+            //set timeout for alert
+            setTimeout(() => setShowSuccessAlert(false), 5000);
+          }
+        } catch (error: any) {
+          console.log("POST API fetching error.", error.message);
+        }
+      }
     }
   }
-
 
   return (
     <div className="container mx-auto p-4">
@@ -281,7 +377,8 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                       <AlertTriangle className="h-4 w-4" />
                       <AlertTitle>Warning</AlertTitle>
                       <AlertDescription>
-                        Please select at least 2 dates for the multiple dates calendar option.
+                        Please select at least 2 dates for the multiple dates
+                        calendar option.
                       </AlertDescription>
                     </Alert>
                   )}
@@ -294,6 +391,29 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                       </AlertDescription>
                     </Alert>
                   )}
+                  {showEmptyDateAlert && (
+                    <Alert variant="destructive">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertTitle>Warning</AlertTitle>
+                      <AlertDescription>
+                        No date has been selected.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  {showSuccessAlert && (
+                    <Alert
+                      variant="default"
+                      className="bg-green-100 border-green-500"
+                    >
+                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                      <AlertTitle className="text-green-800">
+                        Success
+                      </AlertTitle>
+                      <AlertDescription className="text-green-700">
+                        Your WFH request has been successfully submitted.
+                      </AlertDescription>
+                    </Alert>
+                  )}
                   <FormField
                     control={applyForm.control}
                     name="isMultiple"
@@ -303,7 +423,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                         <FormControl>
                           <RadioGroup
                             onValueChange={(value) => {
-                              field.onChange(value)
+                              field.onChange(value);
                               if (value === "No") {
                                 applyForm.setValue("multipleDate", undefined);
                                 checkForAlertApproved(
@@ -373,9 +493,9 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                                 mode="single"
                                 selected={field.value}
                                 onSelect={(date) => {
-                                  field.onChange(date)
-                                  checkForAlertApproved(date)
-                                  checkForAlertPending(date)
+                                  field.onChange(date);
+                                  checkForAlertApproved(date);
+                                  checkForAlertPending(date);
                                 }}
                                 fromDate={fromDate}
                                 toDate={toDate}
@@ -426,9 +546,9 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                                 mode="multiple"
                                 selected={field.value}
                                 onSelect={(dates) => {
-                                  field.onChange(dates)
-                                  checkForAlertApproved(dates)
-                                  checkForAlertPending(dates)
+                                  field.onChange(dates);
+                                  checkForAlertApproved(dates);
+                                  checkForAlertPending(dates);
                                 }}
                                 fromDate={fromDate}
                                 toDate={toDate}
