@@ -159,26 +159,27 @@ def updateGithubStatus(state, description, context) {
 
     for (int i = 0; i < maxRetries; i++) {
       def curlCommand = """
-        curl -v -H 'Authorization: token ${GITHUB_TOKEN}' \
+        curl -s -w "%{http_code}" -H 'Authorization: token ${GITHUB_TOKEN}' \
           -X POST \
           -H 'Accept: application/vnd.github.v3+json' \
           ${repoUrl} \
           -d '{"state":"${state}","context":"${context}","description":"${description}","target_url":"${jenkinsUrl}"}'
       """
 
-      def response = sh(script: curlCommand, returnStdout: true).trim()
+      def (response, statusCode) = sh(script: curlCommand, returnStdout: true).trim().tokenize('\n')
 
+      echo "GitHub API response status code: ${statusCode}"
       echo "Full GitHub API response:"
       echo response
 
-      if (response.contains('"state":"${state}"')) {
+      if (statusCode == "201") {
         echo "GitHub status updated successfully"
         return // Exit the loop on successful update
-      } else if (response.contains('429 Too Many Requests')) {
+      } else if (statusCode == "429") {
         echo "Rate limit exceeded. Retrying in ${retryDelay} seconds..."
         sleep(retryDelay * 1000) // Wait before retrying
       } else {
-        error("Failed to update GitHub status. Response: ${response}")
+        error("Failed to update GitHub status. Status code: ${statusCode}, Response: ${response}")
         break // Exit the loop on non-retryable error
       }
     }
