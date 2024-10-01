@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    options {
+        githubChecks()
+    }
+
     triggers {
         githubPullRequests(
             spec: '',
@@ -35,9 +39,9 @@ pipeline {
         stage('Initialize') {
             steps {
                 script {
-                    notifyGitHub('PENDING', 'Building Docker image', env.BUILD_CONTEXT)
-                    notifyGitHub('PENDING', 'Publishing to ACR', env.PUBLISH_CONTEXT)
-                    notifyGitHub('PENDING', 'Deploying to Azure', env.DEPLOY_CONTEXT)
+                    createGitHubCheck(name: 'Build', status: 'QUEUED')
+                    createGitHubCheck(name: 'Publish', status: 'QUEUED')
+                    createGitHubCheck(name: 'Deploy', status: 'QUEUED')
                 }
             }
         }
@@ -45,11 +49,12 @@ pipeline {
         stage('Build') {
             steps {
                 script {
+                    updateGitHubCheck(name: 'Build', status: 'IN_PROGRESS')
                     try {
                         sh "docker build -t ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER} ."
-                        notifyGitHub('SUCCESS', 'Docker image built successfully', env.BUILD_CONTEXT)
+                        updateGitHubCheck(name: 'Build', status: 'COMPLETED', conclusion: 'SUCCESS')
                     } catch (Exception e) {
-                        notifyGitHub('FAILURE', 'Failed during: Build', env.BUILD_CONTEXT)
+                        updateGitHubCheck(name: 'Build', status: 'COMPLETED', conclusion: 'FAILURE')
                         error("Build stage failed: ${e.message}")
                     }
                 }
@@ -59,12 +64,13 @@ pipeline {
         stage('Publish') {
             steps {
                 script {
+                    updateGitHubCheck(name: 'Publish', status: 'IN_PROGRESS')
                     try {
                         sh "echo ${ACR_PASSWORD} | docker login ${ACR_NAME}.azurecr.io -u ${ACR_USERNAME} --password-stdin"
                         sh "docker push ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER}"
-                        notifyGitHub('SUCCESS', 'Image published to ACR successfully', env.PUBLISH_CONTEXT)
+                        updateGitHubCheck(name: 'Publish', status: 'COMPLETED', conclusion: 'SUCCESS')
                     } catch (Exception e) {
-                        notifyGitHub('FAILURE', 'Failed during: Publish', env.PUBLISH_CONTEXT)
+                        updateGitHubCheck(name: 'Publish', status: 'COMPLETED', conclusion: 'FAILURE')
                         error("Publish stage failed: ${e.message}")
                     }
                 }
@@ -74,6 +80,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
+                    updateGitHubCheck(name: 'Deploy', status: 'IN_PROGRESS')
                     try {
                         sh '''#!/bin/bash
                             set -e
@@ -97,9 +104,9 @@ pipeline {
                             echo "Logging out from Azure..."
                             az logout
                         '''
-                        notifyGitHub('SUCCESS', 'Application deployed to Azure successfully', env.DEPLOY_CONTEXT)
+                        updateGitHubCheck(name: 'Deploy', status: 'COMPLETED', conclusion: 'SUCCESS')
                     } catch (Exception e) {
-                        notifyGitHub('FAILURE', 'Failed during: Deploy', env.DEPLOY_CONTEXT)
+                        updateGitHubCheck(name: 'Deploy', status: 'COMPLETED', conclusion: 'FAILURE')
                         error("Deploy stage failed: ${e.message}")
                     }
                 }
@@ -108,29 +115,33 @@ pipeline {
     }
 
     post {
-        success {
+        always {
             script {
-                notifyGitHub('SUCCESS', 'Pipeline completed successfully', env.BUILD_CONTEXT)
-                notifyGitHub('SUCCESS', 'Pipeline completed successfully', env.PUBLISH_CONTEXT)
-                notifyGitHub('SUCCESS', 'Pipeline completed successfully', env.DEPLOY_CONTEXT)
-            }
-        }
-        failure {
-            script {
-                notifyGitHub('FAILURE', 'Pipeline failed', env.BUILD_CONTEXT)
-                notifyGitHub('FAILURE', 'Pipeline failed', env.PUBLISH_CONTEXT)
-                notifyGitHub('FAILURE', 'Pipeline failed', env.DEPLOY_CONTEXT)
+                updateGitHubCheck(name: 'Build', status: 'COMPLETED', conclusion: currentBuild.currentResult)
+                updateGitHubCheck(name: 'Publish', status: 'COMPLETED', conclusion: currentBuild.currentResult)
+                updateGitHubCheck(name: 'Deploy', status: 'COMPLETED', conclusion: currentBuild.currentResult)
             }
         }
     }
 }
 
-def notifyGitHub(status, description, context) {
-    githubNotify account: 'cowlinmoo', 
-                 credentialsId: 'GITHUB_TOKEN',
-                 description: description, 
-                 context: context,
-                 sha: env.GIT_COMMIT,
-                 repo: env.GITHUB_REPO,
-                 status: status
+def createGitHubCheck(Map args) {
+    githubCheck(
+        name: args.name,
+        title: "Jenkins ${args.name}",
+        summary: "Running ${args.name} stage",
+        status: args.status
+    )
+}
+
+def updateGitHubCheck(Map args) {
+    githubCheck(
+        name: args.name,
+        title: "Jenkins ${args.name}",
+        summary: "${args.status == 'COMPLETED' ? (args.conclusion == 'SUCCESS' ? 'Successfully completed' : 'Failed') : 'Running'} ${args.name} stage",
+        text: "Build ${env.BUILD_NUMBER}\n\nCheck console output at ${env.BUILD_URL} to view the results.",
+        detailsURL: "${env.BUILD_URL}",
+        status: args.status,
+        conclusion: args.conclusion
+    )
 }
