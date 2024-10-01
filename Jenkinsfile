@@ -33,6 +33,7 @@ pipeline {
     DEPLOY_CONTEXT = "Jenkins: 3. Deploy"
     PIPELINE_CONTEXT = "Jenkins: Pipeline"
     GIT_REPO = "cowlinmoo/IS212_ComeBeck"
+    GITHUB_TOKEN = credentials('GITHUB_TOKEN')
   }
 
   stages {
@@ -42,9 +43,7 @@ pipeline {
           def scmVars = checkout scm
           env.GIT_COMMIT = scmVars.GIT_COMMIT
         }
-        withCredentials([string(credentialsId: 'GITHUB_TOKEN', variable: 'GITHUB_TOKEN')]) {
-          githubNotify context: "Jenkins: Checkout", description: "Checked out source code", status: "SUCCESS", account: 'cowlinmoo', repo: "${GIT_REPO}", credentialsId: 'GITHUB_TOKEN', sha: "${env.GIT_COMMIT}"
-        }
+        githubNotify context: "Jenkins: Checkout", description: "Checked out source code", status: "SUCCESS", account: 'cowlinmoo', repo: "${GIT_REPO}", token: "${GITHUB_TOKEN}", sha: "${env.GIT_COMMIT}"
       }
     }
 
@@ -57,15 +56,14 @@ pipeline {
           string(credentialsId: 'TENANT_ID', variable: 'TENANT_ID'),
           string(credentialsId: 'CONTAINER_APP_NAME', variable: 'CONTAINER_APP_NAME'),
           string(credentialsId: 'RESOURCE_GROUP', variable: 'RESOURCE_GROUP'),
-          string(credentialsId: 'IMAGE_NAME', variable: 'IMAGE_NAME'),
-          string(credentialsId: 'GITHUB_TOKEN', variable: 'GITHUB_TOKEN')
+          string(credentialsId: 'IMAGE_NAME', variable: 'IMAGE_NAME')
         ]) {
           script {
             try {
               // Set initial pending status for all steps
-              githubNotify context: "${env.BUILD_CONTEXT}", description: "Building Docker image", status: "PENDING", account: 'cowlinmoo', repo: "${GIT_REPO}", credentialsId: 'GITHUB_TOKEN', sha: "${env.GIT_COMMIT}"
-              githubNotify context: "${env.PUBLISH_CONTEXT}", description: "Publishing to ACR", status: "PENDING", account: 'cowlinmoo', repo: "${GIT_REPO}", credentialsId: 'GITHUB_TOKEN', sha: "${env.GIT_COMMIT}"
-              githubNotify context: "${env.DEPLOY_CONTEXT}", description: "Deploying to Azure", status: "PENDING", account: 'cowlinmoo', repo: "${GIT_REPO}", credentialsId: 'GITHUB_TOKEN', sha: "${env.GIT_COMMIT}"
+              githubNotify context: "${env.BUILD_CONTEXT}", description: "Building Docker image", status: "PENDING", account: 'cowlinmoo', repo: "${GIT_REPO}", token: "${GITHUB_TOKEN}", sha: "${env.GIT_COMMIT}"
+              githubNotify context: "${env.PUBLISH_CONTEXT}", description: "Publishing to ACR", status: "PENDING", account: 'cowlinmoo', repo: "${GIT_REPO}", token: "${GITHUB_TOKEN}", sha: "${env.GIT_COMMIT}"
+              githubNotify context: "${env.DEPLOY_CONTEXT}", description: "Deploying to Azure", status: "PENDING", account: 'cowlinmoo', repo: "${GIT_REPO}", token: "${GITHUB_TOKEN}", sha: "${env.GIT_COMMIT}"
 
               // Execute the shell script
               sh '''#!/bin/bash
@@ -110,14 +108,14 @@ az logout
 echo "Script completed successfully."
 '''
               // Update success status for all steps
-              githubNotify context: "${env.BUILD_CONTEXT}", description: "Docker image built successfully", status: "SUCCESS", account: 'cowlinmoo', repo: "${GIT_REPO}", credentialsId: 'GITHUB_TOKEN', sha: "${env.GIT_COMMIT}"
-              githubNotify context: "${env.PUBLISH_CONTEXT}", description: "Image published to ACR successfully", status: "SUCCESS", account: 'cowlinmoo', repo: "${GIT_REPO}", credentialsId: 'GITHUB_TOKEN', sha: "${env.GIT_COMMIT}"
-              githubNotify context: "${env.DEPLOY_CONTEXT}", description: "Application deployed to Azure successfully", status: "SUCCESS", account: 'cowlinmoo', repo: "${GIT_REPO}", credentialsId: 'GITHUB_TOKEN', sha: "${env.GIT_COMMIT}"
+              githubNotify context: "${env.BUILD_CONTEXT}", description: "Docker image built successfully", status: "SUCCESS", account: 'cowlinmoo', repo: "${GIT_REPO}", token: "${GITHUB_TOKEN}", sha: "${env.GIT_COMMIT}"
+              githubNotify context: "${env.PUBLISH_CONTEXT}", description: "Image published to ACR successfully", status: "SUCCESS", account: 'cowlinmoo', repo: "${GIT_REPO}", token: "${GITHUB_TOKEN}", sha: "${env.GIT_COMMIT}"
+              githubNotify context: "${env.DEPLOY_CONTEXT}", description: "Application deployed to Azure successfully", status: "SUCCESS", account: 'cowlinmoo', repo: "${GIT_REPO}", token: "${GITHUB_TOKEN}", sha: "${env.GIT_COMMIT}"
             } catch (Exception e) {
               // Update failure status for all steps
-              githubNotify context: "${env.BUILD_CONTEXT}", description: "Build failed: ${e.message}", status: "FAILURE", account: 'cowlinmoo', repo: "${GIT_REPO}", credentialsId: 'GITHUB_TOKEN', sha: "${env.GIT_COMMIT}"
-              githubNotify context: "${env.PUBLISH_CONTEXT}", description: "Publish failed: ${e.message}", status: "FAILURE", account: 'cowlinmoo', repo: "${GIT_REPO}", credentialsId: 'GITHUB_TOKEN', sha: "${env.GIT_COMMIT}"
-              githubNotify context: "${env.DEPLOY_CONTEXT}", description: "Deploy failed: ${e.message}", status: "FAILURE", account: 'cowlinmoo', repo: "${GIT_REPO}", credentialsId: 'GITHUB_TOKEN', sha: "${env.GIT_COMMIT}"
+              githubNotify context: "${env.BUILD_CONTEXT}", description: "Build failed: ${e.message}", status: "FAILURE", account: 'cowlinmoo', repo: "${GIT_REPO}", token: "${GITHUB_TOKEN}", sha: "${env.GIT_COMMIT}"
+              githubNotify context: "${env.PUBLISH_CONTEXT}", description: "Publish failed: ${e.message}", status: "FAILURE", account: 'cowlinmoo', repo: "${GIT_REPO}", token: "${GITHUB_TOKEN}", sha: "${env.GIT_COMMIT}"
+              githubNotify context: "${env.DEPLOY_CONTEXT}", description: "Deploy failed: ${e.message}", status: "FAILURE", account: 'cowlinmoo', repo: "${GIT_REPO}", token: "${GITHUB_TOKEN}", sha: "${env.GIT_COMMIT}"
               error("Pipeline failed: ${e.message}")
             }
           }
@@ -128,14 +126,10 @@ echo "Script completed successfully."
 
   post {
     success {
-      withCredentials([string(credentialsId: 'GITHUB_TOKEN', variable: 'GITHUB_TOKEN')]) {
-        githubNotify context: "${env.PIPELINE_CONTEXT}", description: "All stages completed successfully", status: "SUCCESS", account: 'cowlinmoo', repo: "${GIT_REPO}", credentialsId: 'GITHUB_TOKEN', sha: "${env.GIT_COMMIT}"
-      }
+      githubNotify context: "${env.PIPELINE_CONTEXT}", description: "All stages completed successfully", status: "SUCCESS", account: 'cowlinmoo', repo: "${GIT_REPO}", token: "${GITHUB_TOKEN}", sha: "${env.GIT_COMMIT}"
     }
     failure {
-      withCredentials([string(credentialsId: 'GITHUB_TOKEN', variable: 'GITHUB_TOKEN')]) {
-        githubNotify context: "${env.PIPELINE_CONTEXT}", description: "Pipeline failed", status: "FAILURE", account: 'cowlinmoo', repo: "${GIT_REPO}", credentialsId: 'GITHUB_TOKEN', sha: "${env.GIT_COMMIT}"
-      }
+      githubNotify context: "${env.PIPELINE_CONTEXT}", description: "Pipeline failed", status: "FAILURE", account: 'cowlinmoo', repo: "${GIT_REPO}", token: "${GITHUB_TOKEN}", sha: "${env.GIT_COMMIT}"
     }
   }
 }
