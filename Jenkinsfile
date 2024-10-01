@@ -32,7 +32,6 @@ pipeline {
     PUBLISH_CONTEXT = "Jenkins: 2. Publish"
     DEPLOY_CONTEXT = "Jenkins: 3. Deploy"
     PIPELINE_CONTEXT = "Jenkins: Pipeline"
-    GIT_REPO = "cowlinmoo/IS212_ComeBeck"
   }
 
   stages {
@@ -43,7 +42,7 @@ pipeline {
           env.GIT_COMMIT = scmVars.GIT_COMMIT
           env.GIT_BRANCH = scmVars.GIT_BRANCH
         }
-        githubNotify context: "Jenkins: Checkout", description: "Checked out source code", status: "SUCCESS", account: 'cowlinmoo', repo: "${GIT_REPO}", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", targetUrl: "${env.BUILD_URL}"
+        githubNotify context: "Jenkins: Checkout", description: "Checked out source code", status: "SUCCESS", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", targetUrl: "${env.BUILD_URL}"
       }
     }
 
@@ -61,9 +60,9 @@ pipeline {
           script {
             try {
               // Set initial pending status for all steps
-              githubNotify context: "${env.BUILD_CONTEXT}", description: "Building Docker image", status: "PENDING", account: 'cowlinmoo', repo: "${GIT_REPO}", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", targetUrl: "${env.BUILD_URL}"
-              githubNotify context: "${env.PUBLISH_CONTEXT}", description: "Publishing to ACR", status: "PENDING", account: 'cowlinmoo', repo: "${GIT_REPO}", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", targetUrl: "${env.BUILD_URL}"
-              githubNotify context: "${env.DEPLOY_CONTEXT}", description: "Deploying to Azure", status: "PENDING", account: 'cowlinmoo', repo: "${GIT_REPO}", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", targetUrl: "${env.BUILD_URL}"
+              githubNotify context: "${env.BUILD_CONTEXT}", description: "Building Docker image", status: "PENDING", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", targetUrl: "${env.BUILD_URL}"
+              githubNotify context: "${env.PUBLISH_CONTEXT}", description: "Publishing to ACR", status: "PENDING", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", targetUrl: "${env.BUILD_URL}"
+              githubNotify context: "${env.DEPLOY_CONTEXT}", description: "Deploying to Azure", status: "PENDING", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", targetUrl: "${env.BUILD_URL}"
 
               // Execute the shell script
               sh '''#!/bin/bash
@@ -108,14 +107,14 @@ az logout
 echo "Script completed successfully."
 '''
               // Update success status for all steps
-              githubNotify context: "${env.BUILD_CONTEXT}", description: "Docker image built successfully", status: "SUCCESS", account: 'cowlinmoo', repo: "${GIT_REPO}", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", targetUrl: "${env.BUILD_URL}"
-              githubNotify context: "${env.PUBLISH_CONTEXT}", description: "Image published to ACR successfully", status: "SUCCESS", account: 'cowlinmoo', repo: "${GIT_REPO}", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", targetUrl: "${env.BUILD_URL}"
-              githubNotify context: "${env.DEPLOY_CONTEXT}", description: "Application deployed to Azure successfully", status: "SUCCESS", account: 'cowlinmoo', repo: "${GIT_REPO}", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", targetUrl: "${env.BUILD_URL}"
+              githubNotify context: "${env.BUILD_CONTEXT}", description: "Docker image built successfully", status: "SUCCESS", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", targetUrl: "${env.BUILD_URL}"
+              githubNotify context: "${env.PUBLISH_CONTEXT}", description: "Image published to ACR successfully", status: "SUCCESS", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", targetUrl: "${env.BUILD_URL}"
+              githubNotify context: "${env.DEPLOY_CONTEXT}", description: "Application deployed to Azure successfully", status: "SUCCESS", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", targetUrl: "${env.BUILD_URL}"
             } catch (Exception e) {
               // Update failure status for all steps
-              githubNotify context: "${env.BUILD_CONTEXT}", description: "Build failed: ${e.message}", status: "FAILURE", account: 'cowlinmoo', repo: "${GIT_REPO}", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", targetUrl: "${env.BUILD_URL}"
-              githubNotify context: "${env.PUBLISH_CONTEXT}", description: "Publish failed: ${e.message}", status: "FAILURE", account: 'cowlinmoo', repo: "${GIT_REPO}", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", targetUrl: "${env.BUILD_URL}"
-              githubNotify context: "${env.DEPLOY_CONTEXT}", description: "Deploy failed: ${e.message}", status: "FAILURE", account: 'cowlinmoo', repo: "${GIT_REPO}", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", targetUrl: "${env.BUILD_URL}"
+              githubNotify context: "${env.BUILD_CONTEXT}", description: "Build failed: ${e.message}", status: "FAILURE", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", targetUrl: "${env.BUILD_URL}"
+              githubNotify context: "${env.PUBLISH_CONTEXT}", description: "Publish failed: ${e.message}", status: "FAILURE", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", targetUrl: "${env.BUILD_URL}"
+              githubNotify context: "${env.DEPLOY_CONTEXT}", description: "Deploy failed: ${e.message}", status: "FAILURE", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", targetUrl: "${env.BUILD_URL}"
               error("Pipeline failed: ${e.message}")
             }
           }
@@ -126,10 +125,10 @@ echo "Script completed successfully."
 
   post {
     success {
-      githubNotify context: "${env.PIPELINE_CONTEXT}", description: "All stages completed successfully", status: "SUCCESS", account: 'cowlinmoo', repo: "${GIT_REPO}", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", targetUrl: "${env.BUILD_URL}"
+      githubNotify context: "${env.PIPELINE_CONTEXT}", description: "All stages completed successfully", status: "SUCCESS", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", targetUrl: "${env.BUILD_URL}"
     }
     failure {
-      githubNotify context: "${env.PIPELINE_CONTEXT}", description: "Pipeline failed", status: "FAILURE", account: 'cowlinmoo', repo: "${GIT_REPO}", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", targetUrl: "${env.BUILD_URL}"
+      githubNotify context: "${env.PIPELINE_CONTEXT}", description: "Pipeline failed", status: "FAILURE", credentialsId: 'githubpat', sha: "${env.GIT_COMMIT}", targetUrl: "${env.BUILD_URL}"
     }
   }
 }
