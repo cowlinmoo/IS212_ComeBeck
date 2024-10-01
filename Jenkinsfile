@@ -73,7 +73,7 @@ update_github_status "pending" "Deploying to Azure" "${DEPLOY_CONTEXT}"
 
 # Wrap the entire script in a try-catch block
 {
-    echo "Deleting Old Docker resources..."
+    echo "Deleting Old Docker resource..."
     docker system prune -af
 
     # Step 1: Build the Docker image
