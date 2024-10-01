@@ -37,8 +37,7 @@ pipeline {
                                   title: 'Building Docker Image',
                                   summary: 'Building the Docker image for the application',
                                   text: 'This step builds the Docker image using the Dockerfile in the repository.',
-                                  status: 'IN_PROGRESS',
-                                  changeset: [GIT_COMMIT]
+                                  status: 'IN_PROGRESS'
                     echo "Initial Build check published"
                     
                     try {
@@ -47,8 +46,7 @@ pipeline {
                         publishChecks name: 'Jenkins: Build',
                                       conclusion: 'SUCCESS',
                                       title: 'Docker Image Built Successfully',
-                                      summary: 'The Docker image was built without any issues.',
-                                      changeset: [GIT_COMMIT]
+                                      summary: 'The Docker image was built without any issues.'
                         echo "Successful Build check published"
                     } catch (Exception e) {
                         echo "About to publish failed Build check"
@@ -56,8 +54,7 @@ pipeline {
                                       conclusion: 'FAILURE',
                                       title: 'Docker Image Build Failed',
                                       summary: 'There was an error while building the Docker image.',
-                                      text: "Error: ${e.message}",
-                                      changeset: [GIT_COMMIT]
+                                      text: "Error: ${e.message}"
                         echo "Failed Build check published"
                         throw e
                     }
@@ -73,8 +70,7 @@ pipeline {
                                   title: 'Publishing Docker Image',
                                   summary: 'Publishing the Docker image to Azure Container Registry',
                                   text: 'This step pushes the built Docker image to ACR.',
-                                  status: 'IN_PROGRESS',
-                                  changeset: [GIT_COMMIT]
+                                  status: 'IN_PROGRESS'
                     echo "Initial Publish check published"
                     
                     try {
@@ -84,8 +80,7 @@ pipeline {
                         publishChecks name: 'Jenkins: Publish',
                                       conclusion: 'SUCCESS',
                                       title: 'Docker Image Published Successfully',
-                                      summary: 'The Docker image was pushed to ACR without any issues.',
-                                      changeset: [GIT_COMMIT]
+                                      summary: 'The Docker image was pushed to ACR without any issues.'
                         echo "Successful Publish check published"
                     } catch (Exception e) {
                         echo "About to publish failed Publish check"
@@ -93,8 +88,7 @@ pipeline {
                                       conclusion: 'FAILURE',
                                       title: 'Docker Image Publish Failed',
                                       summary: 'There was an error while publishing the Docker image to ACR.',
-                                      text: "Error: ${e.message}",
-                                      changeset: [GIT_COMMIT]
+                                      text: "Error: ${e.message}"
                         echo "Failed Publish check published"
                         throw e
                     }
@@ -110,8 +104,7 @@ pipeline {
                                   title: 'Deploying to Azure Container App',
                                   summary: 'Updating the Azure Container App with the new image',
                                   text: 'This step deploys the new image to Azure Container App.',
-                                  status: 'IN_PROGRESS',
-                                  changeset: [GIT_COMMIT]
+                                  status: 'IN_PROGRESS'
                     echo "Initial Deploy check published"
                     
                     try {
@@ -141,8 +134,7 @@ pipeline {
                         publishChecks name: 'Jenkins: Deploy',
                                       conclusion: 'SUCCESS',
                                       title: 'Deployment Successful',
-                                      summary: 'The application was successfully deployed to Azure Container App.',
-                                      changeset: [GIT_COMMIT]
+                                      summary: 'The application was successfully deployed to Azure Container App.'
                         echo "Successful Deploy check published"
                     } catch (Exception e) {
                         echo "About to publish failed Deploy check"
@@ -150,8 +142,7 @@ pipeline {
                                       conclusion: 'FAILURE',
                                       title: 'Deployment Failed',
                                       summary: 'There was an error while deploying to Azure Container App.',
-                                      text: "Error: ${e.message}",
-                                      changeset: [GIT_COMMIT]
+                                      text: "Error: ${e.message}"
                         echo "Failed Deploy check published"
                         throw e
                     }
@@ -169,8 +160,7 @@ pipeline {
                           text: '''This is an overall summary of the pipeline execution.
                                    It includes the Build, Publish, and Deploy stages.''',
                           detailsURL: "${env.BUILD_URL}",
-                          actions: [[label: 'Rerun', description: 'Rerun the pipeline', identifier: "rerun_${env.BUILD_NUMBER}"]],
-                          changeset: [GIT_COMMIT]
+                          actions: [[label: 'Rerun', description: 'Rerun the pipeline', identifier: "rerun_${env.BUILD_NUMBER}"]]
             echo "Pipeline Summary check published"
         }
     }
