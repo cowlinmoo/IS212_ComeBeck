@@ -34,7 +34,7 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                withChecks('Jenkins: 1. Build') {
+                withChecks(name: 'Build', includeStage: true) {
                     sh "docker build -t ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER} ."
                 }
             }
@@ -42,7 +42,7 @@ pipeline {
 
         stage('Publish') {
             steps {
-                withChecks('Jenkins: 2. Publish') {
+                withChecks(name: 'Publish', includeStage: true) {
                     sh "echo ${ACR_PASSWORD} | docker login ${ACR_NAME}.azurecr.io -u ${ACR_USERNAME} --password-stdin"
                     sh "docker push ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER}"
                 }
@@ -51,7 +51,7 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                withChecks('Jenkins: 3. Deploy') {
+                withChecks(name: 'Deploy', includeStage: true) {
                     sh '''#!/bin/bash
                         set -e
                         if ! command -v az &> /dev/null
@@ -81,9 +81,27 @@ pipeline {
 
     post {
         always {
-            withChecks('Jenkins: Pipeline') {
-                echo "Pipeline finished with result: ${currentBuild.result}"
-            }
+            publishChecks name: 'Pipeline Summary', 
+                          title: 'Pipeline Result', 
+                          summary: "Pipeline finished with result: ${currentBuild.result}",
+                          text: '''This is an overall summary of the pipeline execution.
+                                   It includes the Build, Publish, and Deploy stages.''',
+                          detailsURL: "${env.BUILD_URL}",
+                          actions: [[label: 'Rerun', description: 'Rerun the pipeline', identifier: "rerun_${env.BUILD_NUMBER}"]]
+        }
+        success {
+            publishChecks name: 'Pipeline Status', 
+                          conclusion: 'SUCCESS',
+                          title: 'Pipeline Succeeded', 
+                          summary: 'All stages completed successfully.',
+                          text: 'The pipeline has successfully built, published, and deployed the application.'
+        }
+        failure {
+            publishChecks name: 'Pipeline Status', 
+                          conclusion: 'FAILURE',
+                          title: 'Pipeline Failed', 
+                          summary: 'One or more stages failed.',
+                          text: 'Please check the Jenkins console output for more details on the failure.'
         }
     }
 }
