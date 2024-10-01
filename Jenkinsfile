@@ -34,67 +34,46 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                githubChecks(context: env.BUILD_CONTEXT, status: 'PENDING')
-                sh "docker build -t ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER} ."
-            }
-            post {
-                success {
-                    githubChecks(context: env.BUILD_CONTEXT, status: 'SUCCESS')
-                }
-                failure {
-                    githubChecks(context: env.BUILD_CONTEXT, status: 'FAILURE')
+                withChecks('Jenkins: 1. Build') {
+                    sh "docker build -t ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER} ."
                 }
             }
         }
 
         stage('Publish') {
             steps {
-                githubChecks(context: env.PUBLISH_CONTEXT, status: 'PENDING')
-                sh "echo ${ACR_PASSWORD} | docker login ${ACR_NAME}.azurecr.io -u ${ACR_USERNAME} --password-stdin"
-                sh "docker push ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER}"
-            }
-            post {
-                success {
-                    githubChecks(context: env.PUBLISH_CONTEXT, status: 'SUCCESS')
-                }
-                failure {
-                    githubChecks(context: env.PUBLISH_CONTEXT, status: 'FAILURE')
+                withChecks('Jenkins: 2. Publish') {
+                    sh "echo ${ACR_PASSWORD} | docker login ${ACR_NAME}.azurecr.io -u ${ACR_USERNAME} --password-stdin"
+                    sh "docker push ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER}"
                 }
             }
         }
 
         stage('Deploy') {
             steps {
-                githubChecks(context: env.DEPLOY_CONTEXT, status: 'PENDING')
-                sh '''#!/bin/bash
-                    set -e
-                    if ! command -v az &> /dev/null
-                    then
-                        echo "Azure CLI not found. Installing..."
-                        curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-                    else
-                        echo "Azure CLI is already installed."
-                    fi
+                withChecks('Jenkins: 3. Deploy') {
+                    sh '''#!/bin/bash
+                        set -e
+                        if ! command -v az &> /dev/null
+                        then
+                            echo "Azure CLI not found. Installing..."
+                            curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+                        else
+                            echo "Azure CLI is already installed."
+                        fi
 
-                    echo "Logging in to Azure..."
-                    az login --service-principal -u ${ACR_USERNAME} -p ${ACR_PASSWORD} --tenant ${TENANT_ID}
+                        echo "Logging in to Azure..."
+                        az login --service-principal -u ${ACR_USERNAME} -p ${ACR_PASSWORD} --tenant ${TENANT_ID}
 
-                    echo "Updating Container App..."
-                    az containerapp update \
-                      --name ${CONTAINER_APP_NAME} \
-                      --resource-group ${RESOURCE_GROUP} \
-                      --image ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER}
+                        echo "Updating Container App..."
+                        az containerapp update \
+                          --name ${CONTAINER_APP_NAME} \
+                          --resource-group ${RESOURCE_GROUP} \
+                          --image ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER}
 
-                    echo "Logging out from Azure..."
-                    az logout
-                '''
-            }
-            post {
-                success {
-                    githubChecks(context: env.DEPLOY_CONTEXT, status: 'SUCCESS')
-                }
-                failure {
-                    githubChecks(context: env.DEPLOY_CONTEXT, status: 'FAILURE')
+                        echo "Logging out from Azure..."
+                        az logout
+                    '''
                 }
             }
         }
@@ -102,7 +81,9 @@ pipeline {
 
     post {
         always {
-            githubChecks(context: 'Jenkins: Pipeline', conclusion: currentBuild.resultIsBetterOrEqualTo('SUCCESS') ? 'SUCCESS' : 'FAILURE')
+            withChecks('Jenkins: Pipeline') {
+                echo "Pipeline finished with result: ${currentBuild.result}"
+            }
         }
     }
 }
