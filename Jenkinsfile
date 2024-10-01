@@ -32,7 +32,7 @@ pipeline {
     PUBLISH_CONTEXT = "Jenkins: 2. Publish"
     DEPLOY_CONTEXT = "Jenkins: 3. Deploy"
     PIPELINE_CONTEXT = "Jenkins: Pipeline"
-    GITHUB_REPO = "your-github-account/your-repo-name"
+    GITHUB_REPO = "cowlinmoo/IS212_ComeBeck"
   }
 
   stages {
@@ -89,6 +89,21 @@ if ! command -v az &> /dev/null
 then
     echo "Azure CLI not found. Installing..."
     curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+    
+    # Azure CLI installation script
+    sudo bash -c '
+    set -e
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update
+    apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
+    mkdir -p /etc/apt/keyrings
+    curl -sLS https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/keyrings/microsoft.gpg
+    chmod go+r /etc/apt/keyrings/microsoft.gpg
+    CLI_REPO=$(lsb_release -cs)
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/azure-cli/ $CLI_REPO main" | tee /etc/apt/sources.list.d/azure-cli.list > /dev/null
+    apt-get update
+    apt-get install -y azure-cli
+    '
 else
     echo "Azure CLI is already installed."
 fi
