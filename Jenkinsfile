@@ -34,7 +34,7 @@ pipeline {
                     githubNotify account: 'cowlinmoo', context: 'Build Docker Image', credentialsId: 'githubpat', description: 'Building Docker Image In Jenkins', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'PENDING', targetUrl: "${env.BUILD_URL}"
 
                     try {
-                        sh "docker build -t ${env.ACR_NAME}.azurecr.io/${env.IMAGE_NAME}:${env.BUILD_NUMBER} ."
+                        sh "docker build -t ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER} ."
                         githubNotify account: 'cowlinmoo', context: 'Build Docker Image', credentialsId: 'githubpat', description: 'Docker Image Built Successfully', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'SUCCESS', targetUrl: "${env.BUILD_URL}"
                     } catch (Exception e) {
                         githubNotify account: 'cowlinmoo', context: 'Build Docker Image', credentialsId: 'githubpat', description: 'Docker Image Build Failed', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'FAILURE', targetUrl: "${env.BUILD_URL}"
@@ -57,8 +57,8 @@ pipeline {
                     githubNotify account: 'cowlinmoo', context: 'Publish Docker Image', credentialsId: 'githubpat', description: 'Publishing Docker Image to registry', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'PENDING', targetUrl: "${env.BUILD_URL}"
 
                     try {
-                        sh "echo ${env.ACR_PASSWORD} | docker login ${env.ACR_NAME}.azurecr.io -u ${env.ACR_USERNAME} --password-stdin"
-                        sh "docker push ${env.ACR_NAME}.azurecr.io/${env.IMAGE_NAME}:${env.BUILD_NUMBER}"
+                        sh "echo ${ACR_PASSWORD} | docker login ${ACR_NAME}.azurecr.io -u ${ACR_USERNAME} --password-stdin"
+                        sh "docker push ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER}"
                         githubNotify account: 'cowlinmoo', context: 'Publish Docker Image', credentialsId: 'githubpat', description: 'Docker Image Published Successfully', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'SUCCESS', targetUrl: "${env.BUILD_URL}"
                     } catch (Exception e) {
                         githubNotify account: 'cowlinmoo', context: 'Publish Docker Image', credentialsId: 'githubpat', description: 'Docker Image Publish Failed', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'FAILURE', targetUrl: "${env.BUILD_URL}"
@@ -92,13 +92,13 @@ pipeline {
                             fi
 
                             echo "Logging in to Azure..."
-                            az login --service-principal -u ${env.ACR_USERNAME} -p ${env.ACR_PASSWORD} --tenant ${env.TENANT_ID}
+                            az login --service-principal -u $ACR_USERNAME -p $ACR_PASSWORD --tenant $TENANT_ID
 
                             echo "Updating Container App..."
                             az containerapp update \
-                              --name ${env.CONTAINER_APP_NAME} \
-                              --resource-group ${env.RESOURCE_GROUP} \
-                              --image ${env.ACR_NAME}.azurecr.io/${env.IMAGE_NAME}:${env.BUILD_NUMBER}
+                              --name $CONTAINER_APP_NAME \
+                              --resource-group $RESOURCE_GROUP \
+                              --image $ACR_NAME.azurecr.io/$IMAGE_NAME:$BUILD_NUMBER
 
                             echo "Logging out from Azure..."
                             az logout
