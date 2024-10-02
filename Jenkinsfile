@@ -32,13 +32,13 @@ pipeline {
             steps {
                 script {
                     // Notify GitHub (Status API - for the dot)
-                    githubNotify account: 'cowlinmoo', context: 'Build Docker Image', credentialsId: 'githubpat', description: 'Building Docker Image In Jenkins', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'PENDING', targetUrl: "${env.BUILD_URL}"
+                    githubNotify account: 'cowlinmoo', context: 'Build Docker Image', credentialsId: 'githubpat', description: 'Building Docker Image In Jenkins', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'pending', targetUrl: "${env.BUILD_URL}"
 
                     try {
                         sh "docker build -t ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER} ."
-                        githubNotify account: 'cowlinmoo', context: 'Build Docker Image', credentialsId: 'githubpat', description: 'Docker Image Built Successfully', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'SUCCESS', targetUrl: "${env.BUILD_URL}"
+                        githubNotify account: 'cowlinmoo', context: 'Build Docker Image', credentialsId: 'githubpat', description: 'Docker Image Built Successfully', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'success', targetUrl: "${env.BUILD_URL}"
                     } catch (Exception e) {
-                        githubNotify account: 'cowlinmoo', context: 'Build Docker Image', credentialsId: 'githubpat', description: 'Docker Image Build Failed', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'FAILURE', targetUrl: "${env.BUILD_URL}"
+                        githubNotify account: 'cowlinmoo', context: 'Build Docker Image', credentialsId: 'githubpat', description: 'Docker Image Build Failed', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'failure', targetUrl: "${env.BUILD_URL}"
                         throw e
                     }
 
@@ -56,14 +56,14 @@ pipeline {
         stage('Publish') {
             steps {
                 script {
-                    githubNotify account: 'cowlinmoo', context: 'Publish Docker Image', credentialsId: 'githubpat', description: 'Publishing Docker Image to registry', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'PENDING', targetUrl: "${env.BUILD_URL}"
+                    githubNotify account: 'cowlinmoo', context: 'Publish Docker Image', credentialsId: 'githubpat', description: 'Publishing Docker Image to registry', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'pending', targetUrl: "${env.BUILD_URL}"
 
                     try {
                         sh "echo ${ACR_PASSWORD} | docker login ${ACR_NAME}.azurecr.io -u ${ACR_USERNAME} --password-stdin"
                         sh "docker push ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER}"
-                        githubNotify account: 'cowlinmoo', context: 'Publish Docker Image', credentialsId: 'githubpat', description: 'Docker Image Published Successfully', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'SUCCESS', targetUrl: "${env.BUILD_URL}"
+                        githubNotify account: 'cowlinmoo', context: 'Publish Docker Image', credentialsId: 'githubpat', description: 'Docker Image Published Successfully', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'success', targetUrl: "${env.BUILD_URL}"
                     } catch (Exception e) {
-                        githubNotify account: 'cowlinmoo', context: 'Publish Docker Image', credentialsId: 'githubpat', description: 'Docker Image Publish Failed', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'FAILURE', targetUrl: "${env.BUILD_URL}"
+                        githubNotify account: 'cowlinmoo', context: 'Publish Docker Image', credentialsId: 'githubpat', description: 'Docker Image Publish Failed', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'failure', targetUrl: "${env.BUILD_URL}"
                         throw e
                     }
 
@@ -80,7 +80,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    githubNotify account: 'cowlinmoo', context: 'Deploy Docker Image', credentialsId: 'githubpat', description: 'Deploying to Azure Container App', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'PENDING', targetUrl: "${env.BUILD_URL}"
+                    githubNotify account: 'cowlinmoo', context: 'Deploy Docker Image', credentialsId: 'githubpat', description: 'Deploying to Azure Container App', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'pending', targetUrl: "${env.BUILD_URL}"
 
                     try {
                         sh '''#!/bin/bash
@@ -105,9 +105,9 @@ pipeline {
                             echo "Logging out from Azure..."
                             az logout
                         '''
-                        githubNotify account: 'cowlinmoo', context: 'Deploy Docker Image', credentialsId: 'githubpat', description: 'Deployment Successful', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'SUCCESS', targetUrl: "${env.BUILD_URL}"
+                        githubNotify account: 'cowlinmoo', context: 'Deploy Docker Image', credentialsId: 'githubpat', description: 'Deployment Successful', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'success', targetUrl: "${env.BUILD_URL}"
                     } catch (Exception e) {
-                        githubNotify account: 'cowlinmoo', context: 'Deploy Docker Image', credentialsId: 'githubpat', description: 'Deployment Failed', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'FAILURE', targetUrl: "${env.BUILD_URL}"
+                        githubNotify account: 'cowlinmoo', context: 'Deploy Docker Image', credentialsId: 'githubpat', description: 'Deployment Failed', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'failure', targetUrl: "${env.BUILD_URL}"
                         throw e
                     }
 
