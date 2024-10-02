@@ -137,9 +137,9 @@ pipeline {
                               Git Commit: ${GIT_COMMIT}
                               
                               Stages:
-                              - Build: ${currentBuild.rawBuild.getExecution().getStages().find { it.name == 'Build' }?.status ?: 'N/A'}
-                              - Publish: ${currentBuild.rawBuild.getExecution().getStages().find { it.name == 'Publish' }?.status ?: 'N/A'}
-                              - Deploy: ${currentBuild.rawBuild.getExecution().getStages().find { it.name == 'Deploy' }?.status ?: 'N/A'}
+                              - Build: ${currentBuild.stages.find { it.name == 'Build' }?.status ?: 'N/A'}
+                              - Publish: ${currentBuild.stages.find { it.name == 'Publish' }?.status ?: 'N/A'}
+                              - Deploy: ${currentBuild.stages.find { it.name == 'Deploy' }?.status ?: 'N/A'}
                               """,
                               conclusion: (buildStatus == 'SUCCESS') ? 'success' : 'failure',
                               detailsURL: "${BUILD_URL}",
