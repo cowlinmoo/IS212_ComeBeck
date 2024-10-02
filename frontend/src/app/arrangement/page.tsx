@@ -16,6 +16,7 @@ export default function Component() {
   console.log('Token:', token);
   console.log('User ID:', userId);
 
+
   return (
     <div className="flex h-screen text-black bg-gray-100">
       {/* Left Navbar */}
@@ -24,10 +25,10 @@ export default function Component() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <Header/>
+        <Header />
         {/* Page Content */}
-        <Applications />
+        <Applications staffId = {userId} token= {token}/>
       </div>
     </div>
-  )
+  );
 }
