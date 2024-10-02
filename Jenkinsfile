@@ -1,9 +1,9 @@
-@Grab(group='io.jsonwebtoken', module='jjwt', version='0.9.1')
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
 import java.security.KeyFactory
 import java.security.spec.PKCS8EncodedKeySpec
 import java.util.Base64
+import java.util.Date
 
 pipeline {
     agent any
