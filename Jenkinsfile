@@ -25,28 +25,22 @@ pipeline {
         RESOURCE_GROUP = credentials('RESOURCE_GROUP')
         GIT_COMMIT = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
         GITHUB_REPO = "IS212_ComeBeck"
+        GITHUB_TOKEN = credentials('GITHUB_TOKEN')
     }
 
     stages {
         stage('Build') {
             steps {
                 script {
-                    githubNotify account: 'cowlinmoo', context: 'Build Docker Image', credentialsId: 'githubpat', description: 'Building Docker Image In Jenkins', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'PENDING', targetUrl: "${env.BUILD_URL}"
+                    updateGitHubStatus('pending', 'Building Docker image', 'Jenkins: 1. Build')
 
                     try {
                         sh "docker build -t ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER} ."
-                        githubNotify account: 'cowlinmoo', context: 'Build Docker Image', credentialsId: 'githubpat', description: 'Docker Image Built Successfully', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'SUCCESS', targetUrl: "${env.BUILD_URL}"
+                        updateGitHubStatus('success', 'Docker image built successfully', 'Jenkins: 1. Build')
                     } catch (Exception e) {
-                        githubNotify account: 'cowlinmoo', context: 'Build Docker Image', credentialsId: 'githubpat', description: 'Docker Image Build Failed', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'FAILURE', targetUrl: "${env.BUILD_URL}"
+                        updateGitHubStatus('failure', 'Docker image build failed', 'Jenkins: 1. Build')
                         throw e
                     }
-
-                    publishChecks name: 'Jenkins: Build Docker Image',
-                                  title: 'Build Result',
-                                  summary: 'Build Completed',
-                                  text: 'Docker image built',
-                                  conclusion: (currentBuild.result == 'SUCCESS') ? 'SUCCESS' : 'FAILURE',
-                                  detailsURL: "${env.BUILD_URL}"
                 }
             }
         }
@@ -54,23 +48,16 @@ pipeline {
         stage('Publish') {
             steps {
                 script {
-                    githubNotify account: 'cowlinmoo', context: 'Publish Docker Image', credentialsId: 'githubpat', description: 'Publishing Docker Image to registry', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'PENDING', targetUrl: "${env.BUILD_URL}"
+                    updateGitHubStatus('pending', 'Publishing to ACR', 'Jenkins: 2. Publish')
 
                     try {
                         sh "echo ${ACR_PASSWORD} | docker login ${ACR_NAME}.azurecr.io -u ${ACR_USERNAME} --password-stdin"
                         sh "docker push ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER}"
-                        githubNotify account: 'cowlinmoo', context: 'Publish Docker Image', credentialsId: 'githubpat', description: 'Docker Image Published Successfully', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'SUCCESS', targetUrl: "${env.BUILD_URL}"
+                        updateGitHubStatus('success', 'Image published to ACR successfully', 'Jenkins: 2. Publish')
                     } catch (Exception e) {
-                        githubNotify account: 'cowlinmoo', context: 'Publish Docker Image', credentialsId: 'githubpat', description: 'Docker Image Publish Failed', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'FAILURE', targetUrl: "${env.BUILD_URL}"
+                        updateGitHubStatus('failure', 'Image publish failed', 'Jenkins: 2. Publish')
                         throw e
                     }
-
-                    publishChecks name: 'Jenkins: Publish Docker Image',
-                                  title: 'Publish Result',
-                                  summary: 'Publish Completed',
-                                  text: 'Docker image published',
-                                  conclusion: (currentBuild.result == 'SUCCESS') ? 'SUCCESS' : 'FAILURE',
-                                  detailsURL: "${env.BUILD_URL}"
                 }
             }
         }
@@ -78,7 +65,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    githubNotify account: 'cowlinmoo', context: 'Deploy Docker Image', credentialsId: 'githubpat', description: 'Deploying to Azure Container App', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'PENDING', targetUrl: "${env.BUILD_URL}"
+                    updateGitHubStatus('pending', 'Deploying to Azure', 'Jenkins: 3. Deploy')
 
                     try {
                         sh '''#!/bin/bash
@@ -103,18 +90,11 @@ pipeline {
                             echo "Logging out from Azure..."
                             az logout
                         '''
-                        githubNotify account: 'cowlinmoo', context: 'Deploy Docker Image', credentialsId: 'githubpat', description: 'Deployment Successful', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'SUCCESS', targetUrl: "${env.BUILD_URL}"
+                        updateGitHubStatus('success', 'Application deployed to Azure successfully', 'Jenkins: 3. Deploy')
                     } catch (Exception e) {
-                        githubNotify account: 'cowlinmoo', context: 'Deploy Docker Image', credentialsId: 'githubpat', description: 'Deployment Failed', gitApiUrl: '', repo: "${GITHUB_REPO}", sha: "${GIT_COMMIT}", status: 'FAILURE', targetUrl: "${env.BUILD_URL}"
+                        updateGitHubStatus('failure', 'Deployment failed', 'Jenkins: 3. Deploy')
                         throw e
                     }
-
-                    publishChecks name: 'Jenkins: Deploy Docker Image',
-                                  title: 'Deploy Result',
-                                  summary: 'Deploy Completed',
-                                  text: 'Docker image deployed',
-                                  conclusion: (currentBuild.result == 'SUCCESS') ? 'SUCCESS' : 'FAILURE',
-                                  detailsURL: "${env.BUILD_URL}"
                 }
             }
         }
@@ -125,19 +105,17 @@ pipeline {
             script {
                 def buildStatus = currentBuild.result ?: 'SUCCESS'
                 def description = "Pipeline finished with result: ${buildStatus}"
-
-                publishChecks name: 'Jenkins Continuous Integration Pipeline',
-                              title: 'Pipeline Result',
-                              summary: description,
-                              text: """
-                              Build Number: ${env.BUILD_NUMBER}
-                              Build URL: ${env.BUILD_URL}
-                              Git Commit: ${env.GIT_COMMIT}
-                              """,
-                              conclusion: (buildStatus == 'SUCCESS') ? 'SUCCESS' : 'FAILURE',
-                              detailsURL: "${env.BUILD_URL}",
-                              actions: [[label: 'Rerun Pipeline', description: 'Rerun the Jenkins pipeline', identifier: 'rerun_pipeline']]
             }
         }
     }
+}
+
+def updateGitHubStatus(String state, String description, String context) {
+    sh """
+        curl -s -H "Authorization: token ${GITHUB_TOKEN}" \
+             -X POST \
+             -H "Accept: application/vnd.github.v3+json" \
+             https://api.github.com/repos/cowlinmoo/IS212_ComeBeck/statuses/${GIT_COMMIT} \
+             -d "{\\"state\\":\\"${state}\\",\\"context\\":\\"${context}\\",\\"description\\":\\"${description}\\",\\"target_url\\":\\"${env.BUILD_URL}\\"}"
+    """
 }
