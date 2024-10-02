@@ -32,15 +32,15 @@ pipeline {
             steps {
                 script {
                     echo "About to notify GitHub: Build in progress"
-                    githubNotify account: 'cowlinmoo', context: 'continuous-integration/jenkins/build', credentialsId: 'githubpat', description: 'Building Docker Image', gitApiUrl: '', repo: 'IS212_ComeBeck', sha: "${GIT_COMMIT}", status: 'PENDING', targetUrl: "${env.BUILD_URL}"
+                    githubNotify account: 'cowlinmoo', context: 'Jenkins: Build Docker Image', credentialsId: 'githubpat', description: 'Building Docker Image', gitApiUrl: '', repo: 'IS212_ComeBeck', sha: "${GIT_COMMIT}", status: 'PENDING', targetUrl: "${env.BUILD_URL}"
                     
                     try {
                         sh "docker build -t ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER} ."
                         echo "About to notify GitHub: Build successful"
-                        githubNotify account: 'cowlinmoo', context: 'continuous-integration/jenkins/build', credentialsId: 'githubpat', description: 'Docker Image Built Successfully', gitApiUrl: '', repo: 'IS212_ComeBeck', sha: "${GIT_COMMIT}", status: 'SUCCESS', targetUrl: "${env.BUILD_URL}"
+                        githubNotify account: 'cowlinmoo', context: 'Jenkins: Build Image', credentialsId: 'githubpat', description: 'Docker Image Built Successfully', gitApiUrl: '', repo: 'IS212_ComeBeck', sha: "${GIT_COMMIT}", status: 'SUCCESS', targetUrl: "${env.BUILD_URL}"
                     } catch (Exception e) {
                         echo "About to notify GitHub: Build failed"
-                        githubNotify account: 'cowlinmoo', context: 'continuous-integration/jenkins/build', credentialsId: 'githubpat', description: 'Docker Image Build Failed', gitApiUrl: '', repo: 'IS212_ComeBeck', sha: "${GIT_COMMIT}", status: 'FAILURE', targetUrl: "${env.BUILD_URL}"
+                        githubNotify account: 'cowlinmoo', context: 'Jenkins: Build Image', credentialsId: 'githubpat', description: 'Docker Image Build Failed', gitApiUrl: '', repo: 'IS212_ComeBeck', sha: "${GIT_COMMIT}", status: 'FAILURE', targetUrl: "${env.BUILD_URL}"
                         throw e
                     }
                 }
@@ -51,16 +51,16 @@ pipeline {
             steps {
                 script {
                     echo "About to notify GitHub: Publish in progress"
-                    githubNotify account: 'cowlinmoo', context: 'continuous-integration/jenkins/publish', credentialsId: 'githubpat', description: 'Publishing Docker Image', gitApiUrl: '', repo: 'IS212_ComeBeck', sha: "${GIT_COMMIT}", status: 'PENDING', targetUrl: "${env.BUILD_URL}"
+                    githubNotify account: 'cowlinmoo', context: 'Jenkins: Publish Docker Image', credentialsId: 'githubpat', description: 'Publishing Docker Image to container registry', gitApiUrl: '', repo: 'IS212_ComeBeck', sha: "${GIT_COMMIT}", status: 'PENDING', targetUrl: "${env.BUILD_URL}"
                     
                     try {
                         sh "echo ${ACR_PASSWORD} | docker login ${ACR_NAME}.azurecr.io -u ${ACR_USERNAME} --password-stdin"
                         sh "docker push ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER}"
                         echo "About to notify GitHub: Publish successful"
-                        githubNotify account: 'cowlinmoo', context: 'continuous-integration/jenkins/publish', credentialsId: 'githubpat', description: 'Docker Image Published Successfully', gitApiUrl: '', repo: 'IS212_ComeBeck', sha: "${GIT_COMMIT}", status: 'SUCCESS', targetUrl: "${env.BUILD_URL}"
+                        githubNotify account: 'cowlinmoo', context: 'Jenkins: Publish Docker Image', credentialsId: 'githubpat', description: 'Docker Image Published Successfully', gitApiUrl: '', repo: 'IS212_ComeBeck', sha: "${GIT_COMMIT}", status: 'SUCCESS', targetUrl: "${env.BUILD_URL}"
                     } catch (Exception e) {
                         echo "About to notify GitHub: Publish failed"
-                        githubNotify account: 'cowlinmoo', context: 'continuous-integration/jenkins/publish', credentialsId: 'githubpat', description: 'Docker Image Publish Failed', gitApiUrl: '', repo: 'IS212_ComeBeck', sha: "${GIT_COMMIT}", status: 'FAILURE', targetUrl: "${env.BUILD_URL}"
+                        githubNotify account: 'cowlinmoo', context: 'Jenkins: Publish Docker Image', credentialsId: 'githubpat', description: 'Docker Image Publish Failed', gitApiUrl: '', repo: 'IS212_ComeBeck', sha: "${GIT_COMMIT}", status: 'FAILURE', targetUrl: "${env.BUILD_URL}"
                         throw e
                     }
                 }
@@ -71,7 +71,7 @@ pipeline {
             steps {
                 script {
                     echo "About to notify GitHub: Deploy in progress"
-                    githubNotify account: 'cowlinmoo', context: 'continuous-integration/jenkins/deploy', credentialsId: 'githubpat', description: 'Deploying to Azure Container App', gitApiUrl: '', repo: 'IS212_ComeBeck', sha: "${GIT_COMMIT}", status: 'PENDING', targetUrl: "${env.BUILD_URL}"
+                    githubNotify account: 'cowlinmoo', context: 'Jenkins: Deploy Docker Image', credentialsId: 'githubpat', description: 'Deploying to Azure Container App', gitApiUrl: '', repo: 'IS212_ComeBeck', sha: "${GIT_COMMIT}", status: 'PENDING', targetUrl: "${env.BUILD_URL}"
                     
                     try {
                         sh '''#!/bin/bash
@@ -97,10 +97,10 @@ pipeline {
                             az logout
                         '''
                         echo "About to notify GitHub: Deploy successful"
-                        githubNotify account: 'cowlinmoo', context: 'continuous-integration/jenkins/deploy', credentialsId: 'githubpat', description: 'Deployment Successful', gitApiUrl: '', repo: 'IS212_ComeBeck', sha: "${GIT_COMMIT}", status: 'SUCCESS', targetUrl: "${env.BUILD_URL}"
+                        githubNotify account: 'cowlinmoo', context: 'Jenkins: Deploy Docker Image', credentialsId: 'githubpat', description: 'Deployment Successful', gitApiUrl: '', repo: 'IS212_ComeBeck', sha: "${GIT_COMMIT}", status: 'SUCCESS', targetUrl: "${env.BUILD_URL}"
                     } catch (Exception e) {
                         echo "About to notify GitHub: Deploy failed"
-                        githubNotify account: 'cowlinmoo', context: 'continuous-integration/jenkins/deploy', credentialsId: 'githubpat', description: 'Deployment Failed', gitApiUrl: '', repo: 'IS212_ComeBeck', sha: "${GIT_COMMIT}", status: 'FAILURE', targetUrl: "${env.BUILD_URL}"
+                        githubNotify account: 'cowlinmoo', context: 'Jenkins: Deploy Docker Image', credentialsId: 'githubpat', description: 'Deployment Failed', gitApiUrl: '', repo: 'IS212_ComeBeck', sha: "${GIT_COMMIT}", status: 'FAILURE', targetUrl: "${env.BUILD_URL}"
                         throw e
                     }
                 }
@@ -111,7 +111,7 @@ pipeline {
     post {
         always {
             echo "About to notify GitHub: Pipeline Summary"
-            githubNotify account: 'cowlinmoo', context: 'continuous-integration/jenkins/pipeline', credentialsId: 'githubpat', description: "Pipeline finished with result: ${currentBuild.result}", gitApiUrl: '', repo: 'IS212_ComeBeck', sha: "${GIT_COMMIT}", status: "${currentBuild.result == 'SUCCESS' ? 'SUCCESS' : 'FAILURE'}", targetUrl: "${env.BUILD_URL}"
+            githubNotify account: 'cowlinmoo', context: 'Jenkins Continuouse Integration Pipeline', credentialsId: 'githubpat', description: "Pipeline finished with result: ${currentBuild.result}", gitApiUrl: '', repo: 'IS212_ComeBeck', sha: "${GIT_COMMIT}", status: "${currentBuild.result == 'SUCCESS' ? 'SUCCESS' : 'FAILURE'}", targetUrl: "${env.BUILD_URL}"
         }
     }
 }
