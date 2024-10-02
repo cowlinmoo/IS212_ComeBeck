@@ -2,17 +2,7 @@ pipeline {
     agent any
 
     triggers {
-        githubPullRequests(
-            spec: '',
-            triggerMode: 'HEAVY_HOOKS',
-            events: [
-                [$class: 'org.jenkinsci.plugins.github.pullrequest.events.impl.GitHubPROpenEvent'],
-                [$class: 'org.jenkinsci.plugins.github.pullrequest.events.impl.GitHubPRCommitEvent']
-            ],
-            branchRestriction: [targetBranch: 'main'],
-            cancelQueued: true,
-            abortRunning: false
-        )
+        githubPush()
     }
 
     environment {
