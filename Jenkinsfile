@@ -1,10 +1,3 @@
-import io.jsonwebtoken.Jwts
-import io.jsonwebtoken.SignatureAlgorithm
-import java.security.KeyFactory
-import java.security.spec.PKCS8EncodedKeySpec
-import java.util.Base64
-import java.util.Date
-
 pipeline {
     agent any
 
@@ -31,21 +24,21 @@ pipeline {
         CONTAINER_APP_NAME = credentials('CONTAINER_APP_NAME')
         RESOURCE_GROUP = credentials('RESOURCE_GROUP')
         GIT_COMMIT = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
-        GITHUB_APP_ID = credentials('GITHUB_APP_ID')
-        GITHUB_PRIVATE_KEY = credentials('GITHUB_PRIVATE_KEY')
+        GITHUB_REPO = "IS212_ComeBeck"
+        GITHUB_TOKEN = credentials('GITHUB_TOKEN')
     }
 
     stages {
         stage('Build') {
             steps {
                 script {
-                    def checkId = createGitHubCheck('Jenkins: Build', 'Building Docker image')
+                    updateGitHubStatus('pending', 'Building Docker image', 'Jenkins: 1. Build')
 
                     try {
                         sh "docker build -t ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER} ."
-                        completeGitHubCheck(checkId, 'success', 'Docker image built successfully')
+                        updateGitHubStatus('success', 'Docker image built successfully', 'Jenkins: 1. Build')
                     } catch (Exception e) {
-                        completeGitHubCheck(checkId, 'failure', 'Docker image build failed')
+                        updateGitHubStatus('failure', 'Docker image build failed', 'Jenkins: 1. Build')
                         throw e
                     }
                 }
@@ -55,14 +48,14 @@ pipeline {
         stage('Publish') {
             steps {
                 script {
-                    def checkId = createGitHubCheck('Jenkins: Publish', 'Publishing to ACR')
+                    updateGitHubStatus('pending', 'Publishing to ACR', 'Jenkins: 2. Publish')
 
                     try {
                         sh "echo ${ACR_PASSWORD} | docker login ${ACR_NAME}.azurecr.io -u ${ACR_USERNAME} --password-stdin"
                         sh "docker push ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER}"
-                        completeGitHubCheck(checkId, 'success', 'Image published to ACR successfully')
+                        updateGitHubStatus('success', 'Image published to ACR successfully', 'Jenkins: 2. Publish')
                     } catch (Exception e) {
-                        completeGitHubCheck(checkId, 'failure', 'Image publish failed')
+                        updateGitHubStatus('failure', 'Image publish failed', 'Jenkins: 2. Publish')
                         throw e
                     }
                 }
@@ -72,25 +65,34 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    def checkId = createGitHubCheck('Jenkins: Deploy', 'Deploying to Azure')
+                    updateGitHubStatus('pending', 'Deploying to Azure', 'Jenkins: 3. Deploy')
 
                     try {
-                        sh '''
+                        sh '''#!/bin/bash
+                            set -e
                             if ! command -v az &> /dev/null
                             then
+                                echo "Azure CLI not found. Installing..."
                                 curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+                            else
+                                echo "Azure CLI is already installed."
                             fi
 
+                            echo "Logging in to Azure..."
                             az login --service-principal -u $ACR_USERNAME -p $ACR_PASSWORD --tenant $TENANT_ID
+
+                            echo "Updating Container App..."
                             az containerapp update \
                               --name $CONTAINER_APP_NAME \
                               --resource-group $RESOURCE_GROUP \
                               --image $ACR_NAME.azurecr.io/$IMAGE_NAME:$BUILD_NUMBER
+
+                            echo "Logging out from Azure..."
                             az logout
                         '''
-                        completeGitHubCheck(checkId, 'success', 'Application deployed to Azure successfully')
+                        updateGitHubStatus('success', 'Application deployed to Azure successfully', 'Jenkins: 3. Deploy')
                     } catch (Exception e) {
-                        completeGitHubCheck(checkId, 'failure', 'Deployment failed')
+                        updateGitHubStatus('failure', 'Deployment failed', 'Jenkins: 3. Deploy')
                         throw e
                     }
                 }
@@ -103,71 +105,17 @@ pipeline {
             script {
                 def buildStatus = currentBuild.result ?: 'SUCCESS'
                 def description = "Pipeline finished with result: ${buildStatus}"
-                // Optionally update final check status
             }
         }
     }
 }
 
-def createGitHubCheck(String name, String description) {
-    def jwt = generateJWT()
-    def response = sh(script: """
-        curl -s -X POST \
-        -H "Authorization: Bearer ${jwt}" \
-        -H "Accept: application/vnd.github+json" \
-        https://api.github.com/repos/cowlinmoo/IS212_ComeBeck/check-runs \
-        -d '{
-            "name": "${name}",
-            "head_sha": "${GIT_COMMIT}",
-            "status": "in_progress",
-            "external_id": "${env.BUILD_ID}",
-            "started_at": "${new Date().format("yyyy-MM-dd'T'HH:mm:ss'Z'", TimeZone.getTimeZone('UTC'))}",
-            "output": {
-                "title": "${name}",
-                "summary": "${description}"
-            }
-        }'
-    """, returnStdout: true)
-
-    def jsonResponse = readJSON(text: response)
-    return jsonResponse.id
-}
-
-def completeGitHubCheck(int checkId, String conclusion, String description) {
-    def jwt = generateJWT()
+def updateGitHubStatus(String state, String description, String context) {
     sh """
-        curl -s -X PATCH \
-        -H "Authorization: Bearer ${jwt}" \
-        -H "Accept: application/vnd.github+json" \
-        https://api.github.com/repos/cowlinmoo/IS212_ComeBeck/check-runs/${checkId} \
-        -d '{
-            "status": "completed",
-            "completed_at": "${new Date().format("yyyy-MM-dd'T'HH:mm:ss'Z'", TimeZone.getTimeZone('UTC'))}",
-            "conclusion": "${conclusion}",
-            "output": {
-                "title": "${conclusion.capitalize()}",
-                "summary": "${description}"
-            }
-        }'
+        curl -s -H "Authorization: token ${GITHUB_TOKEN}" \
+             -X POST \
+             -H "Accept: application/vnd.github.v3+json" \
+             https://api.github.com/repos/cowlinmoo/IS212_ComeBeck/statuses/${GIT_COMMIT} \
+             -d "{\\"state\\":\\"${state}\\",\\"context\\":\\"${context}\\",\\"description\\":\\"${description}\\",\\"target_url\\":\\"${env.BUILD_URL}\\"}"
     """
-}
-
-def generateJWT() {
-    def now = System.currentTimeMillis()
-    def exp = now + 1200000 // 20 minutes expiration
-
-    def privateKey = GITHUB_PRIVATE_KEY
-    def keySpec = new PKCS8EncodedKeySpec(Base64.getDecoder().decode(privateKey
-        .replace("-----BEGIN PRIVATE KEY-----", "")
-        .replace("-----END PRIVATE KEY-----", "")
-        .replaceAll("\\s", "")))
-    def keyFactory = KeyFactory.getInstance("RSA")
-    def key = keyFactory.generatePrivate(keySpec)
-
-    return Jwts.builder()
-        .setIssuer(GITHUB_APP_ID)
-        .setIssuedAt(new Date(now))
-        .setExpiration(new Date(exp))
-        .signWith(SignatureAlgorithm.RS256, key)
-        .compact()
 }
