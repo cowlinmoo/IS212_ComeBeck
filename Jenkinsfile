@@ -37,10 +37,10 @@ pipeline {
                     try {
                         sh "docker build -t ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER} ."
                         echo "About to notify GitHub: Build successful"
-                        githubNotify account: 'cowlinmoo', context: 'Jenkins: Build Image', credentialsId: 'githubpat', description: 'Docker Image Built Successfully', gitApiUrl: '', repo: 'IS212_ComeBeck', sha: "${GIT_COMMIT}", status: 'SUCCESS', targetUrl: "${env.BUILD_URL}"
+                        githubNotify account: 'cowlinmoo', context: 'Jenkins: Build Docker Image', credentialsId: 'githubpat', description: 'Docker Image Built Successfully', gitApiUrl: '', repo: 'IS212_ComeBeck', sha: "${GIT_COMMIT}", status: 'SUCCESS', targetUrl: "${env.BUILD_URL}"
                     } catch (Exception e) {
                         echo "About to notify GitHub: Build failed"
-                        githubNotify account: 'cowlinmoo', context: 'Jenkins: Build Image', credentialsId: 'githubpat', description: 'Docker Image Build Failed', gitApiUrl: '', repo: 'IS212_ComeBeck', sha: "${GIT_COMMIT}", status: 'FAILURE', targetUrl: "${env.BUILD_URL}"
+                        githubNotify account: 'cowlinmoo', context: 'Jenkins: Build Docker Image', credentialsId: 'githubpat', description: 'Docker Image Build Failed', gitApiUrl: '', repo: 'IS212_ComeBeck', sha: "${GIT_COMMIT}", status: 'FAILURE', targetUrl: "${env.BUILD_URL}"
                         throw e
                     }
                 }
@@ -111,7 +111,7 @@ pipeline {
     post {
         always {
             echo "About to notify GitHub: Pipeline Summary"
-            githubNotify account: 'cowlinmoo', context: 'Jenkins Continuouse Integration Pipeline', credentialsId: 'githubpat', description: "Pipeline finished with result: ${currentBuild.result}", gitApiUrl: '', repo: 'IS212_ComeBeck', sha: "${GIT_COMMIT}", status: "${currentBuild.result == 'SUCCESS' ? 'SUCCESS' : 'FAILURE'}", targetUrl: "${env.BUILD_URL}"
+            githubNotify account: 'cowlinmoo', context: 'Jenkins Continuous Integration Pipeline', credentialsId: 'githubpat', description: "Pipeline finished with result: ${currentBuild.result}", gitApiUrl: '', repo: 'IS212_ComeBeck', sha: "${GIT_COMMIT}", status: "${currentBuild.result == 'SUCCESS' ? 'SUCCESS' : 'FAILURE'}", targetUrl: "${env.BUILD_URL}"
         }
     }
 }
