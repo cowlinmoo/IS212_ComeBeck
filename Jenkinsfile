@@ -108,10 +108,40 @@ pipeline {
         }
     }
 
-    post {
-        always {
-            echo "About to notify GitHub: Pipeline Summary"
-            githubNotify account: 'cowlinmoo', context: 'Jenkins Continuous Integration Pipeline', credentialsId: 'githubpat', description: "Pipeline finished with result: ${currentBuild.result}", gitApiUrl: '', repo: 'IS212_ComeBeck', sha: "${GIT_COMMIT}", status: "${currentBuild.result == 'SUCCESS' ? 'SUCCESS' : 'FAILURE'}", targetUrl: "${env.BUILD_URL}"
+post {
+    always {
+        script {
+            def buildStatus = currentBuild.result ?: 'SUCCESS'
+            def description = "Pipeline finished with result: ${buildStatus}"
+            
+            // Existing githubNotify step
+            githubNotify account: 'cowlinmoo', 
+                         context: 'Jenkins Continuous Integration Pipeline', 
+                         credentialsId: 'githubpat', 
+                         description: description, 
+                         gitApiUrl: '', 
+                         repo: 'IS212_ComeBeck', 
+                         sha: "${GIT_COMMIT}", 
+                         status: buildStatus, 
+                         targetUrl: "${env.BUILD_URL}"
+            
+            // New publishChecks step
+            publishChecks name: 'Jenkins Continuous Integration Pipeline',
+                          title: 'Pipeline Result',
+                          summary: description,
+                          text: """
+                          Build Number: ${BUILD_NUMBER}
+                          Build URL: ${BUILD_URL}
+                          Git Commit: ${GIT_COMMIT}
+                          
+                          Stages:
+                          - Build: ${currentBuild.rawBuild.getExecution().getStages().find { it.name == 'Build' }?.status ?: 'N/A'}
+                          - Publish: ${currentBuild.rawBuild.getExecution().getStages().find { it.name == 'Publish' }?.status ?: 'N/A'}
+                          - Deploy: ${currentBuild.rawBuild.getExecution().getStages().find { it.name == 'Deploy' }?.status ?: 'N/A'}
+                          """,
+                          conclusion: buildStatus,
+                          detailsURL: "${BUILD_URL}"
         }
     }
+}
 }
