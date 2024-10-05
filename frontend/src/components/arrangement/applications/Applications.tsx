@@ -1,5 +1,4 @@
 "use client";
-import { headers } from "next/headers";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -91,21 +90,21 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
           throw new Error(`GET Application API validation ERROR`);
         } else {
           const data = await response.json();
-          var approvedApplications = new Array();
-          var pendingApplications = new Array();
+          let approvedApplications = [];
+          let pendingApplications = [];
           if (data.length < 1) {
             approvedApplications = [];
             pendingApplications = [];
           } else {
-            for (var application of data) {
+            for (const application of data) {
               console.log(application);
               // check if application is approved or pending and add them to the array variables
               if (application["status"] === "approved") {
-                for (var event of application["events"]) {
+                for (const event of application["events"]) {
                   approvedApplications.push(event["requested_date"]);
                 }
               } else if (application["status"] === "pending") {
-                for (var event of application["events"]) {
+                for (const event of application["events"]) {
                   pendingApplications.push(event["requested_date"]);
                 }
               }
@@ -114,12 +113,12 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
             setwfhPending(pendingApplications);
           }
         }
-      } catch (error: any) {
+      } catch (error:any) {
         console.log("GET API fetching error.", error.message);
       }
     }
     fetchData();
-  }, []);
+  });
 
   // restricted calendar
   const [fromDate, setFromDate] = useState<Date>(new Date());
@@ -139,7 +138,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
     const currentDate = new Date();
     setFromDate(subMonths(currentDate, 2));
     setToDate(addMonths(currentDate, 3));
-  }, []);
+  },[]);
 
   //end date variables and restriction
   const [fromEndDate, setFromEndDate] = useState<Date>(new Date());
@@ -147,7 +146,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
   useEffect(() => {
     const currentDate = fromEndDate;
     setToEndDate(addMonths(currentDate, 3));
-  }, []);
+  },[fromEndDate]);
 
   // disable weekends
   const isDateDisabled = (date: Date) => {
@@ -171,8 +170,8 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
     setShowMultipleDateAlert(false);
     if (Array.isArray(date)) {
       setShowMultipleDateAlert(date.length < 2);
-      for (var d of date) {
-        for (var i of wfhApproved) {
+      for (const d of date) {
+        for (const i of wfhApproved) {
           if (isSameDay(i, d)) {
             setShowAlertApproved(true);
             setAlertApprovedDates(
@@ -182,7 +181,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
         }
       }
     } else if (date) {
-      for (var i of wfhApproved) {
+      for (const i of wfhApproved) {
         if (isSameDay(i, date)) {
           setShowAlertApproved(true);
           setAlertApprovedDates(
@@ -201,8 +200,8 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
     setAlertPendingDates("");
     //all dates to be alerted
     if (Array.isArray(date)) {
-      for (var d of date) {
-        for (var i of wfhPending) {
+      for (const d of date) {
+        for (const i of wfhPending) {
           if (isSameDay(i, d)) {
             setShowAlertPending(true);
             setAlertPendingDates(
@@ -212,7 +211,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
         }
       }
     } else if (date) {
-      for (var i of wfhPending) {
+      for (const i of wfhPending) {
         if (isSameDay(i, date)) {
           setShowAlertPending(true);
           setAlertPendingDates(
@@ -329,9 +328,9 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
       } 
       //multiple dates selected
       else if (values.multipleDate) {
-        var events = [];
-        var count = 0;
-        for (var d of values.multipleDate) {
+        const events = [];
+        let count = 0;
+        for (const d of values.multipleDate) {
           count += 1;
           if (count !== 1) {
             events.push({"requested_date":format(d, "yyyy-MM-dd")});
@@ -339,7 +338,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
         }
         console.log(values.multipleDate[0])
         console.log(events)
-        var multiContent = {
+        const multiContent = {
           location: "Home",
           reason: values.reason,
           requested_date: format(values.multipleDate[0], "yyyy-MM-dd"),
