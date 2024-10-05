@@ -41,9 +41,19 @@ services:
       - prod
 
   backend_ci:
-    extends:
-      service: backend
-    env_file: []
+    build:
+      context: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/code
+    command: >
+      uvicorn backend.main:app
+      --host 0.0.0.0 --port 8080 --reload
+    environment:
+      - DATABASE_HOSTNAME=postgres
+    image: backend_api_ci
+    container_name: backend_api_ci
     profiles:
       - ci
 
