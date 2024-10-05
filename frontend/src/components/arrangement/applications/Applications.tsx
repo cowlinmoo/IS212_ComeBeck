@@ -1,6 +1,4 @@
 "use client";
-
-import { headers } from "next/headers";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,6 +60,13 @@ const applyFormSchema = z.object({
       { message: "Please select dates (at least 2), excluding weekends." }
     )
     .optional(),
+  isRecurring: z.enum(["Yes","No"]).optional(),
+  recurringType: z.enum(["Weekly","Monthly"]).optional(),
+  endDate: z.date({
+    required_error: "Please select a date.",
+  })
+  .refine((date) => !isWeekend(date), { message: "Weekends are not allowed" })
+  .optional(),
   reason: z.string(),
 });
 
@@ -85,21 +90,21 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
           throw new Error(`GET Application API validation ERROR`);
         } else {
           const data = await response.json();
-          var approvedApplications = new Array();
-          var pendingApplications = new Array();
+          let approvedApplications = [];
+          let pendingApplications = [];
           if (data.length < 1) {
             approvedApplications = [];
             pendingApplications = [];
           } else {
-            for (var application of data) {
+            for (const application of data) {
               console.log(application);
               // check if application is approved or pending and add them to the array variables
               if (application["status"] === "approved") {
-                for (var event of application["events"]) {
+                for (const event of application["events"]) {
                   approvedApplications.push(event["requested_date"]);
                 }
               } else if (application["status"] === "pending") {
-                for (var event of application["events"]) {
+                for (const event of application["events"]) {
                   pendingApplications.push(event["requested_date"]);
                 }
               }
@@ -108,12 +113,12 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
             setwfhPending(pendingApplications);
           }
         }
-      } catch (error: any) {
+      } catch (error:any) {
         console.log("GET API fetching error.", error.message);
       }
     }
     fetchData();
-  }, []);
+  });
 
   // restricted calendar
   const [fromDate, setFromDate] = useState<Date>(new Date());
@@ -133,7 +138,15 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
     const currentDate = new Date();
     setFromDate(subMonths(currentDate, 2));
     setToDate(addMonths(currentDate, 3));
-  }, []);
+  },[]);
+
+  //end date variables and restriction
+  const [fromEndDate, setFromEndDate] = useState<Date>(new Date());
+  const [toEndDate, setToEndDate] = useState<Date>(new Date());
+  useEffect(() => {
+    const currentDate = fromEndDate;
+    setToEndDate(addMonths(currentDate, 3));
+  },[fromEndDate]);
 
   // disable weekends
   const isDateDisabled = (date: Date) => {
@@ -157,8 +170,8 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
     setShowMultipleDateAlert(false);
     if (Array.isArray(date)) {
       setShowMultipleDateAlert(date.length < 2);
-      for (var d of date) {
-        for (var i of wfhApproved) {
+      for (const d of date) {
+        for (const i of wfhApproved) {
           if (isSameDay(i, d)) {
             setShowAlertApproved(true);
             setAlertApprovedDates(
@@ -168,7 +181,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
         }
       }
     } else if (date) {
-      for (var i of wfhApproved) {
+      for (const i of wfhApproved) {
         if (isSameDay(i, date)) {
           setShowAlertApproved(true);
           setAlertApprovedDates(
@@ -187,8 +200,8 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
     setAlertPendingDates("");
     //all dates to be alerted
     if (Array.isArray(date)) {
-      for (var d of date) {
-        for (var i of wfhPending) {
+      for (const d of date) {
+        for (const i of wfhPending) {
           if (isSameDay(i, d)) {
             setShowAlertPending(true);
             setAlertPendingDates(
@@ -198,7 +211,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
         }
       }
     } else if (date) {
-      for (var i of wfhPending) {
+      for (const i of wfhPending) {
         if (isSameDay(i, date)) {
           setShowAlertPending(true);
           setAlertPendingDates(
@@ -223,6 +236,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
     defaultValues: {
       arrangementType: "WFH",
       isMultiple: "No",
+      isRecurring: "No",
       reason: "",
     },
   });
@@ -249,18 +263,48 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
       showAlertPending === false
     ) {
       const headers = { "Authorization": `Bearer ${token}`, "Content-Type": "application/json", "accept": "application/json"};
+      //singleDate selected/ recurring date 
       if (values.singleDate) {
         console.log(typeof values.reason);
         console.log(values.singleDate);
         console.log(values.singleDate instanceof Date);
-        const content = {
-          location: "Home",
-          reason: values.reason,
-          description: "",
-          requested_date: format(values.singleDate, "yyyy-MM-dd"),
-          staff_id: staffId,
-          recurring: false,
-        };
+        let content = {}
+        if (values.isRecurring==="No"){
+          content = {
+            location: "Home",
+            reason: values.reason,
+            description: "",
+            requested_date: format(values.singleDate, "yyyy-MM-dd"),
+            staff_id: staffId,
+            recurring: false,
+          };
+        }
+        else if (values.isRecurring==="Yes"){
+          if (values.recurringType==="Weekly"){
+            content = {
+              location: "Home",
+              reason: values.reason,
+              description: "",
+              requested_date: format(values.singleDate, "yyyy-MM-dd"),
+              staff_id: staffId,
+              recurring: true,
+              recurrence_type: "weekly",
+              end_date: format(values.endDate,"yyyy-MM-dd")
+            };
+          }
+          else if (values.recurringType==="Monthly"){
+            content = {
+              location: "Home",
+              reason: values.reason,
+              description: "",
+              requested_date: format(values.singleDate, "yyyy-MM-dd"),
+              staff_id: staffId,
+              recurring: true,
+              recurrence_type: "monthly",
+              end_date: format(values.endDate,"yyyy-MM-dd")
+            };
+          }
+        }
         console.log(content);
         try {
           const response = await fetch(
@@ -281,24 +325,26 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
         } catch (error: any) {
           console.log("POST API fetching error.", error.message);
         }
-      } else if (values.multipleDate) {
-        var events = [];
-        var count = 0;
-        for (var d of values.multipleDate) {
+      } 
+      //multiple dates selected
+      else if (values.multipleDate) {
+        const events = [];
+        let count = 0;
+        for (const d of values.multipleDate) {
           count += 1;
           if (count !== 1) {
-            events.push(d);
+            events.push({"requested_date":format(d, "yyyy-MM-dd")});
           }
         }
-        var multiContent = {
+        console.log(values.multipleDate[0])
+        console.log(events)
+        const multiContent = {
           location: "Home",
           reason: values.reason,
-          requested_date: values.multipleDate[0],
+          requested_date: format(values.multipleDate[0], "yyyy-MM-dd"),
           description: "",
           staff_id: staffId,
           recurring: false,
-          recurrence_type: "",
-          end_date: "",
           events: events,
         };
         try {
@@ -464,12 +510,139 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                     )}
                   />
                   {applyForm.watch("isMultiple") === "No" && (
+                    <>
                     <FormField
                       control={applyForm.control}
                       name="singleDate"
                       render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Date:</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "w-[240px] justify-start text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP")
+                                ) : (
+                                  <span>Pick a date</span>
+                                )}
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent>
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={(date) => {
+                                  field.onChange(date);
+                                  checkForAlertApproved(date);
+                                  checkForAlertPending(date);
+                                  setFromEndDate(date)
+                                }}
+                                fromDate={fromDate}
+                                toDate={toDate}
+                                disabled={isDateDisabled}
+                                initialFocus
+                              />
+                              <div className="p-3 border-t">
+                                <p className="text-s text-muted-foreground">
+                                  Selectable range:{" "}
+                                  {format(fromDate, "MMM d, yyyy")} -{" "}
+                                  {format(toDate, "MMM d, yyyy")}
+                                </p>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                    control={applyForm.control}
+                    name="isRecurring"
+                    render= {({field})=> (
+                      <FormItem>
+                        <FormLabel>Is a recurring arrangement?</FormLabel>
+                        <FormControl>
+                            <RadioGroup
+                            onValueChange={(value)=>{
+                              field.onChange(value)
+                              if (value === "No"){
+                                applyForm.setValue("dateRange", undefined)
+                              }
+                            }}
+                            defaultValue= {field.value}
+                            className="flex flex-col space-y-1"
+                            >
+                              <FormItem className="flex items-center space-x-3 space-y-0">
+                                <FormControl>
+                                  <RadioGroupItem value = "Yes"/>
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  Yes
+                                </FormLabel>
+                              </FormItem>
+                              <FormItem className="flex items-center space-x-3 space-y-0">
+                              <FormControl>
+                                  <RadioGroupItem value = "No"/>
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  No
+                                </FormLabel>
+                              </FormItem>
+                            </RadioGroup>
+                          </FormControl>
+                      </FormItem>
+                    )}/>
+                    
+                    {applyForm.watch("isRecurring") === "Yes" && (
+                      <>
+                      <FormField
+                      control={applyForm.control}
+                      name="recurringType"
+                      render= {({field})=> (
+                        <FormItem>
+                          <FormLabel>What is the recurring type?</FormLabel>
+                          <FormControl>
+                            <RadioGroup
+                            onValueChange={(value)=>{
+                              field.onChange(value)
+                            }}
+                            defaultValue= {field.value}
+                            className="flex flex-col space-y-1"
+                            >
+                              <FormItem className="flex items-center space-x-3 space-y-0">
+                                <FormControl>
+                                  <RadioGroupItem value = "Weekly"/>
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  Weekly
+                                </FormLabel>
+                              </FormItem>
+                              <FormItem className="flex items-center space-x-3 space-y-0">
+                              <FormControl>
+                                  <RadioGroupItem value = "Monthly"/>
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  Monthly
+                                </FormLabel>
+                              </FormItem>
+                            </RadioGroup>
+                          </FormControl>
+                        </FormItem>
+                      )}/>
+                      <FormField
+                      control={applyForm.control}
+                      name="endDate"
+                      render={({ field }) => (
                         <FormItem className="flex flex-col">
-                          <FormLabel>Date:</FormLabel>
+                          <FormLabel>End date for recurring arrangement:</FormLabel>
                           <Popover>
                             <PopoverTrigger asChild>
                               <FormControl>
@@ -495,19 +668,17 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                                 selected={field.value}
                                 onSelect={(date) => {
                                   field.onChange(date);
-                                  checkForAlertApproved(date);
-                                  checkForAlertPending(date);
                                 }}
-                                fromDate={fromDate}
-                                toDate={toDate}
+                                fromDate={fromEndDate}
+                                toDate={toEndDate}
                                 disabled={isDateDisabled}
                                 initialFocus
                               />
                               <div className="p-3 border-t">
                                 <p className="text-s text-muted-foreground">
                                   Selectable range:{" "}
-                                  {format(fromDate, "MMM d, yyyy")} -{" "}
-                                  {format(toDate, "MMM d, yyyy")}
+                                  {format(fromEndDate, "MMM d, yyyy")} -{" "}
+                                  {format(toEndDate, "MMM d, yyyy")}
                                 </p>
                               </div>
                             </PopoverContent>
@@ -515,6 +686,10 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                         </FormItem>
                       )}
                     />
+                      </>
+                    )
+                    }
+                    </>
                   )}
                   {applyForm.watch("isMultiple") === "Yes" && (
                     <FormField
@@ -626,6 +801,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                   placeholder="e.g., Office work, Different hours"
                 />
               </div>
+              
               <div className="space-y-2">
                 <Label htmlFor="change-reason">Reason for Change</Label>
                 <Textarea
