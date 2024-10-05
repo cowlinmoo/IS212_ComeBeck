@@ -205,3 +205,6 @@ def test_get_scheduler_service(
     )
     mock_scheduler_service.assert_called_once_with(mock_application_service.return_value)
     assert result == mock_scheduler_service.return_value
+
+def test_always_fails():
+    assert False, "This test is designed to fail"
