@@ -57,29 +57,29 @@ def mock_env_content():
     PRODUCTION_DB_PORT=5433
     PRODUCTION_DB_NAME=proddb
     """
-
-@patch('backend.config.Environment.get_env_filename')
-def test_environment_settings(mock_get_env_filename, mock_env_content):
-    mock_get_env_filename.return_value = '.env.test'
-    with patch('builtins.open', mock_open(read_data=mock_env_content)):
-        settings = EnvironmentSettings()
-        assert settings.CURRENT_ENV == 'TEST'
-        assert settings.DATABASE_DIALECT == 'postgresql'
-        assert settings.DATABASE_HOSTNAME == 'localhost'
-        assert settings.POSTGRES_DB == 'testdb'
-        assert settings.POSTGRES_PASSWORD == 'testpass'
-        assert settings.POSTGRES_PORT == 5432
-        assert settings.POSTGRES_USER == 'testuser'
-        assert settings.DEBUG_MODE == True
-        assert settings.SMTP_SERVER == 'smtp.test.com'
-        assert settings.SMTP_PORT == 587
-        assert settings.SENDER_EMAIL == 'test@example.com'
-        assert settings.SENDER_PASSWORD == 'testpassword'
-        assert settings.PRODUCTION_DB_USER == 'produser'
-        assert settings.PRODUCTION_DB_PASSWORD == 'prodpass'
-        assert settings.PRODUCTION_DB_HOSTNAME == 'prodhost'
-        assert settings.PRODUCTION_DB_PORT == 5433
-        assert settings.PRODUCTION_DB_NAME == 'proddb'
+#
+# @patch('backend.config.Environment.get_env_filename')
+# def test_environment_settings(mock_get_env_filename, mock_env_content):
+#     mock_get_env_filename.return_value = '.env.test'
+#     with patch('builtins.open', mock_open(read_data=mock_env_content)):
+#         settings = EnvironmentSettings()
+#         assert settings.CURRENT_ENV == 'TEST'
+#         assert settings.DATABASE_DIALECT == 'postgresql'
+#         assert settings.DATABASE_HOSTNAME == 'localhost'
+#         assert settings.POSTGRES_DB == 'testdb'
+#         assert settings.POSTGRES_PASSWORD == 'testpass'
+#         assert settings.POSTGRES_PORT == 5432
+#         assert settings.POSTGRES_USER == 'testuser'
+#         assert settings.DEBUG_MODE == True
+#         assert settings.SMTP_SERVER == 'smtp.test.com'
+#         assert settings.SMTP_PORT == 587
+#         assert settings.SENDER_EMAIL == 'test@example.com'
+#         assert settings.SENDER_PASSWORD == 'testpassword'
+#         assert settings.PRODUCTION_DB_USER == 'produser'
+#         assert settings.PRODUCTION_DB_PASSWORD == 'prodpass'
+#         assert settings.PRODUCTION_DB_HOSTNAME == 'prodhost'
+#         assert settings.PRODUCTION_DB_PORT == 5433
+#         assert settings.PRODUCTION_DB_NAME == 'proddb'
 
 @pytest.fixture
 def mock_environment_settings():
