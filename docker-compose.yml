@@ -40,6 +40,13 @@ services:
       - dev
       - prod
 
+  backend_ci:
+    extends:
+      service: backend
+    env_file: []
+    profiles:
+      - ci
+
   pgadmin:
     image: dpage/pgadmin4
     container_name: pg_admin
