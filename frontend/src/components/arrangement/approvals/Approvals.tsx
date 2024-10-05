@@ -7,7 +7,6 @@ import { Calendar as CalendarIcon } from "lucide-react";
 import { Application } from "@/app/approvals/page";
 
 export default function Approvals({ data }: { data: Application[] }) {
-
   return (
     <div className="container mx-auto p-4">
       <Card>
@@ -25,97 +24,106 @@ export default function Approvals({ data }: { data: Application[] }) {
 
             <TabsContent value="pending">
               <ScrollArea className="h-[600px] w-full rounded-md border p-4">
-                {data
-                  .filter((request) => request.status === "pending") // Filter approved requests
-                  .map((request) => (
-                    <Card key={request.application_id} className="mb-4">
-                      <CardHeader>
-                        <div className="flex items-center space-x-4">
-                          <div>
-                            <CardTitle>{`Application ID: ${request.application_id}`}</CardTitle>
-                            <CardDescription>{request.description}</CardDescription>
-                            <CardDescription>{`Reason: ${request.reason}`}</CardDescription>
-                            <CardDescription>{`Approved by: -`}</CardDescription>
-                            <CardDescription>{`Recurring: ${request.recurring ? "Yes" : "No"}`}</CardDescription>
+                {data.filter((request) => request.status === "pending").length === 0 ? (
+                  <p>No pending requests.</p>
+                ) : (
+                  data
+                    .filter((request) => request.status === "pending")
+                    .map((request) => (
+                      <Card key={request.application_id} className="mb-4">
+                        <CardHeader>
+                          <div className="flex items-center space-x-4">
+                            <div>
+                              <CardTitle>{`Application ID: ${request.application_id}`}</CardTitle>
+                              <CardDescription>{request.description}</CardDescription>
+                              <CardDescription>{`Reason: ${request.reason}`}</CardDescription>
+                              <CardDescription>{`Approved by: -`}</CardDescription>
+                              <CardDescription>{`Recurring: ${request.recurring ? "Yes" : "No"}`}</CardDescription>
+                            </div>
                           </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        {request.events.map((event) => (
-                          <div key={event.event_id} className="flex items-center space-x-2">
-                            <CalendarIcon className="h-4 w-4" />
-                            <span>{new Date(event.requested_date).toDateString()}</span>
-                            <span>{event.location}</span>
-                          </div>
-                        ))}
-                      </CardContent>
-                      
-                    </Card>
-                  ))}
+                        </CardHeader>
+                        <CardContent>
+                          {request.events.map((event) => (
+                            <div key={event.event_id} className="flex items-center space-x-2">
+                              <CalendarIcon className="h-4 w-4" />
+                              <span>{new Date(event.requested_date).toDateString()}</span>
+                              <span>{event.location}</span>
+                            </div>
+                          ))}
+                        </CardContent>
+                      </Card>
+                    ))
+                )}
               </ScrollArea>
             </TabsContent>
 
             <TabsContent value="approved">
               <ScrollArea className="h-[600px] w-full rounded-md border p-4">
-                {data
-                  .filter((request) => request.status === "approved") // Filter approved requests
-                  .map((request) => (
-                    <Card key={request.application_id} className="mb-4">
-                      <CardHeader>
-                        <div className="flex items-center space-x-4"> 
-                          <div>
-                            <CardTitle>{`Application ID: ${request.application_id}`}</CardTitle>
-                            <CardDescription>{request.description}</CardDescription>
-                            <CardDescription>{`Reason: ${request.reason}`}</CardDescription>
-                            <CardDescription>{`Approved by: ${request.approver_id}`}</CardDescription>
-                            <CardDescription>{`Recurring: ${request.recurring ? "Yes" : "No"}`}</CardDescription>
+                {data.filter((request) => request.status === "approved").length === 0 ? (
+                  <p>No approved requests.</p>
+                ) : (
+                  data
+                    .filter((request) => request.status === "approved")
+                    .map((request) => (
+                      <Card key={request.application_id} className="mb-4">
+                        <CardHeader>
+                          <div className="flex items-center space-x-4">
+                            <div>
+                              <CardTitle>{`Application ID: ${request.application_id}`}</CardTitle>
+                              <CardDescription>{request.description}</CardDescription>
+                              <CardDescription>{`Reason: ${request.reason}`}</CardDescription>
+                              <CardDescription>{`Approved by: ${request.approver_id}`}</CardDescription>
+                              <CardDescription>{`Recurring: ${request.recurring ? "Yes" : "No"}`}</CardDescription>
+                            </div>
                           </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        {request.events.map((event) => (
-                          <div key={event.event_id} className="flex items-center space-x-2">
-                            <CalendarIcon className="h-4 w-4" />
-                            <span>{new Date(event.requested_date).toDateString()}</span>
-                            <span>{event.location}</span>
-                          </div>
-                        ))}
-                      </CardContent>
-                      
-                    </Card>
-                  ))}
+                        </CardHeader>
+                        <CardContent>
+                          {request.events.map((event) => (
+                            <div key={event.event_id} className="flex items-center space-x-2">
+                              <CalendarIcon className="h-4 w-4" />
+                              <span>{new Date(event.requested_date).toDateString()}</span>
+                              <span>{event.location}</span>
+                            </div>
+                          ))}
+                        </CardContent>
+                      </Card>
+                    ))
+                )}
               </ScrollArea>
             </TabsContent>
 
             <TabsContent value="rejected">
               <ScrollArea className="h-[600px] w-full rounded-md border p-4">
-                {data
-                  .filter((request) => request.status === "rejected") // Filter approved requests
-                  .map((request) => (
-                    <Card key={request.application_id} className="mb-4">
-                      <CardHeader>
-                        <div className="flex items-center space-x-4">
-                          <div>
-                            <CardTitle>{`Application ID: ${request.application_id}`}</CardTitle>
-                            <CardDescription>{request.description}</CardDescription>
-                            <CardDescription>{`Reason: ${request.reason}`}</CardDescription>
-                            <CardDescription>{`Rejected by: ${request.approver_id}`}</CardDescription>
-                            <CardDescription>{`Recurring: ${request.recurring ? "Yes" : "No"}`}</CardDescription>
+                {data.filter((request) => request.status === "rejected").length === 0 ? (
+                  <p>No rejected requests.</p>
+                ) : (
+                  data
+                    .filter((request) => request.status === "rejected")
+                    .map((request) => (
+                      <Card key={request.application_id} className="mb-4">
+                        <CardHeader>
+                          <div className="flex items-center space-x-4">
+                            <div>
+                              <CardTitle>{`Application ID: ${request.application_id}`}</CardTitle>
+                              <CardDescription>{request.description}</CardDescription>
+                              <CardDescription>{`Reason: ${request.reason}`}</CardDescription>
+                              <CardDescription>{`Rejected by: ${request.approver_id}`}</CardDescription>
+                              <CardDescription>{`Recurring: ${request.recurring ? "Yes" : "No"}`}</CardDescription>
+                            </div>
                           </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        {request.events.map((event) => (
-                          <div key={event.event_id} className="flex items-center space-x-2">
-                            <CalendarIcon className="h-4 w-4" />
-                            <span>{new Date(event.requested_date).toDateString()}</span>
-                            <span>{event.location}</span>
-                          </div>
-                        ))}
-                      </CardContent>
-                      
-                    </Card>
-                  ))}
+                        </CardHeader>
+                        <CardContent>
+                          {request.events.map((event) => (
+                            <div key={event.event_id} className="flex items-center space-x-2">
+                              <CalendarIcon className="h-4 w-4" />
+                              <span>{new Date(event.requested_date).toDateString()}</span>
+                              <span>{event.location}</span>
+                            </div>
+                          ))}
+                        </CardContent>
+                      </Card>
+                    ))
+                )}
               </ScrollArea>
             </TabsContent>
 

@@ -37,7 +37,7 @@ export default function Component() {
       try {
         console.log("Fetching staff application...");
         const fetchData = async () => {
-          const data = await GetApplicationOfStaff(101);
+          const data = await GetApplicationOfStaff(Number(userId));
           setApplications(data);
         };
         fetchData();
