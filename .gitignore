@@ -4,4 +4,3 @@ __pycache__
 *.env
 /pgadmin-data
 .coverage
-coverage.xml
