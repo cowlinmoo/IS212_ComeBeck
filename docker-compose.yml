@@ -50,12 +50,11 @@ services:
     command: >
       uvicorn backend.main:app
       --host 0.0.0.0 --port 8080 --reload
-    environment:
-      - DATABASE_HOSTNAME=postgres
     image: backend_api_ci
     container_name: backend_api_ci
     profiles:
       - ci
+
 
   pgadmin:
     image: dpage/pgadmin4
