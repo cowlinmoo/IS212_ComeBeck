@@ -118,7 +118,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
       }
     }
     fetchData();
-  });
+  },[]);
 
   // restricted calendar
   const [fromDate, setFromDate] = useState<Date>(new Date());
