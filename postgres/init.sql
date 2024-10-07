@@ -4,9 +4,9 @@ INSERT INTO employees (staff_id, staff_fname, staff_lname, dept, position, count
 VALUES
     (100, 'John', 'Doe', 'Engineering', 'CTO', 'Singapore', 'colinmok1000@gmail.com', 100, 3, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
     (101, 'Alice', 'Smith', 'Engineering', 'Software Engineer', 'USA', 'colinmok3@gmail.com', 100, 1, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
-    (102, 'Bob', 'Johnson', 'Engineering', 'Tech Lead', 'Canada', 'test@gmail.com', 100, 2, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
+    (102, 'Bob', 'Johnson', 'Engineering', 'Tech Lead', 'Canada', 'test1@gmail.com', 100, 2, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
     (103, 'Charlie', 'Brown', 'Marketing', 'Marketing Manager', 'UK', 'test@gmail.com', 100, 2, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
-    (104, 'David', 'Williams', 'Engineering', 'Senior Engineer', 'Australia', 'test@gmail.com', 102, 1, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
+    (104, 'David', 'Williams', 'Engineering', 'Senior Engineer', 'Australia', 'test2@gmail.com', 102, 1, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
     (105, 'Emma', 'Jones', 'Human Resources', 'HR Manager', 'New Zealand', 'test@gmail.com', 100, 2, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
     (106, 'Frank', 'Miller', 'Finance', 'Finance Manager', 'Germany', 'test@gmail.com', 100, 2, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
     (107, 'Grace', 'Lee', 'Customer Support', 'Support Manager', 'South Korea', 'test@gmail.com', 100, 2, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO')
@@ -40,7 +40,8 @@ VALUES
     (202, 'Relocation', 'Requesting to relocate to the New York office for 3 months.', '2023-07-05 09:00:00', '2023-07-06 11:00:00', 'pending', 104, 100, FALSE),
     (203, 'Flexible Hours', 'Requesting flexible working hours for childcare reasons.', '2023-07-10 14:00:00', '2023-07-11 09:00:00', 'approved', 103, 100, TRUE),
     (204, 'Remote Work', 'Requesting to work remotely from Bali for 1 month.', '2023-07-15 11:00:00', '2023-07-16 13:00:00', 'rejected', 106, 100, FALSE),
-    (205, 'Office Change', 'Requesting to move to a quieter area in the office.', '2023-07-20 10:00:00', '2023-07-20 15:00:00', 'pending', 107, 103, FALSE)
+    (205, 'Office Change', 'Requesting to move to a quieter area in the office.', '2023-07-20 10:00:00', '2023-07-20 15:00:00', 'pending', 107, 103, FALSE).
+    (206, 'Sitting at Home', 'I just want to sit at home', '2023-07-21 10:00:00', '2023-07-21 15:00:00', 'pending', 107, 100, FALSE)
 ON CONFLICT (application_id) DO NOTHING;
 
 -- Insert seed data into the Event table if not exists
@@ -52,5 +53,7 @@ VALUES
     (404, '2023-07-15', 'wfo', 203),  -- Charlie's flexible hours
     (405, '2023-07-16', 'wfo', 203),  -- Charlie's flexible hours
     (406, '2023-08-05', 'wfh', 204),  -- Frank's rejected remote work
-    (407, '2023-07-25', 'wfo', 205)   -- Grace's office change pending
+    (407, '2023-07-25', 'wfo', 205),  -- Grace's office change pending
+    (408, '2023-07-27', 'wfo', 206),  -- Grace sits at home
+    (409, '2023-07-28', 'wfo', 206)   -- Grace sits at home
 ON CONFLICT (event_id) DO NOTHING;
