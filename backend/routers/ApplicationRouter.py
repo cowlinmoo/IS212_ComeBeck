@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 
 from ..models.enums.EmployeeRoleEnum import EmployeeRole
 from ..schemas.ApplicationSchema import (ApplicationSchema, ApplicationCreateSchema, ApplicationUpdateSchema,
-                                         ApplicationWithdrawSchema, ApplicationResponse)
+                                         ApplicationWithdrawSchema, ApplicationResponse, ApprovedApplicationLocationSchema)
 from ..services.ApplicationService import ApplicationService
 from ..services.dependencies import role_required
 
@@ -96,6 +96,11 @@ def update_application_status(
     return service.update_application_status(application_id, new_status)
 
 
-@ApplicationRouter.get("/locations")
-def get_all_approved_locatons(service: ApplicationService = Depends()):
+@ApplicationRouter.get("/location/")
+def get_all_locations(
+        service: ApplicationService = Depends(),
+        current_user: dict = Depends(role_required(
+            EmployeeRole.HR, EmployeeRole.MANAGER, EmployeeRole.STAFF))
+):
+
     return service.get_employee_approved_application_locations()

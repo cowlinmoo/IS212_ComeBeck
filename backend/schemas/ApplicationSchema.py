@@ -104,5 +104,5 @@ class ApplicationWithdrawSchema(BaseModel):
 class ApprovedApplicationLocationSchema(BaseModel):
     employee_fname: str
     employee_lname: str
-    location: EventLocationEnum
-    position: EmployeeRole
+    location: str
+    position: str

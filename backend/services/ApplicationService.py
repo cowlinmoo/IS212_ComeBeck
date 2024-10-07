@@ -59,14 +59,15 @@ class ApplicationService:
             raise HTTPException(status_code=404, detail="Employee not found")
         return self.application_repository.get_application_by_staff_id(staff_id)
 
-    def get_employee_approved_application_locations(self) -> List[Type[ApprovedApplicationLocationSchema]]:
-        employee_locations: List[Type[ApprovedApplicationLocationSchema]] = []
-        approved_applications: List[Type[Application]] = self.application_repository.get_applications_by_status(
+    def get_employee_approved_application_locations(self) -> List[ApprovedApplicationLocationSchema]:
+        employee_locations: List[ApprovedApplicationLocationSchema] = []
+        approved_applications: List[Application] = self.application_repository.get_applications_by_status(
             status="approved")
-        for application in approved_applications:
+
+        for approved_application in approved_applications:
             user = self.employee_repository.get_employee(
-                staff_id=application.staff_id)
-            for event in self.event_repository.get_event_by_application_id(application_id=application.application_id):
+                staff_id=approved_application.staff_id)
+            for event in self.event_repository.get_event_by_application_id(application_id=approved_application.application_id):
                 employee_locations.append(
                     ApprovedApplicationLocationSchema(
                         employee_fname=user.staff_fname,
