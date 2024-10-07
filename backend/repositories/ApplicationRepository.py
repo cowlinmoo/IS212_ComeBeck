@@ -43,7 +43,7 @@ class ApplicationRepository:
         db_application = self.get_application_by_application_id(application_id)
 
         db_application.status = application.status
-        db_application.reason = application.withdraw_reason
+        db_application.outcome_reason = application.withdraw_reason
         db_application.last_updated_on = get_current_datetime_sgt()
 
         self.db.commit()
@@ -68,12 +68,13 @@ class ApplicationRepository:
             .order_by(desc(Application.created_on))
         return applications if applications is not None else []
 
-    def update_application_status(self, application_id: int, new_status: str) -> Application:
+    def update_application_status(self, application_id: int, new_status: str, outcome_reason: str) -> Application:
         db_application = self.db.query(Application).filter(Application.application_id == application_id).first()
         if db_application is None:
             raise HTTPException(status_code=404, detail="Application not found")
 
         db_application.status = new_status
+        db_application.outcome_reason = outcome_reason
         db_application.last_updated_on = get_current_datetime_sgt()
 
         self.db.commit()

@@ -1,5 +1,5 @@
 from datetime import datetime, date
-from typing import Optional, List
+from typing import Optional, List, Union, Dict
 
 from backend.schemas.EventSchema import EventCreateSchema
 
@@ -10,11 +10,13 @@ def get_new_application_manager_email_subject(staff_id: int, employee_name: str)
 def get_new_application_employee_email_subject(application_id: int) -> str:
     return f"Application Submitted - Application ID: {application_id}"
 
-def get_application_withdrawn_manager_email_subject(staff_id: int, employee_name: str) -> str:
-    return f"Application Withdrawn by Employee ID: {staff_id} - {employee_name}"
+def get_application_withdrawn_manager_email_subject(staff_id: int, employee_name: str, withdrawn_by_employee: bool) -> str:
+    action = "Withdrawn" if withdrawn_by_employee else "Cancelled"
+    return f"Application {action} for Employee ID: {staff_id} - {employee_name}"
 
-def get_application_withdrawn_employee_email_subject(application_id: int) -> str:
-    return f"WITHDRAWN: Application Withdrawn - Application ID: {application_id}"
+def get_application_withdrawn_employee_email_subject(application_id: int, withdrawn_by_employee: bool) -> str:
+    action = "WITHDRAWN" if withdrawn_by_employee else "CANCELLED"
+    return f"{action}: Application {action.lower()} - Application ID: {application_id}"
 
 def get_application_auto_rejected_employee_email_subject(application_id: int) -> str:
     return f"REJECTED: Application Auto Rejected - Application ID: {application_id}"
@@ -135,11 +137,12 @@ HR Department
 This is an automated message. Please do not reply directly to this email.
     """
 
-def get_application_withdrawn_manager_email_template(manager_name: str, employee_name: str, employee_id: int, application_id: int, reason: str, status: str, withdrawn_on: datetime) -> str:
+def get_application_withdrawn_manager_email_template(manager_name: str, employee_name: str, employee_id: int, application_id: int, reason: str, status: str, withdrawn_on: datetime, withdrawn_by: str) -> str:
+    action = "withdrawn" if withdrawn_by == "employee" else "cancelled"
     return f"""
 Dear {manager_name},
 
-This is to inform you that an application has been withdrawn by one of your employees.
+This is to inform you that an application has been {action} {"by" if withdrawn_by == "employee" else "for"} one of your employees.
 
 Application Details:
 --------------------
@@ -148,9 +151,10 @@ Employee ID: {employee_id}
 Application ID: {application_id}
 Reason: {reason}
 Status: {status}
-Withdrawn On: {withdrawn_on}
+{action.capitalize()} On: {withdrawn_on}
+{action.capitalize()} By: {withdrawn_by.capitalize()}
 
-If you have any questions regarding this withdrawal, please contact the HR department.
+If you have any questions regarding this {action}, please contact the HR department.
 
 Best regards,
 HR Department
@@ -158,18 +162,20 @@ HR Department
 This is an automated message. Please do not reply directly to this email.
     """
 
-def get_application_withdrawn_employee_email_template(employee_name: str, application_id: int, reason: str, status: str, withdrawn_on: datetime) -> str:
+def get_application_withdrawn_employee_email_template(employee_name: str, application_id: int, reason: str, status: str, withdrawn_on: datetime, withdrawn_by: str) -> str:
+    action = "withdrawn" if withdrawn_by == "you" else "cancelled"
     return f"""
 Dear {employee_name},
 
-This email confirms that your application has been successfully withdrawn.
+This email confirms that your application has been {action} {"by you" if withdrawn_by == "you" else f"by your manager ({withdrawn_by})"}.
 
 Application Details:
 --------------------
 Application ID: {application_id}
 Reason: {reason}
 Status: {status}
-Withdrawn On: {withdrawn_on}
+{action.capitalize()} On: {withdrawn_on}
+{action.capitalize()} By: {withdrawn_by.capitalize()}
 
 If you need to submit a new application or have any questions, please contact the HR department.
 
@@ -202,3 +208,119 @@ HR Department
 
 This is an automated message. Please do not reply directly to this email.
     """
+def get_application_outcome_employee_email_subject(application_id: int, status: str) -> str:
+    status_upper = status.upper()
+    return f"Application {status_upper} - ID: {application_id}"
+
+def get_application_outcome_approver_email_subject(application_id: int, status: str, employee_name: str) -> str:
+    status_upper = status.upper()
+    return f"Confirmation: Application {status_upper} - ID: {application_id} - {employee_name}"
+
+def get_application_outcome_employee_email_template(
+    employee_name: str,
+    application_id: int,
+    status: str,
+    reason: str,
+    description: str,
+    decided_on: datetime,
+    decided_by: str,
+    app_type: str,
+    event_info: Union[Dict, List]
+) -> str:
+    event_details = _format_event_details(app_type, event_info)
+
+    reason_prefix = "Reason for rejection: " if status == "rejected" else "Reason: "
+
+    return f"""
+Dear {employee_name},
+
+This email is to inform you that a decision has been made regarding your application.
+
+Application Details:
+--------------------
+Application ID: {application_id}
+Status: {status.upper()}
+Description: {description if description else "No additional description provided"}
+
+{event_details}
+
+Decision Details:
+-----------------
+Decision made on: {decided_on}
+Decision made by: {decided_by}
+{reason_prefix}{reason}
+
+If you have any questions about this decision, please contact your manager or the HR department.
+
+Thank you for using our application system.
+
+Best regards,
+HR Department
+
+This is an automated message. Please do not reply directly to this email.
+    """
+
+def get_application_outcome_approver_email_template(
+    approver_name: str,
+    employee_name: str,
+    employee_id: str,
+    application_id: int,
+    status: str,
+    reason: str,
+    description: str,
+    decided_on: datetime,
+    app_type: str,
+    event_info: Union[Dict, List]
+) -> str:
+    event_details = _format_event_details(app_type, event_info)
+
+    reason_prefix = "Reason for rejection: " if status == "rejected" else "Reason: "
+
+    return f"""
+Dear {approver_name},
+
+This email confirms that you have made a decision on the following application:
+
+Application Details:
+--------------------
+Application ID: {application_id}
+Employee: {employee_name} (ID: {employee_id})
+Status: {status.upper()}
+Description: {description if description else "No additional description provided"}
+
+{event_details}
+
+Decision Details:
+-----------------
+Decision made on: {decided_on}
+{reason_prefix}{reason}
+
+If you need to make any changes to this decision or have any questions, please contact the HR department.
+
+Best regards,
+HR Department
+
+This is an automated message. Please do not reply directly to this email.
+    """
+
+def _format_event_details(app_type: str, event_info: Union[Dict, List]) -> str:
+    if app_type == "recurring":
+        return f"""
+Recurring Application Details:
+------------------------------
+Recurrence Type: {event_info['recurrence_type']}
+Start Date: {event_info['start_date']}
+End Date: {event_info['end_date']}
+"""
+    elif app_type == "multiple_dates":
+        details = "Multiple Dates Application:\n"
+        for idx, event in enumerate(event_info, 1):
+            details += f"Event {idx}: Date: {event['date']}, Location: {event['location']}\n"
+        return details
+    else:  # one_time
+        return f"""
+Application Details:
+--------------------
+Date: {event_info['date']}
+Location: {event_info['location']}
+"""

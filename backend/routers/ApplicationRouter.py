@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from ..models.enums.EmployeeRoleEnum import EmployeeRole
 from ..schemas.ApplicationSchema import (ApplicationSchema, ApplicationCreateSchema, ApplicationUpdateSchema,
-                                         ApplicationWithdrawSchema, ApplicationResponse)
+                                         ApplicationWithdrawSchema, ApplicationResponse, ApplicationApproveRejectSchema)
 from ..services.ApplicationService import ApplicationService
 from ..services.dependencies import role_required
 
@@ -79,11 +79,20 @@ def get_applications_by_status(
 ):
     return service.get_applications_by_status(status)
 
-@ApplicationRouter.put("/{application_id}/status", response_model=ApplicationResponse)
-def update_application_status(
-    application_id: int,
-    new_status: str,
+# @ApplicationRouter.put("/{application_id}/status", response_model=ApplicationResponse)
+# def update_application_status(
+#     application_id: int,
+#     new_status: str,
+#     reason: str,
+#     service: ApplicationService = Depends(),
+#     current_user: dict = Depends(role_required(EmployeeRole.HR, EmployeeRole.MANAGER, EmployeeRole.STAFF))
+# ):
+#     return service.update_application_status(application_id, new_status, reason)
+
+@ApplicationRouter.put("/process/{application_id}", response_model=ApplicationResponse)
+def process_application(
+    application: ApplicationApproveRejectSchema,
     service: ApplicationService = Depends(),
-    current_user: dict = Depends(role_required(EmployeeRole.HR, EmployeeRole.MANAGER, EmployeeRole.STAFF))
+    current_user: dict = Depends(role_required(EmployeeRole.HR, EmployeeRole.MANAGER))
 ):
-    return service.update_application_status(application_id, new_status)
+    return service.approve_reject_pending_applications(application)
