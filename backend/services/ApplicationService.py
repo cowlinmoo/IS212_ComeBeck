@@ -80,6 +80,7 @@ class ApplicationService:
         application_dict["status"] = "pending"  # set status to pending as it is a new application
         application_dict["created_on"] = get_current_datetime_sgt()
         application_dict["last_updated_on"] = get_current_datetime_sgt()
+        application_dict["approver_id"] = employee.reporting_manager
 
         # Create new application
         new_application = self.application_repository.create_application(application_dict)
