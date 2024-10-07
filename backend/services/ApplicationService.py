@@ -324,8 +324,8 @@ class ApplicationService:
                     self._send_rejection_emails(
                         application, event.requested_date)
 
-        print(f"Rejected {rejected_count} applications with events older than {
-              two_months_ago}")
+        print(f"""Rejected {rejected_count} applications with events older than {
+              two_months_ago}""")
 
     def _send_rejection_emails(self, application: Application, req_date):
         employee = self.employee_repository.get_employee(application.staff_id)
