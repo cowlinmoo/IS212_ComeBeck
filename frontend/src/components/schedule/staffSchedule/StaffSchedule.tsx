@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 // import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -54,6 +54,7 @@ const StaffSchedule: React.FC<IStaffSchedule> = ({ teamMembers }) => {
 
   const [activeTab, setActiveTab] = useState("team")
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(today)
+  const [currTeamMembers, setCurrTeamMembers] = useState<EmployeeLocation[]>(teamMembers)
 
   const formatDate = (date: Date) => {
     return date.toISOString().split('T')[0]
@@ -62,6 +63,16 @@ const StaffSchedule: React.FC<IStaffSchedule> = ({ teamMembers }) => {
   const getScheduleForDate = (date: Date) => {
     return teamSchedule[formatDate(date)] || []
   }
+  useEffect(() => {
+    if (selectedDate) {
+      const adjustedDate = new Date(selectedDate);
+      adjustedDate.setDate(adjustedDate.getDate() + 1);
+      const formattedDate = formatDate(adjustedDate);
+      console.log(formattedDate)
+      const filteredMembers = teamMembers.filter(member => member.date === formattedDate);
+      setCurrTeamMembers(filteredMembers);
+    }
+  }, [selectedDate])
 
   return (
     <div className="container mx-auto p-4">
@@ -91,7 +102,7 @@ const StaffSchedule: React.FC<IStaffSchedule> = ({ teamMembers }) => {
                     {selectedDate ? selectedDate.toDateString() : 'Select a date'}
                   </h3>
                   <ul className="space-y-2">
-                    {teamMembers.map((member: EmployeeLocation) => (
+                    {currTeamMembers.map((member: EmployeeLocation) => (
                       <li key={`${member.employee_fname}-${member.employee_lname}`} className="flex items-center space-x-2">
                         <PersonIcon />
                         <span>{`${member.employee_fname} ${member.employee_lname}`}</span>
