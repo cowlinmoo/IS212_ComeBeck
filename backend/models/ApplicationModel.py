@@ -18,6 +18,7 @@ class Application(EntityMeta):
                     nullable=False)
     staff_id = Column(ForeignKey('employees.staff_id'), nullable=False)
     approver_id = Column(ForeignKey('employees.staff_id'), nullable=True)
+    outcome_reason = Column(Text, nullable=True)
 
     # fields for recurring events
     recurring = Column(Boolean, nullable=False)
