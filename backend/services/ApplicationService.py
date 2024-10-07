@@ -58,6 +58,12 @@ class ApplicationService:
             raise HTTPException(status_code=404, detail="Employee not found")
         return self.application_repository.get_application_by_staff_id(staff_id)
 
+    def get_applications_by_approver_id(self, approver_id: int) -> List[Type[Application]]:
+        # check if employee exists in the database
+        if self.employee_repository.get_employee(approver_id) is None:
+            raise HTTPException(status_code=404, detail="Employee not found")
+        return self.application_repository.get_applications_by_approver_id(approver_id)
+
     def create_application(self, application: ApplicationCreateSchema) -> ApplicationCreateSchema:
         # check if employee exists in the database
         employee = self.employee_repository.get_employee(application.staff_id)
@@ -80,6 +86,7 @@ class ApplicationService:
         application_dict["status"] = "pending"  # set status to pending as it is a new application
         application_dict["created_on"] = get_current_datetime_sgt()
         application_dict["last_updated_on"] = get_current_datetime_sgt()
+        application_dict["approver_id"] = employee.reporting_manager
 
         # Create new application
         new_application = self.application_repository.create_application(application_dict)

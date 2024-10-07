@@ -37,6 +37,14 @@ def get_applications_by_staff_id(
 ):
     return service.get_applications_by_staff_id(staff_id)
 
+@ApplicationRouter.get("/approver/{approver_id}", response_model=List[ApplicationResponse])
+def get_applications_by_approver_id(
+    approver_id: int,
+    service: ApplicationService = Depends(),
+    current_user: dict = Depends(role_required(EmployeeRole.HR, EmployeeRole.MANAGER, EmployeeRole.STAFF))
+):
+    return service.get_applications_by_approver_id(approver_id)
+
 @ApplicationRouter.post("/", response_model=ApplicationCreateSchema)
 def create_application(
     application: ApplicationCreateSchema,
