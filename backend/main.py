@@ -10,6 +10,7 @@ from backend.routers.EventRouter import EventRouter
 from backend.routers.ApplicationRouter import ApplicationRouter
 from backend.routers.AuthenticationRouter import AuthRouter
 from backend.routers.EmployeeRouter import EmployeeRouter
+from backend.routers.TeamRouter import TeamRouter
 from backend.services.dependencies import get_scheduler_service
 
 create_database()
@@ -42,3 +43,4 @@ app.include_router(AuthRouter)
 app.include_router(ApplicationRouter)
 app.include_router(EmployeeRouter)
 app.include_router(EventRouter)
+app.include_router(TeamRouter)

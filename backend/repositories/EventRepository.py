@@ -4,7 +4,7 @@ from typing import List, Type
 from fastapi import Depends
 from sqlalchemy.orm import Session
 
-from ..config.Database import get_db_connection
+from backend.config.Database import get_db_connection
 from backend.models import Event
 
 class EventRepository:
