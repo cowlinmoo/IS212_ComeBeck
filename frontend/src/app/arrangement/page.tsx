@@ -23,12 +23,12 @@ export default function Component() {
       <SideBar />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-scroll">
         {/* Header */}
         <Header />
         {/* Page Content */}
         <Applications staffId = {userId} token= {token}/>
       </div>
-    </div>
+      </div>
   );
 }
