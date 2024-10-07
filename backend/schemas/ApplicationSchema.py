@@ -106,3 +106,4 @@ class ApprovedApplicationLocationSchema(BaseModel):
     employee_lname: str
     location: str
     position: str
+    date:str
