@@ -9,7 +9,7 @@ from backend.services.ApplicationService import ApplicationService
 from backend.models.enums.RecurrenceType import RecurrenceType
 from backend.models import Application, Event, Employee
 from backend.schemas.ApplicationSchema import ApplicationCreateSchema, ApplicationUpdateSchema, \
-    ApplicationWithdrawSchema
+    ApplicationWithdrawSchema, ApplicationApproveRejectSchema
 
 
 @pytest.fixture
@@ -556,3 +556,183 @@ def test_get_applications_by_approver_id_employee_not_found(application_service,
     assert exc_info.value.detail == "Employee not found"
     mock_employee_repository.get_employee.assert_called_once_with(approver_id)
     mock_application_repository.get_applications_by_approver_id.assert_not_called()
+
+def test_approve_reject_pending_applications_approve_success(application_service, mock_application_repository,
+                                                            mock_employee_repository, mock_email_service):
+    application_id = 1
+    approver_id = 2
+    mock_application = Mock(Application, application_id=application_id, approver_id=approver_id, status='pending',
+                            staff_id=3, recurring=False, events=[Mock(Event, requested_date=date(2024, 1, 1),
+                                                                       location="Test Location")],
+                            outcome_reason="Approved", description="Test Description")
+    mock_application_repository.get_application_by_application_id.return_value = mock_application
+    mock_employee_repository.get_employee.side_effect = [
+        Mock(Employee, staff_fname="John", staff_lname="Doe", email="john@example.com"),
+        Mock(Employee, staff_fname="Jane", staff_lname="Doe", email="jane@example.com")
+    ]
+    # Configure update_application_status to return the original mock_application
+    mock_application_repository.update_application_status.return_value = mock_application
+
+    application_data = ApplicationApproveRejectSchema(
+        application_id=application_id,
+        approver_id=approver_id,
+        status="approved",
+        outcome_reason="Test Reason"
+    )
+    result = application_service.approve_reject_pending_applications(application_data)
+
+    assert result == mock_application
+    mock_application_repository.update_application_status.assert_called_once_with(application_id, 'approved',
+                                                                                  "Test Reason")
+    mock_email_service.send_email.assert_called()
+
+
+def test_approve_reject_pending_applications_reject_success(application_service, mock_application_repository,
+                                                            mock_employee_repository, mock_email_service):
+    application_id = 1
+    approver_id = 2
+    mock_application = Mock(Application, application_id=application_id, approver_id=approver_id, status='pending',
+                            staff_id=3, recurring=False, events=[Mock(Event, requested_date=date(2024, 1, 1),
+                                                                      location="Test Location")],
+                            outcome_reason="Rejected", description="Test Description")
+    mock_application_repository.get_application_by_application_id.return_value = mock_application
+    mock_employee_repository.get_employee.side_effect = [
+        Mock(Employee, staff_fname="John", staff_lname="Doe", email="john@example.com"),
+        Mock(Employee, staff_fname="Jane", staff_lname="Doe", email="jane@example.com")
+    ]
+
+    # Configure update_application_status to return the original mock_application
+    mock_application_repository.update_application_status.return_value = mock_application
+
+    application_data = ApplicationApproveRejectSchema(
+        application_id=application_id,
+        approver_id=approver_id,
+        status="rejected",
+        outcome_reason="Test Reason"
+    )
+    result = application_service.approve_reject_pending_applications(application_data)
+
+    assert result == mock_application
+    mock_application_repository.update_application_status.assert_called_once_with(application_id, 'rejected',
+                                                                                  "Test Reason")
+    mock_email_service.send_email.assert_called()
+
+
+def test_approve_reject_pending_applications_not_found(application_service, mock_application_repository):
+    mock_application_repository.get_application_by_application_id.return_value = None
+
+    application_data = ApplicationApproveRejectSchema(
+        application_id=1,
+        approver_id=2,
+        status="approved",
+        outcome_reason="Test Reason"
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        application_service.approve_reject_pending_applications(application_data)
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Application not found"
+
+
+def test_approve_reject_pending_applications_not_pending(application_service, mock_application_repository):
+    mock_application = Mock(Application, status='approved')
+    mock_application_repository.get_application_by_application_id.return_value = mock_application
+
+    application_data = ApplicationApproveRejectSchema(
+        application_id=1,
+        approver_id=2,
+        status="approved",
+        outcome_reason="Test Reason"
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        application_service.approve_reject_pending_applications(application_data)
+
+    assert exc_info.value.status_code == 400
+    assert exc_info.value.detail == "Application is not pending"
+
+
+def test_approve_reject_pending_applications_unauthorized(application_service, mock_application_repository):
+    mock_application = Mock(Application, approver_id=2, status='pending')
+    mock_application_repository.get_application_by_application_id.return_value = mock_application
+
+    application_data = ApplicationApproveRejectSchema(
+        application_id=1,
+        approver_id=3,  # Different approver ID
+        status="approved",
+        outcome_reason="Test Reason"
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        application_service.approve_reject_pending_applications(application_data)
+
+    assert exc_info.value.status_code == 403
+    assert exc_info.value.detail == "You are not authorized to approve this application"
+
+
+@patch('backend.services.ApplicationService.get_current_datetime_sgt')
+def test_send_outcome_emails_success(mock_datetime, application_service, mock_employee_repository, mock_email_service):
+    mock_datetime.return_value = datetime.now()
+    mock_application = Mock(Application, staff_id=1, approver_id=2, status="approved", recurring=False,
+                            events=[Mock(Event, requested_date=date(2024, 1, 1), location="Test Location")],
+                            outcome_reason="Approved", description="Test Description")
+    mock_employee_repository.get_employee.side_effect = [
+        Mock(Employee, staff_fname="John", staff_lname="Doe", email="john@example.com"),
+        Mock(Employee, staff_fname="Jane", staff_lname="Doe", email="jane@example.com")
+    ]
+
+    application_service._send_outcome_emails(mock_application)
+
+    assert mock_email_service.send_email.call_count == 2
+
+
+def test_send_outcome_emails_employee_or_approver_not_found(application_service, mock_employee_repository):
+    mock_application = Mock(Application, staff_id=1, approver_id=2)
+    mock_employee_repository.get_employee.side_effect = [
+        Mock(Employee),  # Employee exists
+        None  # Approver does not exist
+    ]
+
+    with pytest.raises(HTTPException) as exc_info:
+        application_service._send_outcome_emails(mock_application)
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Employee or approver not found"
+
+@patch('backend.services.ApplicationService.get_current_datetime_sgt')
+def test_send_outcome_emails_recurring_application(mock_datetime, application_service, mock_employee_repository, mock_email_service):
+    mock_datetime.return_value = datetime.now()
+    mock_application = Mock(Application, staff_id=1, approver_id=2, status="approved", recurring=True,
+                            recurrence_type=RecurrenceType.WEEKLY,  # Use the enum member
+                            events=[Mock(Event, requested_date=date(2024, 1, 1))],
+                            end_date=date(2024, 1, 15), outcome_reason="Approved", description="Test Description")
+    mock_employee_repository.get_employee.side_effect = [
+        Mock(Employee, staff_fname="John", staff_lname="Doe", email="john@example.com"),
+        Mock(Employee, staff_fname="Jane", staff_lname="Doe", email="jane@example.com")
+    ]
+
+    application_service._send_outcome_emails(mock_application)
+
+    assert mock_email_service.send_email.call_count == 2
+    # Add assertions to check if the email content contains the correct recurring application information
+
+
+@patch('backend.services.ApplicationService.get_current_datetime_sgt')
+def test_send_outcome_emails_multiple_events(mock_datetime, application_service, mock_employee_repository, mock_email_service):
+    mock_datetime.return_value = datetime.now()
+    mock_events = [
+        Mock(Event, requested_date=date(2024, 1, 1), location="Location A"),
+        Mock(Event, requested_date=date(2024, 1, 5), location="Location B")
+    ]
+    mock_application = Mock(Application, staff_id=1, approver_id=2, status="approved", recurring=False,
+                            events=mock_events, outcome_reason="Approved", description="Test Description")
+    mock_employee_repository.get_employee.side_effect = [
+        Mock(Employee, staff_fname="John", staff_lname="Doe", email="john@example.com"),
+        Mock(Employee, staff_fname="Jane", staff_lname="Doe", email="jane@example.com")
+    ]
+
+    application_service._send_outcome_emails(mock_application)
+
+    assert mock_email_service.send_email.call_count == 2
+    # Add assertions to check if the email content contains the correct multiple events information
