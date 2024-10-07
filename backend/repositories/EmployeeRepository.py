@@ -26,6 +26,10 @@ class EmployeeRepository:
     def create_employee(self, employee_data: Employee) -> Employee:
         if self.db.query(Employee).filter(Employee.email == employee_data.email).first():
             raise HTTPException(status_code=400, detail="Employee with this email already exists")
+        if self.db.query(Employee).filter(Employee.staff_id == employee_data.staff_id).first():
+            raise HTTPException(status_code=400, detail="Employee with this staff ID already exists")
+        if self.db.query(Employee).filter(Employee.reporting_manager == employee_data.reporting_manager).first() is None:
+            raise HTTPException(status_code=400, detail="Reporting Manager does not exist")
         employee_data.password = pwd_context.hash(employee_data.password)
         new_employee = employee_data
         self.db.add(new_employee)
