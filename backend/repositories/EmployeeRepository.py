@@ -59,7 +59,12 @@ class EmployeeRepository:
         employee = self.get_employee(staff_id)
         return employee.email
 
-    def get_employees_by_ids(self, staff_ids: List[str]) -> List[Employee]:
+    def get_employees_by_ids(self, staff_ids: List[int]) -> List[Employee]:
         employees = self.db.query(Employee).filter(
             Employee.staff_id.in_(staff_ids)).all()
+        return employees
+
+    def get_employees_under_manager(self, manager_id: int) -> List[Employee]:
+        employees = self.db.query(Employee).filter(
+            Employee.reporting_manager == manager_id).all()
         return employees

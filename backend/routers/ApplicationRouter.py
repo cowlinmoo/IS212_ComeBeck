@@ -96,11 +96,11 @@ def update_application_status(
     return service.update_application_status(application_id, new_status)
 
 
-@ApplicationRouter.get("/location/")
+@ApplicationRouter.get("/location/{employee_id}")
 def get_all_locations(
+        employee_id: int,
         service: ApplicationService = Depends(),
         current_user: dict = Depends(role_required(
-            EmployeeRole.HR, EmployeeRole.MANAGER, EmployeeRole.STAFF))
+            EmployeeRole.HR, EmployeeRole.MANAGER))
 ):
-
-    return service.get_employee_approved_application_locations()
+    return service.get_employee_approved_application_locations(employee_id=employee_id, current_user_role=current_user["role"])

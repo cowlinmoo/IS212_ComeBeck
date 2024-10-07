@@ -14,6 +14,7 @@ from backend.config.EmailTemplates import (get_new_application_manager_email_sub
                                            get_application_withdrawn_manager_email_template,
                                            get_application_auto_rejected_employee_email_subject,
                                            get_application_auto_rejected_employee_email_template)
+from backend.models.enums.EmployeeRoleEnum import EmployeeRole
 from backend.models.enums.RecurrenceType import RecurrenceType
 from backend.models.generators import get_current_datetime_sgt
 from backend.models.generators import get_current_date
@@ -59,11 +60,17 @@ class ApplicationService:
             raise HTTPException(status_code=404, detail="Employee not found")
         return self.application_repository.get_application_by_staff_id(staff_id)
 
-    def get_employee_approved_application_locations(self) -> List[ApprovedApplicationLocationSchema]:
+    def get_employee_approved_application_locations(self, employee_id: int, current_user_role: EmployeeRole) -> List[ApprovedApplicationLocationSchema]:
         employee_locations: List[ApprovedApplicationLocationSchema] = []
         approved_applications: List[Application] = self.application_repository.get_applications_by_status(
             status="approved")
-
+        if current_user_role == EmployeeRole.MANAGER:
+            employees = self.employee_repository.get_employees_under_manager(
+                manager_id=employee_id)
+            approved_applications = [application for application in approved_applications if application.staff_id in [
+                employee.staff_id for employee in employees]]
+        elif current_user_role == EmployeeRole.HR:
+            pass
         for approved_application in approved_applications:
             user = self.employee_repository.get_employee(
                 staff_id=approved_application.staff_id)
