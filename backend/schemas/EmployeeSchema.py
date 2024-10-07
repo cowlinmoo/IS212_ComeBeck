@@ -17,3 +17,8 @@ class EmployeeSchema(BaseModel):
 
     class Config:
         from_attributes = True
+
+class EmployeeInfo(BaseModel):
+    staff_id: int = Field(examples=[1, 2, 3])
+    staff_fname: str = Field(examples=["John", "Jane", "Doe"])
+    staff_lname: str = Field(examples=["Doe", "Smith", "Doe"])

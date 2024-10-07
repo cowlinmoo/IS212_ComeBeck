@@ -6,6 +6,7 @@ from backend.models.enums.RecurrenceType import RecurrenceType
 
 import logging
 
+from backend.schemas.EmployeeSchema import EmployeeInfo
 from backend.schemas.EventSchema import EventCreateSchema, EventResponse
 
 logging.basicConfig(level=logging.DEBUG)
@@ -32,7 +33,7 @@ class ApplicationResponse(BaseModel):
     created_on: datetime = Field(examples=[datetime.now()])
     last_updated_on: Optional[datetime] = Field(default=None, examples=[datetime.now()])
     status: str = Field(examples=["pending", "approved", "rejected", "withdrawn"])
-    staff_id: int = Field(examples=[101, 102, 103])
+    staff: EmployeeInfo = Field(default_factory=EmployeeInfo)
     approver_id: Optional[int] = Field(default=None, examples=[101, 102, 103])
     recurring: bool = Field(examples=[True, False])
     events: List[EventResponse] = Field(default_factory=list)

@@ -82,4 +82,7 @@ class ApplicationRepository:
 
     def get_pending_applications(self) -> List[Type[Application]]:
         return self.db.query(Application).filter(Application.status == 'pending').all()
+
+    def get_applications_by_approver_id(self, approver_id):
+        return self.db.query(Application).filter(Application.approver_id == approver_id).all()
     
