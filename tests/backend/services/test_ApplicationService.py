@@ -508,10 +508,10 @@ def test_update_application_status(application_service, mock_application_reposit
     mock_application = Mock(Application)
     mock_application_repository.update_application_status.return_value = mock_application
 
-    result = application_service.update_application_status(1, "approved")
+    result = application_service.update_application_status(1, "approved","some lame reason")
 
     assert result == mock_application
-    mock_application_repository.update_application_status.assert_called_once_with(1, "approved")
+    mock_application_repository.update_application_status.assert_called_once_with(1, "approved","some lame reason")
 
 
 @patch('backend.services.ApplicationService.get_current_date')
@@ -534,7 +534,7 @@ def test_reject_old_applications(mock_current_date, application_service, mock_ap
 
     application_service.reject_old_applications()
 
-    mock_application_repository.update_application_status.assert_called_once_with(1, 'rejected')
+    mock_application_repository.update_application_status.assert_called_once_with(1, 'rejected', 'Application automatically rejected due to old requested date')
     mock_email_service.send_email.assert_called_once()
 
 def test_get_applications_by_approver_id(application_service, mock_application_repository, mock_employee_repository):
