@@ -23,12 +23,18 @@ def test_get_new_application_employee_email_subject():
     assert subject == "Application Submitted - Application ID: 67890"
 
 def test_get_application_withdrawn_manager_email_subject():
-    subject = get_application_withdrawn_manager_email_subject(12345, "John Doe")
-    assert subject == "Application Withdrawn by Employee ID: 12345 - John Doe"
+    subject = get_application_withdrawn_manager_email_subject(12345, "John Doe", True)
+    assert subject == "Application Withdrawn for Employee ID: 12345 - John Doe"
+
+    subject = get_application_withdrawn_manager_email_subject(12345, "John Doe", False)
+    assert subject == "Application Cancelled for Employee ID: 12345 - John Doe"
 
 def test_get_application_withdrawn_employee_email_subject():
-    subject = get_application_withdrawn_employee_email_subject(67890)
-    assert subject == "WITHDRAWN: Application Withdrawn - Application ID: 67890"
+    subject = get_application_withdrawn_employee_email_subject(67890, True)
+    assert subject == "WITHDRAWN: Application withdrawn - Application ID: 67890"
+
+    subject = get_application_withdrawn_employee_email_subject(67890, False)
+    assert subject == "CANCELLED: Application cancelled - Application ID: 67890"
 
 def test_get_application_auto_rejected_employee_email_subject():
     subject = get_application_auto_rejected_employee_email_subject(67890)
@@ -86,7 +92,8 @@ def test_get_application_withdrawn_manager_email_template():
         application_id=67890,
         reason="Vacation",
         status="Withdrawn",
-        withdrawn_on=datetime(2023, 6, 15, 10, 30)
+        withdrawn_on=datetime(2023, 6, 15, 10, 30),
+        withdrawn_by="employee"
     )
     assert "Dear Jane Smith," in template
     assert "Employee Name: John Doe" in template
@@ -95,6 +102,7 @@ def test_get_application_withdrawn_manager_email_template():
     assert "Reason: Vacation" in template
     assert "Status: Withdrawn" in template
     assert "Withdrawn On: 2023-06-15 10:30:00" in template
+    assert "Withdrawn By: Employee" in template
 
 def test_get_application_withdrawn_employee_email_template():
     template = get_application_withdrawn_employee_email_template(
@@ -102,13 +110,15 @@ def test_get_application_withdrawn_employee_email_template():
         application_id=67890,
         reason="Vacation",
         status="Withdrawn",
-        withdrawn_on=datetime(2023, 6, 15, 10, 30)
+        withdrawn_on=datetime(2023, 6, 15, 10, 30),
+        withdrawn_by="you"
     )
     assert "Dear John Doe," in template
     assert "Application ID: 67890" in template
     assert "Reason: Vacation" in template
     assert "Status: Withdrawn" in template
     assert "Withdrawn On: 2023-06-15 10:30:00" in template
+    assert "Withdrawn By: You" in template
 
 def test_get_application_auto_rejected_employee_email_template():
     template = get_application_auto_rejected_employee_email_template(

@@ -361,7 +361,7 @@ def test_withdraw_application_success(application_service, mock_application_repo
     mock_application_repository.withdraw_application.return_value = mock_application
 
     withdraw_data = ApplicationWithdrawSchema(
-        staff_id=1,
+        editor_id=1,
         reason="Test withdrawal",
         status="withdrawn",  # Add the required status field
         application_id=1  # Add the required application_id field
@@ -381,7 +381,7 @@ def test_withdraw_application_already_withdrawn(application_service, mock_applic
     mock_application_repository.get_application_by_application_id.return_value = existing_application
 
     withdraw_data = ApplicationWithdrawSchema(
-        staff_id=staff_id,
+        editor_id=staff_id,
         status="withdrawn",
         application_id=application_id
     )
@@ -390,14 +390,14 @@ def test_withdraw_application_already_withdrawn(application_service, mock_applic
     with pytest.raises(HTTPException) as exc_info:
         application_service.withdraw_application(application_id, withdraw_data)
 
-    assert exc_info.value.status_code == 403
+    assert exc_info.value.status_code == 409
     assert exc_info.value.detail == "Application already withdrawn"
 
 def test_withdraw_application_not_found(application_service, mock_application_repository):
     mock_application_repository.get_application_by_application_id.return_value = None
 
     withdraw_data = ApplicationWithdrawSchema(
-        staff_id=1,
+        editor_id=1,
         reason="Test withdrawal",
         status="withdrawn",
         application_id=1
@@ -410,19 +410,24 @@ def test_withdraw_application_not_found(application_service, mock_application_re
     assert exc_info.value.detail == "Application not found"
 
 
-def test_withdraw_application_wrong_staff(application_service, mock_application_repository, mock_employee_repository):
+def test_withdraw_application_non_employee(application_service, mock_application_repository, mock_employee_repository):
     # Setup
     application_id = 1
     staff_id = 1
-    wrong_staff_id = 2
+    non_employee_id = 2
     existing_application = Application(application_id=application_id, staff_id=staff_id, status="pending")
     mock_application_repository.get_application_by_application_id.return_value = existing_application
-    mock_employee_repository.get_employee.return_value = {"id": wrong_staff_id, "name": "Wrong Employee"}
+
+    mock_employee_repository.get_employee.side_effect = [
+        Mock(id=staff_id, reporting_manager=3),  # Application owner
+        Mock(id=non_employee_id, reporting_manager=4)  # Non-employee
+    ]
 
     withdraw_data = ApplicationWithdrawSchema(
-        staff_id=wrong_staff_id,
-        status="withdrawn",
-        application_id=application_id
+        editor_id=non_employee_id,
+        reason="Test withdrawal",
+        status="withdrawn",  # Add the required status field
+        application_id=application_id  # Add the required application_id field
     )
 
     # Execute and Assert
@@ -430,16 +435,43 @@ def test_withdraw_application_wrong_staff(application_service, mock_application_
         application_service.withdraw_application(application_id, withdraw_data)
 
     assert exc_info.value.status_code == 403
-    assert exc_info.value.detail == "You can only withdraw your own application"
+    assert exc_info.value.detail == "You are not authorized to withdraw this application"
 
-def test_get_applications_by_status(application_service, mock_application_repository):
-    mock_applications = [Mock(Application), Mock(Application)]
-    mock_application_repository.get_applications_by_status.return_value = mock_applications
+    assert mock_employee_repository.get_employee.call_count == 2
+    mock_employee_repository.get_employee.assert_any_call(staff_id)
+    mock_employee_repository.get_employee.assert_any_call(non_employee_id)
 
-    result = application_service.get_applications_by_status("pending")
 
-    assert result == mock_applications
-    mock_application_repository.get_applications_by_status.assert_called_once_with("pending")
+def test_withdraw_application_non_manager(application_service, mock_application_repository, mock_employee_repository):
+    # Setup
+    application_id = 1
+    staff_id = 1
+    non_manager_id = 2
+    existing_application = Application(application_id=application_id, staff_id=staff_id, status="pending")
+    mock_application_repository.get_application_by_application_id.return_value = existing_application
+
+    mock_employee_repository.get_employee.side_effect = [
+        Mock(id=staff_id, reporting_manager=3),  # Application owner
+        Mock(id=non_manager_id, reporting_manager=3)  # Non-manager (same reporting manager as staff)
+    ]
+
+    withdraw_data = ApplicationWithdrawSchema(
+        editor_id=non_manager_id,
+        reason="Test withdrawal",
+        status = "withdrawn",  # Add the required status field
+        application_id = application_id  # Add the required application_id field
+    )
+
+    # Execute and Assert
+    with pytest.raises(HTTPException) as exc_info:
+        application_service.withdraw_application(application_id, withdraw_data)
+
+    assert exc_info.value.status_code == 403
+    assert exc_info.value.detail == "You are not authorized to withdraw this application"
+
+    assert mock_employee_repository.get_employee.call_count == 2
+    mock_employee_repository.get_employee.assert_any_call(staff_id)
+    mock_employee_repository.get_employee.assert_any_call(non_manager_id)
 
 def test_withdraw_application_employee_not_found(application_service, mock_application_repository, mock_employee_repository):
     # Setup
@@ -451,7 +483,7 @@ def test_withdraw_application_employee_not_found(application_service, mock_appli
     mock_employee_repository.get_employee.return_value = None
 
     withdraw_data = ApplicationWithdrawSchema(
-        staff_id=wrong_staff_id,
+        editor_id=wrong_staff_id,
         status="withdrawn",
         application_id=application_id
     )
@@ -461,7 +493,16 @@ def test_withdraw_application_employee_not_found(application_service, mock_appli
         application_service.withdraw_application(application_id, withdraw_data)
 
     assert exc_info.value.status_code == 404
-    assert exc_info.value.detail == "Employee not found"
+    assert exc_info.value.detail == "Editor not found"
+
+def test_get_applications_by_status(application_service, mock_application_repository):
+    mock_applications = [Mock(Application), Mock(Application)]
+    mock_application_repository.get_applications_by_status.return_value = mock_applications
+
+    result = application_service.get_applications_by_status("pending")
+
+    assert result == mock_applications
+    mock_application_repository.get_applications_by_status.assert_called_once_with("pending")
 
 def test_update_application_status(application_service, mock_application_repository):
     mock_application = Mock(Application)
@@ -495,3 +536,23 @@ def test_reject_old_applications(mock_current_date, application_service, mock_ap
 
     mock_application_repository.update_application_status.assert_called_once_with(1, 'rejected')
     mock_email_service.send_email.assert_called_once()
+
+def test_get_applications_by_approver_id(application_service, mock_application_repository, mock_employee_repository):
+    approver_id = 1
+    mock_employee_repository.get_employee.return_value = Mock(Employee)
+    applications = [Mock(Application), Mock(Application)]
+    mock_application_repository.get_applications_by_approver_id.return_value = applications
+    result = application_service.get_applications_by_approver_id(approver_id)
+    assert result == applications
+    mock_employee_repository.get_employee.assert_called_once_with(approver_id)
+    mock_application_repository.get_applications_by_approver_id.assert_called_once_with(approver_id)
+
+def test_get_applications_by_approver_id_employee_not_found(application_service, mock_application_repository, mock_employee_repository):
+    approver_id = 1
+    mock_employee_repository.get_employee.return_value = None
+    with pytest.raises(HTTPException) as exc_info:
+        application_service.get_applications_by_approver_id(approver_id)
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Employee not found"
+    mock_employee_repository.get_employee.assert_called_once_with(approver_id)
+    mock_application_repository.get_applications_by_approver_id.assert_not_called()

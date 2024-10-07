@@ -73,6 +73,6 @@ class ApplicationUpdateSchema(BaseModel):
 
 class ApplicationWithdrawSchema(BaseModel):
     status: str = Field(examples=["withdrawn"])
-    staff_id: int = Field(examples=[101, 102, 103])
+    editor_id: int = Field(examples=[101, 102, 103])
     application_id: int = Field(examples=[201, 202, 203])
     withdraw_reason: Optional[str] = Field(default=None, examples=["Personal reasons", "Change of plans"])

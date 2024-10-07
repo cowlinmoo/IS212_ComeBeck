@@ -36,8 +36,8 @@ ON CONFLICT (team_id, staff_id) DO NOTHING;
 -- Insert seed data into the Application table if not exists
 INSERT INTO application (application_id, reason, description, created_on, last_updated_on, status, staff_id, approver_id, recurring)
 VALUES
-    (201, 'WFH Request', 'Requesting to work from home for two weeks due to home renovation.', '2023-07-01 08:00:00', '2023-07-02 10:00:00', 'approved', 101, 102, TRUE),
-    (202, 'Relocation', 'Requesting to relocate to the New York office for 3 months.', '2023-07-05 09:00:00', '2023-07-06 11:00:00', 'pending', 104, 100, FALSE),
+    (201, 'WFH Request', 'Requesting to work from home for two weeks due to home renovation.', '2023-07-01 08:00:00', '2023-07-02 10:00:00', 'approved', 101, 100, TRUE),
+    (202, 'Relocation', 'Requesting to relocate to the New York office for 3 months.', '2023-07-05 09:00:00', '2023-07-06 11:00:00', 'pending', 104, 102, FALSE),
     (203, 'Flexible Hours', 'Requesting flexible working hours for childcare reasons.', '2023-07-10 14:00:00', '2023-07-11 09:00:00', 'approved', 103, 100, TRUE),
     (204, 'Remote Work', 'Requesting to work remotely from Bali for 1 month.', '2023-07-15 11:00:00', '2023-07-16 13:00:00', 'rejected', 106, 100, FALSE),
     (205, 'Office Change', 'Requesting to move to a quieter area in the office.', '2023-07-20 10:00:00', '2023-07-20 15:00:00', 'pending', 107, 103, FALSE)

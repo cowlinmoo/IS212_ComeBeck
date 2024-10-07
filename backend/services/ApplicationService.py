@@ -207,30 +207,37 @@ class ApplicationService:
         if existing_application is None:
             raise HTTPException(status_code=404, detail="Application not found")
 
-        if existing_application.staff_id != application.staff_id:
-            employee = self.employee_repository.get_employee(application.staff_id)
-            if employee is None:
-                raise HTTPException(status_code=404, detail="Employee not found")
-            raise HTTPException(status_code=403, detail="You can only withdraw your own application")
+        # Fetch employee and editor data
+        employee = self.employee_repository.get_employee(existing_application.staff_id)
+        editor = self.employee_repository.get_employee(application.editor_id)
+
+        if editor is None:
+            raise HTTPException(status_code=404, detail="Editor not found")
+
+        # Check if the editor is authorized (either the employee themselves or their manager)
+        is_employee = existing_application.staff_id == application.editor_id
+        is_manager = employee.reporting_manager == application.editor_id
+
+        if not (is_employee or is_manager):
+            raise HTTPException(status_code=403, detail="You are not authorized to withdraw this application")
 
         if existing_application.status == "withdrawn":
-            raise HTTPException(status_code=403, detail="Application already withdrawn")
+            raise HTTPException(status_code=409, detail="Application already withdrawn")
 
         withdrawn_application = self.application_repository.withdraw_application(application_id, application)
 
-        # Fetch employee data
-        employee = self.employee_repository.get_employee(withdrawn_application.staff_id)
-        staff_name = f"{employee.staff_fname} {employee.staff_lname}"
-        manager_id = employee.reporting_manager
-        manager = self.employee_repository.get_employee(manager_id)
-        manager_email = manager.email
         # Prepare email data
         current_time = get_current_datetime_sgt()
+        staff_name = f"{employee.staff_fname} {employee.staff_lname}"
+        editor_name = f"{editor.staff_fname} {editor.staff_lname}"
 
         # Send email to manager
+        manager = self.employee_repository.get_employee(employee.reporting_manager)
+        manager_email = manager.email if manager else None
+
         if manager_email:
             manager_subject = get_application_withdrawn_manager_email_subject(withdrawn_application.staff_id,
-                                                                              staff_name)
+                                                                              staff_name, is_employee)
             manager_body = get_application_withdrawn_manager_email_template(
                 manager_name=f"{manager.staff_fname} {manager.staff_lname}",
                 employee_name=staff_name,
@@ -238,18 +245,21 @@ class ApplicationService:
                 application_id=withdrawn_application.application_id,
                 reason=withdrawn_application.reason,
                 status=withdrawn_application.status,
-                withdrawn_on=current_time
+                withdrawn_on=current_time,
+                withdrawn_by="employee" if is_employee else "you"
             )
             self.email_service.send_email(manager_email, manager_subject, manager_body)
 
         # Send email to employee
-        employee_subject = get_application_withdrawn_employee_email_subject(withdrawn_application.application_id)
+        employee_subject = get_application_withdrawn_employee_email_subject(withdrawn_application.application_id,
+                                                                            is_employee)
         employee_body = get_application_withdrawn_employee_email_template(
             employee_name=staff_name,
             application_id=withdrawn_application.application_id,
             reason=withdrawn_application.reason,
             status=withdrawn_application.status,
-            withdrawn_on=current_time
+            withdrawn_on=current_time,
+            withdrawn_by="you" if is_employee else editor_name
         )
         self.email_service.send_email(employee.email, employee_subject, employee_body)
 
