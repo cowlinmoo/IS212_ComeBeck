@@ -6,7 +6,7 @@ from backend.models.enums.RecurrenceType import RecurrenceType
 
 import logging
 
-from backend.schemas.EmployeeSchema import EmployeeInfo
+from backend.schemas.BaseSchema import BaseEmployeeInfo
 from backend.schemas.EventSchema import EventCreateSchema, EventResponse
 
 logging.basicConfig(level=logging.DEBUG)
@@ -27,7 +27,7 @@ class ApplicationSchema(BaseModel):
         from_attributes = True
 
 class ApplicationResponse(BaseModel):
-    staff: EmployeeInfo = Field(default_factory=EmployeeInfo)
+    staff: BaseEmployeeInfo = Field(default_factory=BaseEmployeeInfo)
     application_id: int = Field(examples=[201, 202, 203])
     reason: str = Field(examples=["Vacation request", "Sick leave", "Personal day"])
     description: Optional[str] = Field(default=None, examples=["Going on a family vacation", "Doctor's appointment"])
@@ -37,6 +37,9 @@ class ApplicationResponse(BaseModel):
     approver_id: Optional[int] = Field(default=None, examples=[101, 102, 103])
     recurring: bool = Field(examples=[True, False])
     events: List[EventResponse] = Field(default_factory=list)
+
+    class Config:
+        from_attributes = True
 
 class ApplicationCreateSchema(BaseModel):
     location: str = Field(examples=["Home", "Office", "Remote"])
@@ -63,6 +66,7 @@ class ApplicationCreateSchema(BaseModel):
 
     class Config:
         validate_assignment = True
+        from_attributes = True
 
 class ApplicationUpdateSchema(BaseModel):
     reason: Optional[str] = Field(default=None, examples=["Vacation request", "Sick leave", "Personal day"])
@@ -70,15 +74,20 @@ class ApplicationUpdateSchema(BaseModel):
     description: Optional[str] = Field(default=None, examples=["Going on a family vacation", "Doctor's appointment"])
     status: Optional[str] = Field(default=None, examples=["pending", "approved", "rejected", "withdrawn"])
     approver_id: Optional[int] = Field(default=None, examples=[101, 102, 103])
-
+    class Config:
+        from_attributes = True
 class ApplicationWithdrawSchema(BaseModel):
     status: str = Field(examples=["withdrawn"])
     editor_id: int = Field(examples=[101, 102, 103])
     application_id: int = Field(examples=[201, 202, 203])
     withdraw_reason: Optional[str] = Field(default=None, examples=["Personal reasons", "Change of plans"])
+    class Config:
+        from_attributes = True
 
 class ApplicationApproveRejectSchema(BaseModel):
     status: str = Field(examples=["approved", "rejected"])
     approver_id: int = Field(examples=[100, 102, 103])
     application_id: int = Field(examples=[201, 202, 203])
     outcome_reason: Optional[str] = Field(default=None, examples=["Some reason for decision"])
+    class Config:
+        from_attributes = True
