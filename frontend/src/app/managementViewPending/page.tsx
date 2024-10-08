@@ -58,7 +58,7 @@ export default function Component() {
         <SideBar />
         <div className="flex flex-col w-full">
           <Header />
-          <ViewPending data={applications} />
+          <ViewPending data={applications} token={String(token)} userId={Number(userId)}/>
         </div>
       </div>
     );

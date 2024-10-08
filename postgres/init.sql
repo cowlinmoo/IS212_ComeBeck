@@ -36,12 +36,11 @@ ON CONFLICT (team_id, staff_id) DO NOTHING;
 -- Insert seed data into the Application table if not exists
 INSERT INTO application (application_id, reason, description, created_on, last_updated_on, status, staff_id, approver_id, recurring)
 VALUES
-    (201, 'WFH Request', 'Requesting to work from home for two weeks due to home renovation.', '2023-07-01 08:00:00', '2023-07-02 10:00:00', 'approved', 101, 100, FALSE),
-    (202, 'Relocation', 'Requesting to relocate to the New York office for 3 months.', '2023-07-05 09:00:00', '2023-07-06 11:00:00', 'pending', 101, 102, FALSE),
-    (203, 'Flexible Hours', 'Requesting flexible working hours for childcare reasons.', '2023-07-10 14:00:00', '2023-07-11 09:00:00', 'approved', 103, 100, FALSE),
+    (201, 'WFH Request', 'Requesting to work from home for two weeks due to home renovation.', '2023-07-01 08:00:00', '2023-07-02 10:00:00', 'pending', 101, 100, FALSE),
+    (202, 'Relocation', 'Requesting to relocate to the New York office for 3 months.', '2023-07-05 09:00:00', '2023-07-06 11:00:00', 'pending', 101, 100, FALSE),
+    (203, 'Flexible Hours', 'Requesting flexible working hours for childcare reasons.', '2023-07-10 14:00:00', '2023-07-11 09:00:00', 'pending', 103, 100, FALSE),
     (204, 'Remote Work', 'Requesting to work remotely from Bali for 1 month.', '2023-07-15 11:00:00', '2023-07-16 13:00:00', 'rejected', 106, 100, FALSE),
-    (205, 'Office Change', 'Requesting to move to a quieter area in the office.', '2023-07-20 10:00:00', '2023-07-20 15:00:00', 'pending', 107, 103, FALSE),
-    (206, 'Sitting at Home', 'I just want to sit at home', '2023-07-21 10:00:00', '2023-07-21 15:00:00', 'pending', 107, 100, FALSE)
+    (205, 'Office Change', 'Requesting to move to a quieter area in the office.', '2023-07-20 10:00:00', '2023-07-20 15:00:00', 'pending', 100, 103, FALSE)
 ON CONFLICT (application_id) DO NOTHING;
 
 -- Insert seed data into the Event table if not exists
@@ -53,7 +52,5 @@ VALUES
     (404, '2023-07-15', 'wfo', 203),  -- Charlie's flexible hours
     (405, '2023-07-16', 'wfo', 203),  -- Charlie's flexible hours
     (406, '2023-08-05', 'wfh', 204),  -- Frank's rejected remote work
-    (407, '2023-07-25', 'wfo', 205),  -- Grace's office change pending
-    (408, '2023-07-27', 'wfo', 206),  -- Grace sits at home
-    (409, '2023-07-28', 'wfo', 206)   -- Grace sits at home
+    (407, '2023-07-25', 'wfo', 205)  -- Grace's office change pending
 ON CONFLICT (event_id) DO NOTHING;
