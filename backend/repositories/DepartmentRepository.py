@@ -27,3 +27,7 @@ class DepartmentRepository:
         if not department:
             raise HTTPException(status_code=404, detail="Department not found")
         return department
+
+    def get_employees_by_department_id(self, department_id: int) -> List[Type[Department]]:
+        department = self.get_department_by_id(department_id)
+        return department.employees

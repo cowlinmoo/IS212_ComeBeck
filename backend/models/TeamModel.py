@@ -20,3 +20,5 @@ class Team(EntityMeta):
     department = relationship("Department", back_populates="teams")
     manager = relationship("Employee", foreign_keys=[manager_id], back_populates="managed_team")
     members = relationship("Employee", back_populates="team", foreign_keys="Employee.team_id")
+    parent_team = relationship("Team", remote_side=[team_id], back_populates="child_teams")
+    child_teams = relationship("Team", back_populates="parent_team")

@@ -57,3 +57,6 @@ class EmployeeRepository:
 
     def get_employees_by_manager_id(self, manager_id: int) -> List[Type[Employee]]:
         return self.db.query(Employee).filter(Employee.reporting_manager == manager_id).all()
+
+    def get_employees_by_team_id(self, team_id):
+        return self.db.query(Employee).filter(Employee.team_id == team_id).all()

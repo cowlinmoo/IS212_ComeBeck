@@ -1,6 +1,8 @@
 from typing import Optional, List
 from pydantic import BaseModel, Field
 from .BaseSchema import BaseDepartmentInfo, BaseEmployeeInfo, BaseTeamInfo
+from .TeamSchema import TeamSchema
+
 
 class DepartmentSchema(BaseDepartmentInfo):
     description: Optional[str] = Field(examples=["The department that handles all engineering matters",
@@ -9,8 +11,7 @@ class DepartmentSchema(BaseDepartmentInfo):
     director_id: Optional[int] = Field(examples=[1, 2, 3])
 
     director: Optional[BaseEmployeeInfo] = None
-    teams: Optional[List[BaseTeamInfo]] = None
-    employees: Optional[List[BaseEmployeeInfo]] = None
+    teams: Optional[List[TeamSchema]] = None
 
     class Config:
         from_attributes = True
