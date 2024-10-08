@@ -1,16 +1,16 @@
 from fastapi import Depends
 
-from backend.repositories.TeamEmployeeRepository import TeamEmployeeRepository
+from backend.repositories.TeamRepository import TeamRepository
 
 
 class TeamService:
-    teamEmployeeRepository = TeamEmployeeRepository
+    teamRepository = TeamRepository
 
     def __init__(
-            self, teamEmployeeRepository: TeamEmployeeRepository = Depends()
+            self, teamRepository: TeamRepository = Depends()
     ) -> None:
-        self.teamEmployeeRepository = teamEmployeeRepository
+        self.teamRepository = teamRepository
 
 
-    def get_team_employees_by_team_id(self, team_id: int):
-        return self.teamEmployeeRepository.get_team_employees_by_team_id(team_id)
+    # def get_team_employees_by_team_id(self, team_id: int):
+    #     return self.teamRepository.get_team_employees_by_team_id(team_id)

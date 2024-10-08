@@ -1,25 +1,36 @@
-# from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
-# from sqlalchemy.orm import relationship
-#
-# from backend.models.generators import get_current_datetime_sgt
-# from backend.models.BaseModel import EntityMeta
-#
-#
-# class Team(EntityMeta):
-#     __tablename__ = 'team'
-#
-#     team_id = Column(Integer, primary_key=True)
-#     name = Column(String(100), nullable=False)
-#     description = Column(Text)
-#     created_on = Column(DateTime, default=get_current_datetime_sgt)
-#     manager_id = Column(Integer, ForeignKey('employees.staff_id'))  # New column
-#
-#     manager = relationship("Employee", foreign_keys="Team.manager_id", back_populates="managed_teams")
-#     members = relationship("TeamEmployee", back_populates="team")
+from datetime import datetime
+from typing import Optional, List
+from pydantic import BaseModel, Field
+from .BaseSchema import BaseTeamInfo, BaseDepartmentInfo, BaseEmployeeInfo
 
-class TeamSchema(BaseModel):
-    team_id: int = Field(examples=[1])
-    name: str =
-    description: str
+class TeamSchema(BaseTeamInfo):
     created_on: datetime
-    manager_id: int
+    manager_id: Optional[int] = Field(examples=[1, 2, 3])
+    department_id: int = Field(examples=[1, 2, 3])
+    parent_team_id: Optional[int] = Field(examples=[1, 2, 3])
+
+    department: Optional[BaseDepartmentInfo] = None
+    manager: Optional[BaseEmployeeInfo] = None
+    members: Optional[List[BaseEmployeeInfo]] = None
+    parent_team: Optional[BaseTeamInfo] = None
+
+    class Config:
+        from_attributes = True
+
+class TeamCreateSchema(BaseModel):
+    name: str = Field(examples=["Frontend Team", "Backend Team", "DevOps Team"])
+    description: Optional[str] = Field(examples=["Responsible for user interfaces", "Handles server-side logic", "Manages deployments and infrastructure"])
+    manager_id: Optional[int] = Field(examples=[1, 2, 3])
+    department_id: int = Field(examples=[1, 2, 3])
+    parent_team_id: Optional[int] = Field(examples=[1, 2, 3])
+    class Config:
+        from_attributes = True
+
+class TeamUpdateSchema(BaseModel):
+    name: Optional[str] = Field(examples=["Frontend Team", "Backend Team", "DevOps Team"])
+    description: Optional[str] = Field(examples=["Responsible for user interfaces", "Handles server-side logic", "Manages deployments and infrastructure"])
+    manager_id: Optional[int] = Field(examples=[1, 2, 3])
+    department_id: Optional[int] = Field(examples=[1, 2, 3])
+    parent_team_id: Optional[int] = Field(examples=[1, 2, 3])
+    class Config:
+        from_attributes = True
