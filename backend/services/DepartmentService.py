@@ -52,7 +52,6 @@ class DepartmentService:
             "team_id": team.team_id,
             "name": team.name,
             "description": team.description,
-            "created_on": team.created_on,
             "department": self.department_to_base_schema(team.department),
             "manager": self.employee_to_schema(manager) if manager else None,
             "parent_team": self.team_to_base_schema(parent_team) if parent_team else None,

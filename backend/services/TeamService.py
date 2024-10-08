@@ -43,7 +43,6 @@ class TeamService:
             "team_id": team.team_id,
             "name": team.name,
             "description": team.description,
-            "created_on": team.created_on,
             "department": BaseDepartmentInfo.model_validate(orm_to_dict(department)) if department else None,
             "manager": BaseEmployeeInfo.model_validate(orm_to_dict(manager)) if manager else None,
             "parent_team": BaseTeamInfo.model_validate(orm_to_dict(team.parent_team)) if team.parent_team else None,

@@ -4,7 +4,6 @@ from pydantic import BaseModel, Field
 from .BaseSchema import BaseTeamInfo, BaseDepartmentInfo, BaseEmployeeInfo
 
 class TeamSchema(BaseTeamInfo):
-    created_on: datetime
     department: Optional[BaseDepartmentInfo] = None
     manager: Optional[BaseEmployeeInfo] = None
     parent_team: Optional[BaseTeamInfo] = None

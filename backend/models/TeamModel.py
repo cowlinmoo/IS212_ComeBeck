@@ -12,7 +12,6 @@ class Team(EntityMeta):
     team_id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False)
     description = Column(Text)
-    created_on = Column(DateTime, default=get_current_datetime_sgt)
     manager_id = Column(Integer, ForeignKey('employees.staff_id'), nullable=True)
     department_id = Column(Integer, ForeignKey('departments.department_id'), nullable=False)
     parent_team_id = Column(Integer, ForeignKey('teams.team_id'), nullable=True)
