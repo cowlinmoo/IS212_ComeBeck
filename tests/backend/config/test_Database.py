@@ -115,13 +115,18 @@ from sqlalchemy.sql import text
 @pytest.mark.parametrize("mock_get_environment_variables", ["mock_env"], indirect=True)
 def test_init_db(mock_get_environment_variables):
     # Mock the file reading
-    mock_sql_content = "CREATE TABLE test (id INT);"
+    mock_sql_content = "INSERT INTO departments (department_id, name) VALUES (1, 'Test Department');"
     mock_file = mock_open(read_data=mock_sql_content)
 
     # Create a mock engine
     mock_engine = MagicMock()
     mock_connection = MagicMock()
     mock_engine.connect.return_value.__enter__.return_value = mock_connection
+
+    # Mock the execute results
+    mock_execute_result = MagicMock()
+    mock_execute_result.scalar.return_value = False  # Simulate no existing data
+    mock_connection.execute.return_value = mock_execute_result
 
     # Mock the entire sqlalchemy module
     with patch('builtins.open', mock_file), \
@@ -135,12 +140,20 @@ def test_init_db(mock_get_environment_variables):
         from backend.config.Database import init_db
         init_db()
 
-    # Assert that the connection was used and the SQL was executed
+    # Assert that the connection was used
     mock_engine.connect.assert_called_once()
 
-    # Use ANY to match any TextClause object
-    mock_connection.execute.assert_called_with(ANY)
+    # Assert that execute was called twice
+    assert mock_connection.execute.call_count == 2
 
-    # Check that the SQL content matches what we expect
-    actual_sql = str(mock_connection.execute.call_args[0][0])
-    assert actual_sql == mock_sql_content, f"Expected SQL: {mock_sql_content}, but got: {actual_sql}"
+    # Check the first execute call (checking for existing data)
+    first_call = mock_connection.execute.call_args_list[0]
+    first_sql = str(first_call[0][0])
+    assert "SELECT EXISTS (SELECT 1 FROM departments LIMIT 1)" in first_sql
+
+    # Check the second execute call (inserting data)
+    second_call = mock_connection.execute.call_args_list[1]
+    second_sql = str(second_call[0][0])
+    assert second_sql == mock_sql_content
+
+    print("Test passed successfully!")
