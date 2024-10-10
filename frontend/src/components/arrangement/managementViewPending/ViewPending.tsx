@@ -28,7 +28,7 @@ export default function ViewPending({ data, token, userId }: { data: Application
     }, [data]);
     console.log(pendingRequests);
     const handleStatusUpdate = async (status: "approved" | "rejected") => {
-        if (!selectedApplication) return;
+        if (!selectedApplication || !reviewReason.trim()) return;
 
         try {
             await processApplicationStatus(token, userId, selectedApplication.application_id, status, reviewReason);
@@ -49,7 +49,15 @@ export default function ViewPending({ data, token, userId }: { data: Application
                 variant: "destructive",
             })
         }
-    }
+    };
+
+    const handleReviewClick = (application: Application) => {
+        setSelectedApplication(application);
+        setReviewReason('');
+        setIsDialogOpen(true);
+    };
+
+    const isReasonValid = reviewReason.trim().length > 0;
 
     return (
         <div className="container mx-auto p-4">
@@ -80,7 +88,7 @@ export default function ViewPending({ data, token, userId }: { data: Application
                                     <div className="flex justify-end mt-4">
                                         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                                             <DialogTrigger asChild>
-                                                <Button onClick={() => setSelectedApplication(request)}>
+                                                <Button onClick={() => handleReviewClick(request)}>
                                                     Review
                                                 </Button>
                                             </DialogTrigger>
@@ -88,7 +96,7 @@ export default function ViewPending({ data, token, userId }: { data: Application
                                                 <DialogHeader>
                                                     <DialogTitle>Review Application</DialogTitle>
                                                     <DialogDescription>
-                                                        Provide a reason for your decision and either approve or reject the application.
+                                                        Approve or reject the application then provide a reason in the box below.
                                                     </DialogDescription>
                                                 </DialogHeader>
                                                 <div className="grid gap-4 py-4">
@@ -101,14 +109,15 @@ export default function ViewPending({ data, token, userId }: { data: Application
                                                             className="col-span-3"
                                                             value={reviewReason}
                                                             onChange={(e) => setReviewReason(e.target.value)}
+                                                            placeholder="Enter your reason here"
                                                         />
                                                     </div>
                                                 </div>
                                                 <DialogFooter>
-                                                    <Button onClick={() => handleStatusUpdate('approved')} variant="default">
+                                                    <Button onClick={() => handleStatusUpdate('approved')} variant="default" disabled={!isReasonValid}>
                                                         Approve
                                                     </Button>
-                                                    <Button onClick={() => handleStatusUpdate('rejected')} variant="destructive">
+                                                    <Button onClick={() => handleStatusUpdate('rejected')} variant="destructive" disabled={!isReasonValid}>
                                                         Reject
                                                     </Button>   
                                                 </DialogFooter>
