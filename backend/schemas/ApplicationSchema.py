@@ -113,3 +113,14 @@ class ApplicationApproveRejectSchema(BaseModel):
     outcome_reason: Optional[str] = Field(default=None, examples=["Some reason for decision"])
     class Config:
         from_attributes = True
+
+
+class ApprovedApplicationLocationSchema(BaseModel):
+    employee_fname: str = Field(examples=["John", "Jane"])
+    employee_lname: str = Field(examples=["Doe", "Smith"])
+    location: str = Field(examples=["New York", "London"])
+    position: str = Field(examples=["Manager", "Developer"])
+    date: str = Field(examples=["2023-10-01", "2023-10-02"])
+
+    class Config:
+        from_attributes = True

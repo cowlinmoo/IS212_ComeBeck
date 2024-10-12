@@ -18,6 +18,7 @@ from backend.config.EmailTemplates import (get_new_application_manager_email_sub
                                            get_application_outcome_approver_email_template,
                                            get_application_outcome_employee_email_template,
                                            get_application_outcome_employee_email_subject)
+from backend.models.enums.EmployeeRoleEnum import EmployeeRole
 from backend.models.enums.RecurrenceType import RecurrenceType
 from backend.models.generators import get_current_datetime_sgt
 from backend.models.generators import get_current_date
@@ -25,7 +26,7 @@ from backend.repositories.ApplicationRepository import ApplicationRepository
 from backend.models import Application, Event, Employee
 from backend.repositories.EmployeeRepository import EmployeeRepository
 from backend.schemas.ApplicationSchema import (ApplicationCreateSchema, ApplicationUpdateSchema,
-                                               ApplicationWithdrawSchema, ApplicationApproveRejectSchema)
+                                               ApplicationWithdrawSchema, ApplicationApproveRejectSchema, ApprovedApplicationLocationSchema)
 from backend.services.EmailService import EmailService
 from backend.services.EventService import EventService
 from backend.repositories.EventRepository import EventRepository
