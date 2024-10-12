@@ -3,7 +3,7 @@ from typing import List, Type
 from sqlalchemy.orm import Session
 from fastapi import Depends
 from ..config.Database import get_db_connection
-from ..models import Employee
+from ..models import Employee, Team
 from passlib.context import CryptContext
 import logging
 
@@ -22,13 +22,12 @@ class EmployeeRepository:
             raise HTTPException(status_code=404, detail="Employee not found")
         return employee
 
-    def get_all_employees(self) -> List[Type[Employee]]:
+    def get_all_employees(self) -> List[Employee]:
         return self.db.query(Employee).all()
 
     def create_employee(self, employee_data: Employee) -> Employee:
         if self.db.query(Employee).filter(Employee.email == employee_data.email).first():
-            raise HTTPException(
-                status_code=400, detail="Employee with this email already exists")
+            raise HTTPException(status_code=409, detail="Employee with this email already exists")
         employee_data.password = pwd_context.hash(employee_data.password)
         new_employee = employee_data
         self.db.add(new_employee)
@@ -68,3 +67,8 @@ class EmployeeRepository:
         employees = self.db.query(Employee).filter(
             Employee.reporting_manager == manager_id).all()
         return employees
+    def get_employees_by_manager_id(self, manager_id: int) -> List[Type[Employee]]:
+        return self.db.query(Employee).filter(Employee.reporting_manager == manager_id).all()
+
+    def get_employees_by_team_id(self, team_id):
+        return self.db.query(Employee).filter(Employee.team_id == team_id).all()

@@ -44,18 +44,20 @@ def get_db_connection():
 
 
 def init_db():
-    # Path to your init.sql file
     init_sql_path = os.path.join(os.path.dirname(__file__), '..', '..', 'postgres', 'init.sql')
 
-    # Read the SQL file
-    with open(init_sql_path, 'r') as file:
-        sql_script = file.read()
-
-    # Create a database connection
     with Engine.connect() as connection:
-        # Begin a transaction
-        with connection.begin():
-            # Execute the SQL script
-            connection.execute(text(sql_script))
+        # Check if data already exists in the departments table
+        data_exists = connection.execute(text(
+            "SELECT EXISTS (SELECT 1 FROM departments LIMIT 1)"
+        )).scalar()
 
-    print("Database initialized with init.sql")
+        if not data_exists:
+            with open(init_sql_path, 'r') as file:
+                sql_script = file.read()
+
+            with connection.begin():
+                connection.execute(text(sql_script))
+            print("Initial data inserted into the database")
+        else:
+            print("Data already exists in the database, skipping initialization")

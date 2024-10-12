@@ -13,8 +13,11 @@ from backend.config.EmailTemplates import (get_new_application_manager_email_sub
                                            get_application_withdrawn_manager_email_subject,
                                            get_application_withdrawn_manager_email_template,
                                            get_application_auto_rejected_employee_email_subject,
-                                           get_application_auto_rejected_employee_email_template)
-from backend.models.enums.EmployeeRoleEnum import EmployeeRole
+                                           get_application_auto_rejected_employee_email_template,
+                                           get_application_outcome_approver_email_subject,
+                                           get_application_outcome_approver_email_template,
+                                           get_application_outcome_employee_email_template,
+                                           get_application_outcome_employee_email_subject)
 from backend.models.enums.RecurrenceType import RecurrenceType
 from backend.models.generators import get_current_datetime_sgt
 from backend.models.generators import get_current_date
@@ -22,7 +25,7 @@ from backend.repositories.ApplicationRepository import ApplicationRepository
 from backend.models import Application, Event, Employee
 from backend.repositories.EmployeeRepository import EmployeeRepository
 from backend.schemas.ApplicationSchema import (ApplicationCreateSchema, ApplicationUpdateSchema,
-                                               ApplicationWithdrawSchema, ApprovedApplicationLocationSchema)
+                                               ApplicationWithdrawSchema, ApplicationApproveRejectSchema)
 from backend.services.EmailService import EmailService
 from backend.services.EventService import EventService
 from backend.repositories.EventRepository import EventRepository
@@ -85,6 +88,11 @@ class ApplicationService:
                     )
                 )
         return employee_locations
+    def get_applications_by_approver_id(self, approver_id: int) -> List[Type[Application]]:
+        # check if employee exists in the database
+        if self.employee_repository.get_employee(approver_id) is None:
+            raise HTTPException(status_code=404, detail="Employee not found")
+        return self.application_repository.get_applications_by_approver_id(approver_id)
 
     def create_application(self, application: ApplicationCreateSchema) -> ApplicationCreateSchema:
         # check if employee exists in the database
@@ -110,6 +118,7 @@ class ApplicationService:
         application_dict["status"] = "pending"
         application_dict["created_on"] = get_current_datetime_sgt()
         application_dict["last_updated_on"] = get_current_datetime_sgt()
+        application_dict["approver_id"] = employee.reporting_manager
 
         # Create new application
         new_application = self.application_repository.create_application(
@@ -243,57 +252,61 @@ class ApplicationService:
             raise HTTPException(
                 status_code=404, detail="Application not found")
 
-        if existing_application.staff_id != application.staff_id:
-            employee = self.employee_repository.get_employee(
-                application.staff_id)
-            if employee is None:
-                raise HTTPException(
-                    status_code=404, detail="Employee not found")
-            raise HTTPException(
-                status_code=403, detail="You can only withdraw your own application")
+        # Fetch employee and editor data
+        employee = self.employee_repository.get_employee(existing_application.staff_id)
+        editor = self.employee_repository.get_employee(application.editor_id)
+
+        if editor is None:
+            raise HTTPException(status_code=404, detail="Editor not found")
+
+        # Check if the editor is authorized (either the employee themselves or their manager)
+        is_employee = existing_application.staff_id == application.editor_id
+        is_manager = employee.reporting_manager == application.editor_id
+
+        if not (is_employee or is_manager):
+            raise HTTPException(status_code=403, detail="You are not authorized to withdraw this application")
 
         if existing_application.status == "withdrawn":
-            raise HTTPException(
-                status_code=403, detail="Application already withdrawn")
+            raise HTTPException(status_code=409, detail="Application already withdrawn")
 
         withdrawn_application = self.application_repository.withdraw_application(
             application_id, application)
 
-        # Fetch employee data
-        employee = self.employee_repository.get_employee(
-            withdrawn_application.staff_id)
-        staff_name = f"{employee.staff_fname} {employee.staff_lname}"
-        manager_id = employee.reporting_manager
-        manager = self.employee_repository.get_employee(manager_id)
-        manager_email = manager.email
         # Prepare email data
         current_time = get_current_datetime_sgt()
+        staff_name = f"{employee.staff_fname} {employee.staff_lname}"
+        editor_name = f"{editor.staff_fname} {editor.staff_lname}"
 
         # Send email to manager
+        manager = self.employee_repository.get_employee(employee.reporting_manager)
+        manager_email = manager.email if manager else None
+
         if manager_email:
             manager_subject = get_application_withdrawn_manager_email_subject(withdrawn_application.staff_id,
-                                                                              staff_name)
+                                                                              staff_name, is_employee)
             manager_body = get_application_withdrawn_manager_email_template(
                 manager_name=f"{manager.staff_fname} {manager.staff_lname}",
                 employee_name=staff_name,
                 employee_id=withdrawn_application.staff_id,
                 application_id=withdrawn_application.application_id,
-                reason=withdrawn_application.reason,
+                reason=withdrawn_application.outcome_reason,
                 status=withdrawn_application.status,
-                withdrawn_on=current_time
+                withdrawn_on=current_time,
+                withdrawn_by="employee" if is_employee else "you"
             )
             self.email_service.send_email(
                 manager_email, manager_subject, manager_body)
 
         # Send email to employee
-        employee_subject = get_application_withdrawn_employee_email_subject(
-            withdrawn_application.application_id)
+        employee_subject = get_application_withdrawn_employee_email_subject(withdrawn_application.application_id,
+                                                                            is_employee)
         employee_body = get_application_withdrawn_employee_email_template(
             employee_name=staff_name,
             application_id=withdrawn_application.application_id,
-            reason=withdrawn_application.reason,
+            reason=withdrawn_application.outcome_reason,
             status=withdrawn_application.status,
-            withdrawn_on=current_time
+            withdrawn_on=current_time,
+            withdrawn_by="you" if is_employee else editor_name
         )
         self.email_service.send_email(
             employee.email, employee_subject, employee_body)
@@ -303,8 +316,8 @@ class ApplicationService:
     def get_applications_by_status(self, status: str) -> List[Type[Application]]:
         return self.application_repository.get_applications_by_status(status)
 
-    def update_application_status(self, application_id: int, new_status: str) -> Application:
-        return self.application_repository.update_application_status(application_id, new_status)
+    def update_application_status(self, application_id: int, new_status: str, outcome_reason: str) -> Application:
+        return self.application_repository.update_application_status(application_id, new_status, outcome_reason)
 
     def reject_old_applications(self):
         pending_applications = self.application_repository.get_pending_applications()
@@ -326,8 +339,7 @@ class ApplicationService:
             if event.requested_date < two_months_ago:
                 if event.application_id not in event_application_ids:
                     event_application_ids.append(event.application_id)
-                    application = self.application_repository.update_application_status(
-                        event.application_id, 'rejected')
+                    application=self.application_repository.update_application_status(event.application_id, 'rejected', 'Application automatically rejected due to old requested date')
                     rejected_count += 1
 
                     self._send_rejection_emails(
@@ -345,9 +357,93 @@ class ApplicationService:
         employee_body = get_application_auto_rejected_employee_email_template(
             employee_name=staff_name,
             application_id=application.application_id,
-            reason="Application automatically rejected due to old requested date",
+            reason=application.outcome_reason,
             status=application.status,
             date_req=req_date
         )
-        self.email_service.send_email(
-            employee.email, employee_subject, employee_body)
+        self.email_service.send_email(employee.email, employee_subject, employee_body)
+
+    def approve_reject_pending_applications(self, application:ApplicationApproveRejectSchema) -> Application:
+        application_id = application.application_id
+        existing_application = self.application_repository.get_application_by_application_id(application_id)
+        if not existing_application:
+            raise HTTPException(status_code=404, detail="Application not found")
+        if existing_application.status != 'pending':
+            raise HTTPException(status_code=400, detail="Application is not pending")
+        if existing_application.approver_id != application.approver_id:
+            raise HTTPException(status_code=403, detail="You are not authorized to approve this application")
+        if application.status == "approved":
+            application = self.application_repository.update_application_status(application_id, 'approved', application.outcome_reason)
+        else:
+            application = self.application_repository.update_application_status(application_id, 'rejected', application.outcome_reason)
+        self._send_outcome_emails(existing_application)
+        return application
+
+    def _send_outcome_emails(self, application):
+        # Fetch employee and approver data
+        employee = self.employee_repository.get_employee(application.staff_id)
+        approver = self.employee_repository.get_employee(application.approver_id)
+
+        if not employee or not approver:
+            raise HTTPException(status_code=404, detail="Employee or approver not found")
+
+        current_time = get_current_datetime_sgt()
+        staff_name = f"{employee.staff_fname} {employee.staff_lname}"
+        approver_name = f"{approver.staff_fname} {approver.staff_lname}"
+
+        # Determine application type and prepare event_info
+        if application.recurring:
+            app_type = "recurring"
+            event_info = {
+                "recurrence_type": application.recurrence_type.value,
+                "start_date": application.events[0].requested_date,
+                "end_date": application.end_date
+            }
+        elif len(application.events) > 1:
+            app_type = "multiple_dates"
+            event_info = [{"date": event.requested_date, "location": event.location} for event in application.events]
+        else:
+            app_type = "one_time"
+            event_info = {
+                "date": application.events[0].requested_date,
+                "location": application.events[0].location
+            }
+
+        # Send email to employee
+        employee_subject = get_application_outcome_employee_email_subject(
+            application_id=application.application_id,
+            status=application.status,
+        )
+        employee_body = get_application_outcome_employee_email_template(
+            employee_name=staff_name,
+            application_id=application.application_id,
+            status=application.status,
+            reason=application.outcome_reason,
+            description=application.description,
+            decided_on=current_time,
+            decided_by=approver_name,
+            app_type=app_type,
+            event_info=event_info
+        )
+        self.email_service.send_email(employee.email, employee_subject, employee_body)
+
+        # Send email to approver (confirmation of their action)
+        approver_subject = get_application_outcome_approver_email_subject(
+            application_id=application.application_id,
+            status=application.status,
+            employee_name=staff_name,
+        )
+        approver_body = get_application_outcome_approver_email_template(
+            approver_name=approver_name,
+            employee_name=staff_name,
+            employee_id=application.staff_id,
+            application_id=application.application_id,
+            status=application.status,
+            reason=application.outcome_reason,
+            description=application.description,
+            decided_on=current_time,
+            app_type=app_type,
+            event_info=event_info
+        )
+        self.email_service.send_email(approver.email, approver_subject, approver_body)
+

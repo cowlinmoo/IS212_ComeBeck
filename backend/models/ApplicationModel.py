@@ -11,13 +11,14 @@ class Application(EntityMeta):
 
     application_id = Column(BigInteger, primary_key=True)
     reason = Column(Text, nullable=False)
-    description = Column(Text, nullable=False)
+    description = Column(Text, nullable=True)
     created_on = Column(DateTime, nullable=False, default=get_current_datetime_sgt)
     last_updated_on = Column(DateTime, nullable=True, default=get_current_datetime_sgt)
     status = Column(String(20), CheckConstraint("status IN ('approved', 'pending', 'rejected', 'withdrawn')"),
                     nullable=False)
     staff_id = Column(ForeignKey('employees.staff_id'), nullable=False)
     approver_id = Column(ForeignKey('employees.staff_id'), nullable=True)
+    outcome_reason = Column(Text, nullable=True)
 
     # fields for recurring events
     recurring = Column(Boolean, nullable=False)
