@@ -20,7 +20,7 @@ export const GetPendingApplications = async (token:string,userId:number) => {
 
 export const processApplicationStatus = async (token: string,userId: number, applicationId: number, status: 'approved' | 'rejected', reason: string) => {
     try {
-        let content = { 
+        const content = { 
                         status: status,
                         approver_id: String(userId),
                         application_id: String(applicationId),

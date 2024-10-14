@@ -15,8 +15,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { format, addMonths, subMonths, isWeekend, isSameDay } from "date-fns";
-import { DayMouseEventHandler } from "react-day-picker";
+import { format, addMonths, subMonths, isWeekend } from "date-fns";
 import {
   Popover,
   PopoverContent,
@@ -109,7 +108,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
       }
     }
     fetchData();
-  },[]);
+  },[staffId, token]);
 
   // restricted calendar
   const [fromDate, setFromDate] = useState<Date>(new Date());

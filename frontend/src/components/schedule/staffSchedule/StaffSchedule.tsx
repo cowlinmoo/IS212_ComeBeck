@@ -1,12 +1,9 @@
 import { useEffect, useState } from "react"
-// import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Calendar } from "@/components/ui/calendar"
 import { Badge } from "@/components/ui/badge"
 import { Home, Briefcase } from "lucide-react"
-import useAuth from "@/lib/auth"
 import { EmployeeLocation } from "@/app/schedule/api"
 import { HomeIcon, Component2Icon, PersonIcon } from "@radix-ui/react-icons"
 
@@ -35,20 +32,20 @@ const generateSchedule = (startDate: Date, days: number) => {
 const today = new Date()
 const teamSchedule = generateSchedule(today, 30)
 
-type TeamMember = {
-  id: number
-  name: string
-  avatar?: string
-}
+// type TeamMember = {
+//   id: number
+//   name: string
+//   avatar?: string
+// }
 
 interface IStaffSchedule {
   teamMembers: EmployeeLocation[]
 }
 
-const iconMap: Record<"wfo" | "wfh", React.ReactNode> = {
-  "wfh": <HomeIcon />,
-  "wfo": <Component2Icon />
-}
+// const iconMap: Record<"wfo" | "wfh", React.ReactNode> = {
+//   "wfh": <HomeIcon />,
+//   "wfo": <Component2Icon />
+// }
 
 const StaffSchedule: React.FC<IStaffSchedule> = ({ teamMembers }) => {
 
@@ -72,7 +69,7 @@ const StaffSchedule: React.FC<IStaffSchedule> = ({ teamMembers }) => {
       const filteredMembers = teamMembers.filter(member => member.date === formattedDate);
       setCurrTeamMembers(filteredMembers);
     }
-  }, [selectedDate])
+  }, [selectedDate, teamMembers])
 
   return (
     <div className="container mx-auto p-4">
