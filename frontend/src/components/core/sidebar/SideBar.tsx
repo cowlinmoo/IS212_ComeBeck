@@ -11,6 +11,7 @@ const tabs = [
   { name: "Arrangement Management", icon: Settings, path: "/arrangement" }, 
   { name: "Arrangement Approvals", icon: Settings, path: "/approvals" },
   { name: "Overview Schedule", icon: Users, path: "/overview" },
+  { name: "Pending Arrangements", icon: Users, path: "/managementViewPending" },
 ];
 
 export default function SideBar() {
