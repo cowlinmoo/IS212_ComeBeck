@@ -443,3 +443,70 @@ HR Department
 
 This is an automated message. Please do not reply directly to this email.
     """
+
+
+def get_cancel_request_employee_email_template(employee_name, application_id, status, outcome_reason, current_time,
+                                               is_recurring, recurrence_type):
+    recurring_info = f"This is a recurring application with {recurrence_type} recurrence." if is_recurring else "This is a one-time application."
+
+    if status == 'approved':
+        body = f"""
+Dear {employee_name},
+
+Your cancellation request for Application ID: {application_id} has been approved.
+
+{recurring_info}
+
+The application has been successfully cancelled as per your request.
+
+If you have any questions, please contact your reporting manager.
+
+Date and Time: {current_time}
+
+Best regards,
+HR Department
+        """
+    else:  # status == 'rejected'
+        body = f"""
+Dear {employee_name},
+
+Your cancellation request for Application ID: {application_id} has been rejected.
+
+{recurring_info}
+
+Reason for rejection: {outcome_reason}
+
+The original approved application remains valid. If you have any questions, please contact your reporting manager.
+
+Date and Time: {current_time}
+
+Best regards,
+HR Department
+        """
+    return body
+
+
+def get_cancel_request_manager_email_template(manager_name, employee_name, application_id, status, outcome_reason,
+                                              current_time, is_recurring, recurrence_type):
+    recurring_info = f"This is a recurring application with {recurrence_type} recurrence." if is_recurring else "This is a one-time application."
+
+    body = f"""
+Dear {manager_name},
+
+This is to confirm that you have {status} the cancellation request for the following application:
+
+Employee: {employee_name}
+Application ID: {application_id}
+
+{recurring_info}
+
+{"The application has been successfully cancelled." if status == 'approved' else "The original approved application remains valid."}
+
+{"Reason for rejection: " + outcome_reason if status == 'rejected' else ""}
+
+Date and Time: {current_time}
+
+Best regards,
+HR Department
+    """
+    return body

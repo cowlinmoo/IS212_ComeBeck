@@ -171,22 +171,31 @@ class ApplicationService:
             raise HTTPException(status_code=400, detail="Application is not pending")
         if existing_application.approver_id != application.approver_id:
             raise HTTPException(status_code=403, detail="You are not authorized to approve this application")
-        if application.status == "approved":
-            application = self.application_repository.update_application_status(application_id, 'approved', application.outcome_reason)
-        else:
-            application = self.application_repository.update_application_status(application_id, 'rejected', application.outcome_reason)
         if existing_application.application_state == "new_application":
-            self.email_service.send_outcome_emails(existing_application)
-        elif existing_application.application_state == "change_request":
-            self._send_change_request_outcome_emails(existing_application)
-        return application
+            if application.status == "approved":
+                self.application_repository.update_application_status(application_id, 'approved', application.outcome_reason)
+            else:
+                self.application_repository.update_application_status(application_id, 'rejected', application.outcome_reason)
+            modified_application = self.application_repository.get_application_by_application_id(application_id)
+            self.email_service.send_outcome_emails(modified_application)
+        elif existing_application.application_state == "cancel_request":
+            if application.status == "approved":
+                self.application_repository.update_application_status(application_id, 'withdrawn', application.outcome_reason)
+            else:
+                self.application_repository.update_application_status(application_id, 'approved', application.outcome_reason)
+            modified_application = self.application_repository.get_application_by_application_id(application_id)
+            self.email_service.send_cancel_request_outcome_emails(modified_application)
+        else:
+            # add in the change_request outcome here later
+            modified_application = self.application_repository.get_application_by_application_id(application_id)
+        return modified_application
 
     def cancel_request(self, existing_application: Application,
                        cancellation_request: ApplicationWithdrawSchema) -> Application:
         # Update application state to 'cancellation_request'
         updated_application = self.application_repository.update_application_state(
             existing_application.application_id,
-            "change_request"
+            "cancel_request"
         )
 
         # Fetch employee and manager data
@@ -206,6 +215,3 @@ class ApplicationService:
         )
 
         return updated_application
-
-    def _send_change_request_outcome_emails(self, existing_application):
-        pass

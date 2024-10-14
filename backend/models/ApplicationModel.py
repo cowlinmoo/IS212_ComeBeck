@@ -16,7 +16,7 @@ class Application(EntityMeta):
     last_updated_on = Column(DateTime, nullable=True, default=get_current_datetime_sgt)
     status = Column(String(20), CheckConstraint("status IN ('approved', 'pending', 'rejected', 'withdrawn')"),
                     nullable=False)
-    application_state = Column(Text, CheckConstraint("application_state IN ('new_application', 'change_request')"),nullable=True)
+    application_state = Column(Text, CheckConstraint("application_state IN ('new_application', 'cancel_request','change_request')"),nullable=True)
     staff_id = Column(ForeignKey('employees.staff_id'), nullable=False)
     approver_id = Column(ForeignKey('employees.staff_id'), nullable=True)
     outcome_reason = Column(Text, nullable=True)

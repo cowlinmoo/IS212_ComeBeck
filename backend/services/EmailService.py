@@ -14,7 +14,8 @@ from backend.config.EmailTemplates import get_new_application_manager_email_subj
     get_application_outcome_approver_email_template, get_application_auto_rejected_employee_email_subject, \
     get_application_auto_rejected_employee_email_template, get_application_withdrawn_manager_email_subject, \
     get_application_withdrawn_manager_email_template, get_application_withdrawn_employee_email_subject, \
-    get_application_withdrawn_employee_email_template
+    get_application_withdrawn_employee_email_template, get_cancel_request_manager_email_template, \
+    get_cancel_request_employee_email_template
 from backend.config.Environment import get_environment_variables
 from backend.models import Application, Employee
 from backend.models.generators import get_current_date, get_current_datetime_sgt
@@ -260,3 +261,54 @@ class EmailService:
             withdrawn_by="you" if is_employee else editor_name
         )
         self.send_email(employee.email, employee_subject, employee_body)
+
+    def send_cancel_request_outcome_emails(self, modified_application: Application):
+        # Fetch employee and manager data
+        employee = self.employee_repository.get_employee(modified_application.staff_id)
+        manager = self.employee_repository.get_employee(modified_application.approver_id)
+
+        # Prepare email data
+        current_time = get_current_datetime_sgt()
+        status = modified_application.status
+        if status == "withdrawn":
+            status = "approved"
+        elif status == "approved":
+            status = "rejected"
+
+        # Send email to employee
+        self.send_email_to_employee(employee, modified_application, status, current_time)
+
+        # Send email to manager
+        self.send_email_to_manager(manager, employee, modified_application, status, current_time)
+
+    def send_email_to_employee(self, employee: Employee, application: Application, status: str, current_time: datetime):
+        subject = f"Cancel Request {status.capitalize()} for Application #{application.application_id}"
+
+        body = get_cancel_request_employee_email_template(
+            employee_name=employee.staff_fname,
+            application_id=application.application_id,
+            status=status,
+            outcome_reason=application.outcome_reason,
+            current_time=current_time,
+            is_recurring=application.recurring,
+            recurrence_type=application.recurrence_type.value if application.recurrence_type else None
+        )
+
+        self.send_email(employee.email, subject, body)
+
+    def send_email_to_manager(self, manager: Employee, employee: Employee, application: Application, status: str,
+                              current_time: datetime):
+        subject = f"Cancel Request {status.capitalize()} for {employee.staff_fname} {employee.staff_lname}"
+
+        body = get_cancel_request_manager_email_template(
+            manager_name=manager.staff_fname,
+            employee_name=f"{employee.staff_fname} {employee.staff_lname}",
+            application_id=application.application_id,
+            status=status,
+            outcome_reason=application.outcome_reason,
+            current_time=current_time,
+            is_recurring=application.recurring,
+            recurrence_type=application.recurrence_type.value if application.recurrence_type else None
+        )
+
+        self.send_email(manager.email, subject, body)
