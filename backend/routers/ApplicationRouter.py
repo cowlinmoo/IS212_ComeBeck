@@ -2,8 +2,9 @@ from typing import List
 from fastapi import APIRouter, Depends
 
 from ..models.enums.EmployeeRoleEnum import EmployeeRole
-from ..schemas.ApplicationSchema import ( ApplicationCreateSchema,
-                                         ApplicationWithdrawSchema, ApplicationResponse, ApplicationApproveRejectSchema)
+from ..schemas.ApplicationSchema import (ApplicationCreateSchema,
+                                         ApplicationWithdrawSchema, ApplicationResponse, ApplicationApproveRejectSchema,
+                                         ApprovedApplicationLocationSchema)
 from ..services.ApplicationService import ApplicationService
 from ..services.dependencies import role_required
 
@@ -103,7 +104,7 @@ def get_applications_by_status(
 #     return service.update_application_status(application_id, new_status)
 
 
-@ApplicationRouter.get("/location/{manager_id}", response_model=List[ApplicationResponse])
+@ApplicationRouter.get("/location/{manager_id}", response_model=List[ApprovedApplicationLocationSchema])
 def get_all_employee_locations_by_manager_id(
         manager_id: int,
         service: ApplicationService = Depends(),
