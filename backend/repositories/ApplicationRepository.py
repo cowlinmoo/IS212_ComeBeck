@@ -8,7 +8,8 @@ from sqlalchemy.orm import Session
 from backend.config.Database import get_db_connection
 from backend.models import Application
 from backend.models.generators import get_current_datetime_sgt
-from backend.schemas.ApplicationSchema import ApplicationUpdateSchema, ApplicationWithdrawSchema
+from backend.schemas.ApplicationSchema import ApplicationWithdrawSchema, \
+    ApplicationCreateSchema
 
 
 class ApplicationRepository:
@@ -53,7 +54,7 @@ class ApplicationRepository:
         self.db.refresh(db_application)
         return db_application
 
-    def update_application(self, application_id: int, application: ApplicationUpdateSchema) -> Application:
+    def update_application(self, application_id: int, application: ApplicationCreateSchema) -> Application:
         db_application = self.db.query(Application).filter(
             Application.application_id == application_id).first()
         if db_application is None:
@@ -97,10 +98,10 @@ class ApplicationRepository:
         application = self.get_application_by_application_id(application_id)
         return application.status
 
-    def update_application_state(self, application_id, new_state, outcome_reason):
+    def update_application_state(self, application_id, new_state, outcome_reason, status):
         db_application = self.get_application_by_application_id(application_id)
         db_application.application_state = new_state
-        db_application.status = 'pending'
+        db_application.status = status
         db_application.outcome_reason = outcome_reason
         self.db.commit()
         self.db.refresh(db_application)

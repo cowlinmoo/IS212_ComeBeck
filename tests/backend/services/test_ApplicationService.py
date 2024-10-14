@@ -8,7 +8,7 @@ from backend.schemas.EventSchema import EventCreateSchema
 from backend.services.ApplicationService import ApplicationService
 from backend.models.enums.RecurrenceType import RecurrenceType
 from backend.models import Application, Event, Employee
-from backend.schemas.ApplicationSchema import ApplicationCreateSchema, ApplicationUpdateSchema, \
+from backend.schemas.ApplicationSchema import ApplicationCreateSchema,  \
     ApplicationWithdrawSchema, ApplicationApproveRejectSchema
 
 
@@ -338,18 +338,6 @@ def test_create_recurring_events_monthly_across_years(application_service, mock_
     assert calls[0][0][0].requested_date == date(2023, 12, 15)
     assert calls[1][0][0].requested_date == date(2024, 1, 15)
     assert calls[2][0][0].requested_date == date(2024, 2, 15)
-def test_update_application(application_service, mock_application_repository):
-    mock_application = Mock(Application)
-    mock_application_repository.update_application.return_value = mock_application
-
-    update_data = ApplicationUpdateSchema(
-        status="approved",
-        requested_date=date.today()
-    )
-    result = application_service.update_application(1, update_data)
-
-    assert result == mock_application
-    mock_application_repository.update_application.assert_called_once_with(1, update_data)
 
 
 def test_withdraw_application_success(application_service, mock_application_repository, mock_employee_repository,

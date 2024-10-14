@@ -15,7 +15,11 @@ from backend.config.EmailTemplates import get_new_application_manager_email_subj
     get_application_auto_rejected_employee_email_template, get_application_withdrawn_manager_email_subject, \
     get_application_withdrawn_manager_email_template, get_application_withdrawn_employee_email_subject, \
     get_application_withdrawn_employee_email_template, get_cancel_request_manager_email_template, \
-    get_cancel_request_employee_email_template
+    get_cancel_request_employee_email_template, format_application_details, get_change_request_manager_email_subject, \
+    get_change_request_manager_email_template, \
+    get_change_request_employee_email_template, get_change_request_employee_email_subject, \
+    get_change_request_outcome_manager_email_subject, get_change_request_outcome_manager_email_template, \
+    get_change_request_outcome_employee_email_template, get_change_request_outcome_employee_email_subject
 from backend.config.Environment import get_environment_variables
 from backend.models import Application, Employee
 from backend.models.generators import get_current_date, get_current_datetime_sgt
@@ -167,6 +171,41 @@ class EmailService:
         )
         self.send_email(approver.email, approver_subject, approver_body)
 
+    def send_change_request_emails(self, existing_application: Application, new_application: Application,
+                                   change_request: ApplicationCreateSchema, employee: Employee, manager: Employee,
+                                   current_time: datetime):
+        staff_name = f"{employee.staff_fname} {employee.staff_lname}"
+        manager_name = f"{manager.staff_fname} {manager.staff_lname}"
+
+        original_details = format_application_details(existing_application)
+        updated_details = format_application_details(change_request)
+
+        # Send email to manager
+        manager_subject = get_change_request_manager_email_subject(employee.staff_id, staff_name)
+        manager_body = get_change_request_manager_email_template(
+            manager_name=manager_name,
+            employee_name=staff_name,
+            employee_id=employee.staff_id,
+            original_application_id=existing_application.application_id,
+            new_application_id=new_application.application_id,
+            original_details=original_details,
+            updated_details=updated_details,
+            current_time=current_time
+        )
+        self.send_email(manager.email, manager_subject, manager_body)
+
+        # Send email to employee
+        employee_subject = get_change_request_employee_email_subject(new_application.application_id)
+        employee_body = get_change_request_employee_email_template(
+            employee_name=staff_name,
+            original_application_id=existing_application.application_id,
+            new_application_id=new_application.application_id,
+            original_details=original_details,
+            updated_details=updated_details,
+            current_time=current_time
+        )
+        self.send_email(employee.email, employee_subject, employee_body)
+
     def send_cancellation_request_emails(self, existing_application: Application, cancellation_request: ApplicationWithdrawSchema,
                                          employee: Employee, manager: Employee, current_time: datetime):
         staff_name = f"{employee.staff_fname} {employee.staff_lname}"
@@ -312,3 +351,50 @@ class EmailService:
         )
 
         self.send_email(manager.email, subject, body)
+
+    def send_change_request_outcome_emails(self, modified_application: Application):
+        # Fetch employee and manager data
+        employee = self.employee_repository.get_employee(modified_application.staff_id)
+        manager = self.employee_repository.get_employee(modified_application.approver_id)
+
+        if not employee or not manager:
+            raise HTTPException(status_code=404, detail="Employee or manager not found")
+
+        # Prepare email data
+        current_time = get_current_datetime_sgt()
+        status = modified_application.status
+        staff_name = f"{employee.staff_fname} {employee.staff_lname}"
+        manager_name = f"{manager.staff_fname} {manager.staff_lname}"
+
+        # Format application details
+        original_details = format_application_details(modified_application.original_application)
+        updated_details = format_application_details(modified_application)
+
+        # Send email to employee
+        employee_subject = get_change_request_outcome_employee_email_subject(
+            modified_application.application_id, status
+        )
+        employee_body = get_change_request_outcome_employee_email_template(
+            employee_name=employee.staff_fname,
+            application_id=modified_application.application_id,
+            status=status,
+            outcome_reason=modified_application.outcome_reason,
+            current_time=current_time,
+            original_details=original_details,
+            updated_details=updated_details
+        )
+        self.send_email(employee.email, employee_subject, employee_body)
+
+        # Send email to manager
+        manager_subject = get_change_request_outcome_manager_email_subject(staff_name, status)
+        manager_body = get_change_request_outcome_manager_email_template(
+            manager_name=manager_name,
+            employee_name=staff_name,
+            application_id=modified_application.application_id,
+            status=status,
+            outcome_reason=modified_application.outcome_reason,
+            current_time=current_time,
+            original_details=original_details,
+            updated_details=updated_details
+        )
+        self.send_email(manager.email, manager_subject, manager_body)

@@ -1,6 +1,8 @@
 from datetime import datetime, date
 from typing import Optional, List, Union, Dict
 
+from sqlalchemy.orm import Query
+
 from backend.schemas.EventSchema import EventCreateSchema
 
 
@@ -510,3 +512,169 @@ Best regards,
 HR Department
     """
     return body
+
+def get_change_request_manager_email_subject(staff_id, staff_name):
+    return f"Change Request for Application from {staff_id} - {staff_name}"
+
+def get_change_request_employee_email_subject(application_id):
+    return f"Change Request Submitted for Application ID: {application_id}"
+def get_change_request_manager_email_template(manager_name, employee_name, employee_id, original_application_id, new_application_id, original_details, updated_details, current_time):
+    template = f"""
+Dear {manager_name},
+
+A change request has been submitted for an existing application that requires your review.
+
+Employee: {employee_name} (ID: {employee_id})
+New Application ID: {new_application_id}
+Original Application ID: {original_application_id}
+Submitted on: {current_time}
+
+Updated Application Details:
+----------------------------
+{updated_details}
+
+Original Application Details:
+-----------------------------
+{original_details}
+
+Please review this change request and take appropriate action through the application management system.
+
+Best regards,
+HR Department
+"""
+    return template
+
+def get_change_request_employee_email_template(employee_name, original_application_id, new_application_id, original_details, updated_details, current_time):
+    template = f"""
+Dear {employee_name},
+
+Your change request for Application ID: {original_application_id} has been submitted successfully.
+
+New Application ID: {new_application_id}
+Original Application ID: {original_application_id}
+Submitted on: {current_time}
+
+Updated Application Details:
+----------------------------
+{updated_details}
+
+Original Application Details:
+-----------------------------
+{original_details}
+
+Your manager will review this change request and take appropriate action. You will be notified of any updates.
+
+Best regards,
+HR Department
+"""
+    return template
+
+
+def format_application_details(application):
+    details = [
+        f"Reason: {application.reason}",
+        f"Description: {application.description or 'N/A'}",
+        f"Recurring: {'Yes' if application.recurring else 'No'}"
+    ]
+
+    # Handle location and events
+    if hasattr(application, 'location') and application.location:
+        details.append(f"Location: {application.location}")
+
+    if hasattr(application, 'requested_date') and application.requested_date:
+        details.append(f"Requested Date: {application.requested_date}")
+
+    # Handle recurring information and events
+    if application.recurring:
+        if hasattr(application, 'events'):
+            first_event = application.events.first() if isinstance(application.events, Query) else next(iter(application.events), None)
+            if first_event:
+                details.append(f"Location: {first_event.location}")
+                details.append(f"Requested Date: {first_event.requested_date}")
+        recurrence_type = getattr(application.recurrence_type, 'value', application.recurrence_type) if application.recurrence_type else 'N/A'
+        details.extend([
+            f"Recurrence Type: {recurrence_type}",
+            f"End Date: {application.end_date or 'N/A'}"
+        ])
+    elif hasattr(application, 'events') and application.events:
+        details.append("\nEvents:")
+        for event in application.events:
+            details.append(f"- Date: {event.requested_date}")
+    elif not (hasattr(application, 'location') and application.location):
+        details.append("No location or event information available.")
+
+    return "\n".join(details)
+
+def get_change_request_outcome_employee_email_subject(application_id: int, status: str) -> str:
+    return f"Change Request {status.capitalize()} for Application #{application_id}"
+
+def get_change_request_outcome_employee_email_template(
+    employee_name: str,
+    application_id: int,
+    status: str,
+    outcome_reason: str,
+    current_time: datetime,
+    original_details: str,
+    updated_details: str
+) -> str:
+    return f"""
+Dear {employee_name},
+
+Your change request for Application ID: {application_id} has been {status}.
+
+Status: {status.capitalize()}
+Reason: {outcome_reason}
+Decision Time: {current_time}
+
+{"Note: The original approved application remains valid. If you have any questions, please contact your reporting manager." if status == 'rejected' else ""}
+
+Updated Application Details:
+----------------------------
+{updated_details}
+
+Original Application Details:
+-----------------------------
+{original_details}
+
+If you have any questions, please contact your manager.
+
+Best regards,
+HR Department
+"""
+
+def get_change_request_outcome_manager_email_subject(employee_name: str, status: str) -> str:
+    return f"Change Request {status.capitalize()} for {employee_name}"
+
+def get_change_request_outcome_manager_email_template(
+    manager_name: str,
+    employee_name: str,
+    application_id: int,
+    status: str,
+    outcome_reason: str,
+    current_time: datetime,
+    original_details: str,
+    updated_details: str
+) -> str:
+    return f"""
+Dear {manager_name},
+
+The change request for {employee_name}'s Application ID: {application_id} has been {status}.
+
+Status: {status.capitalize()}
+Reason: {outcome_reason}
+Decision Time: {current_time}
+
+Employee: {employee_name}
+Application ID: {application_id}
+
+Updated Application Details:
+----------------------------
+{updated_details}
+
+Original Application Details:
+----------------------------
+{original_details}
+
+Best regards,
+HR Department
+"""

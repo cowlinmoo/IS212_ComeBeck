@@ -9,7 +9,7 @@ from backend.models.generators import get_current_date
 from backend.repositories.ApplicationRepository import ApplicationRepository
 from backend.models import Application
 from backend.repositories.EmployeeRepository import EmployeeRepository
-from backend.schemas.ApplicationSchema import (ApplicationCreateSchema, ApplicationUpdateSchema,
+from backend.schemas.ApplicationSchema import (ApplicationCreateSchema,
                                                ApplicationWithdrawSchema, ApplicationApproveRejectSchema, ApprovedApplicationLocationSchema)
 from backend.services.EmailService import EmailService
 from backend.repositories.EventRepository import EventRepository
@@ -47,13 +47,14 @@ class ApplicationService:
             raise HTTPException(status_code=404, detail="Employee not found")
         return self.application_repository.get_application_by_staff_id(staff_id)
 
-    def get_employee_approved_application_locations(self, employee_id: int, current_user_role: EmployeeRole) -> List[ApprovedApplicationLocationSchema]:
+    def get_employee_approved_application_locations(self, manager_id: int, current_user_role: EmployeeRole) -> List[ApprovedApplicationLocationSchema]:
         employee_locations: List[ApprovedApplicationLocationSchema] = []
         approved_applications: List[Application] = self.application_repository.get_applications_by_status(
             status="approved")
         if current_user_role == EmployeeRole.MANAGER:
+            print("testing manager")
             employees = self.employee_repository.get_employees_under_manager(
-                manager_id=employee_id)
+                manager_id=manager_id)
             approved_applications = [application for application in approved_applications if application.staff_id in [
                 employee.staff_id for employee in employees]]
         elif current_user_role == EmployeeRole.HR:
@@ -114,9 +115,16 @@ class ApplicationService:
         self.email_service.send_application_creation_emails(application, new_application, manager, employee, staff_name)
         return application
 
-    def update_application(self, application_id: int, application: ApplicationUpdateSchema) -> Application:
-        return self.application_repository.update_application(application_id, application)
-
+    def update_application(self, application_id: int, application: ApplicationCreateSchema) -> Application:
+        existing_application = self.application_repository.get_application_by_application_id(
+            application_id)
+        if existing_application.status == "pending":
+            return self.application_repository.update_application(application_id, application)
+        elif existing_application.status == "withdrawn" or existing_application.status == "rejected":
+            raise HTTPException(
+                status_code=409, detail="Application has already been withdrawn or rejected")
+        else:
+            return self.change_request(existing_application, application)
     def withdraw_application(self, application_id: int, application: ApplicationWithdrawSchema) -> Application:
         existing_application = self.application_repository.get_application_by_application_id(
             application_id)
@@ -218,8 +226,15 @@ class ApplicationService:
             modified_application = self.application_repository.get_application_by_application_id(application_id)
             self.email_service.send_cancel_request_outcome_emails(modified_application)
         else:
-            # add in the change_request outcome here later
-            modified_application = self.application_repository.get_application_by_application_id(application_id)
+            old_application = self.application_repository.get_application_by_application_id(existing_application.original_application_id)
+            if application.status == "approved":
+                self.application_repository.update_application_status(existing_application.application_id, 'approved', application.outcome_reason)
+                self.application_repository.update_application_status(old_application.application_id, 'superseded', f"Superseded by change request (Application ID: {existing_application.application_id})")
+            else:
+                self.application_repository.update_application_status(existing_application.application_id, 'rejected', application.outcome_reason)
+                self.application_repository.update_application_status(old_application.application_id, 'approved', f"Change request rejected (Application ID: {existing_application.application_id})")
+            modified_application = self.application_repository.get_application_by_application_id(existing_application.application_id)
+            self.email_service.send_change_request_outcome_emails(modified_application)
         return modified_application
 
     def cancel_request(self, existing_application: Application,
@@ -228,7 +243,47 @@ class ApplicationService:
         updated_application = self.application_repository.update_application_state(
             existing_application.application_id,
             "cancel_request",
-            "Cancellation requested"
+            "Cancellation requested",
+            "pending"
+        )
+        # Fetch employee and manager data
+        employee = self.employee_repository.get_employee(existing_application.staff_id)
+        manager = self.employee_repository.get_employee(employee.reporting_manager)
+        # Prepare email data
+        current_time = get_current_datetime_sgt()
+        # Send cancellation request emails
+        self.email_service.send_cancellation_request_emails(
+            existing_application,
+            cancellation_request,
+            employee,
+            manager,
+            current_time
+        )
+        return updated_application
+
+    def change_request(self, existing_application: Application, change_request: ApplicationCreateSchema) -> Application:
+        # Create a new application based on the change request
+        new_application_dict = change_request.model_dump(exclude={"events", "location", "requested_date"})
+        new_application_dict["status"] = "pending"
+        new_application_dict["created_on"] = get_current_datetime_sgt()
+        new_application_dict["last_updated_on"] = get_current_datetime_sgt()
+        new_application_dict["approver_id"] = existing_application.approver_id
+        new_application_dict["application_state"] = "change_request"
+        new_application_dict["staff_id"] = existing_application.staff_id
+        new_application_dict["original_application_id"] = existing_application.application_id
+
+        # Create the new application
+        new_application = self.application_repository.create_application(new_application_dict)
+
+        # Create new events for the new application
+        self.event_service.create_events(change_request, new_application.application_id)
+
+        # Update the existing application to reference the new application
+        self.application_repository.update_application_state(
+            existing_application.application_id,
+            "change_request",
+            f"Superseded by change request (Application ID: {new_application.application_id})",
+            "superseded"
         )
 
         # Fetch employee and manager data
@@ -238,13 +293,14 @@ class ApplicationService:
         # Prepare email data
         current_time = get_current_datetime_sgt()
 
-        # Send cancellation request emails
-        self.email_service.send_cancellation_request_emails(
+        # Send change request emails
+        self.email_service.send_change_request_emails(
             existing_application,
-            cancellation_request,
+            new_application,
+            change_request,
             employee,
             manager,
             current_time
         )
 
-        return updated_application
+        return new_application
