@@ -2,13 +2,15 @@ from dateutil.relativedelta import relativedelta
 from fastapi import Depends, HTTPException
 from typing import List, Type
 from sqlalchemy.orm import InstrumentedAttribute
+from backend.models.enums.EmployeeRoleEnum import EmployeeRole
+from backend.models.enums.RecurrenceType import RecurrenceType
 from backend.models.generators import get_current_datetime_sgt
 from backend.models.generators import get_current_date
 from backend.repositories.ApplicationRepository import ApplicationRepository
 from backend.models import Application
 from backend.repositories.EmployeeRepository import EmployeeRepository
 from backend.schemas.ApplicationSchema import (ApplicationCreateSchema, ApplicationUpdateSchema,
-                                               ApplicationWithdrawSchema, ApplicationApproveRejectSchema)
+                                               ApplicationWithdrawSchema, ApplicationApproveRejectSchema, ApprovedApplicationLocationSchema)
 from backend.services.EmailService import EmailService
 from backend.repositories.EventRepository import EventRepository
 from backend.services.EventService import EventService
@@ -35,7 +37,8 @@ class ApplicationService:
     def get_application_by_id(self, application_id: int) -> Application:
         # check if application exists in the database
         if self.application_repository.get_application_by_application_id(application_id) is None:
-            raise HTTPException(status_code=404, detail="Application not found")
+            raise HTTPException(
+                status_code=404, detail="Application not found")
         return self.application_repository.get_application_by_application_id(application_id)
 
     def get_applications_by_staff_id(self, staff_id: int) -> List[Type[Application]]:
@@ -44,6 +47,31 @@ class ApplicationService:
             raise HTTPException(status_code=404, detail="Employee not found")
         return self.application_repository.get_application_by_staff_id(staff_id)
 
+    def get_employee_approved_application_locations(self, employee_id: int, current_user_role: EmployeeRole) -> List[ApprovedApplicationLocationSchema]:
+        employee_locations: List[ApprovedApplicationLocationSchema] = []
+        approved_applications: List[Application] = self.application_repository.get_applications_by_status(
+            status="approved")
+        if current_user_role == EmployeeRole.MANAGER:
+            employees = self.employee_repository.get_employees_under_manager(
+                manager_id=employee_id)
+            approved_applications = [application for application in approved_applications if application.staff_id in [
+                employee.staff_id for employee in employees]]
+        elif current_user_role == EmployeeRole.HR:
+            pass
+        for approved_application in approved_applications:
+            user = self.employee_repository.get_employee(
+                staff_id=approved_application.staff_id)
+            for event in self.event_repository.get_event_by_application_id(application_id=approved_application.application_id):
+                employee_locations.append(
+                    ApprovedApplicationLocationSchema(
+                        employee_fname=user.staff_fname,
+                        employee_lname=user.staff_lname,
+                        location=event.location,
+                        position=user.position,
+                        date=event.requested_date.isoformat()
+                    )
+                )
+        return employee_locations
     def get_applications_by_approver_id(self, approver_id: int) -> List[Type[Application]]:
         # check if employee exists in the database
         if self.employee_repository.get_employee(approver_id) is None:
@@ -65,14 +93,17 @@ class ApplicationService:
             raise HTTPException(status_code=400,
                                 detail="End date cannot be more than 3 months away from the requested date")
         # Prepare application data
-        application_dict = application.model_dump(exclude={"events", "location", "requested_date"})
-        application_dict["status"] = "pending"  # set status to pending as it is a new application
+        application_dict = application.model_dump(
+            exclude={"events", "location", "requested_date"})
+        # set status to pending as it is a new application
+        application_dict["status"] = "pending"
         application_dict["created_on"] = get_current_datetime_sgt()
         application_dict["last_updated_on"] = get_current_datetime_sgt()
         application_dict["approver_id"] = employee.reporting_manager
         application_dict["application_state"] = "new_application"
         # Create new application
-        new_application = self.application_repository.create_application(application_dict)
+        new_application = self.application_repository.create_application(
+            application_dict)
         # Create events
         self.event_service.create_events(application, new_application.application_id)
         # Get Manager Details
@@ -87,10 +118,12 @@ class ApplicationService:
         return self.application_repository.update_application(application_id, application)
 
     def withdraw_application(self, application_id: int, application: ApplicationWithdrawSchema) -> Application:
-        existing_application = self.application_repository.get_application_by_application_id(application_id)
+        existing_application = self.application_repository.get_application_by_application_id(
+            application_id)
 
         if existing_application is None:
-            raise HTTPException(status_code=404, detail="Application not found")
+            raise HTTPException(
+                status_code=404, detail="Application not found")
 
         # Fetch employee and editor data
         employee = self.employee_repository.get_employee(existing_application.staff_id)
@@ -116,7 +149,6 @@ class ApplicationService:
 
         # Prepare email data
         current_time = get_current_datetime_sgt()
-
         # Send withdrawal emails
         self.email_service.send_withdrawal_emails(
             withdrawn_application=withdrawn_application,
@@ -126,7 +158,6 @@ class ApplicationService:
             is_employee=is_employee,
             current_time=current_time
         )
-
         return withdrawn_application
 
     def get_applications_by_status(self, status: str) -> List[Type[Application]]:
@@ -138,29 +169,30 @@ class ApplicationService:
     def reject_old_applications(self):
         pending_applications = self.application_repository.get_pending_applications()
         application_ids: List[int] = [int(getattr(app, 'application_id')
-                                          if isinstance(app.application_id,InstrumentedAttribute)
+                                          if isinstance(app.application_id, InstrumentedAttribute)
                                           else app.application_id)
-            for app in pending_applications
-            if app.application_id is not None
-        ]
-        events = self.event_repository.get_events_by_application_ids(application_ids)
+                                      for app in pending_applications
+                                      if app.application_id is not None
+                                      ]
+        events = self.event_repository.get_events_by_application_ids(
+            application_ids)
 
         two_months_ago = get_current_date() - relativedelta(months=2)
         rejected_count = 0
 
         event_application_ids = []
         for event in events:
-            print(event_application_ids,"over here")
+            print(event_application_ids, "over here")
             if event.requested_date < two_months_ago:
                 if event.application_id not in event_application_ids:
                     event_application_ids.append(event.application_id)
                     application=self.application_repository.update_application_status(event.application_id, 'rejected', 'Application automatically rejected due to old requested date')
                     rejected_count += 1
-
                     self.email_service.send_rejection_emails(application,event.requested_date)
         
 
-        print(f"Rejected {rejected_count} applications with events older than {two_months_ago}")
+        print(f"""Rejected {rejected_count} applications with events older than {
+              two_months_ago}""")
 
     def approve_reject_pending_applications(self, application:ApplicationApproveRejectSchema) -> Application:
         application_id = application.application_id
