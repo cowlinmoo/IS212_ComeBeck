@@ -86,18 +86,6 @@ class ApplicationCreateSchema(BaseModel):
         validate_assignment = True
         from_attributes = True
 
-
-class ApplicationUpdateSchema(BaseModel):
-    reason: Optional[str] = Field(default=None, examples=[
-                                  "Vacation request", "Sick leave", "Personal day"])
-    requested_date: date = Field(examples=[date.today()])
-    description: Optional[str] = Field(
-        default=None, examples=["Going on a family vacation", "Doctor's appointment"])
-    status: Optional[str] = Field(default=None, examples=[
-                                  "pending", "approved", "rejected", "withdrawn"])
-    approver_id: Optional[int] = Field(default=None, examples=[101, 102, 103])
-    class Config:
-        from_attributes = True
 class ApplicationWithdrawSchema(BaseModel):
     status: str = Field(examples=["withdrawn"])
     editor_id: int = Field(examples=[101, 102, 103])

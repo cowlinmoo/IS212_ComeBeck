@@ -8,7 +8,8 @@ VALUES
     (5, 'HR', 'Manages employee relations and recruitment', NULL),
     (6, 'Finance', 'Oversees financial planning and accounting', NULL),
     (7, 'Consultancy', 'Advises clients and helps them achieve business goals', NULL),
-    (8, 'IT', 'Manages technology infrastructure and support', NULL)
+    (8, 'IT', 'Manages technology infrastructure and support', NULL),
+    (9, 'Testing', 'Department for testing, quality assurance, and bug fixing', NULL)
 ON CONFLICT (department_id) DO NOTHING;  -- Adjust this as necessary for your uniqueness criteria
 
 -- Insert teams for the respective departments (if they don't already exist)
@@ -31,7 +32,8 @@ VALUES
     (15, 'Account Managers - Siti Abdullah''s Team', 'Team that manages all the <$20k accounts for the company.', NULL, 2,12),
     (16, 'Account Managers - Rahim Khalid''s Team', 'Team that manages all the <$30k accounts for the company.', NULL, 2,12),
     (17, 'Account Managers - Yee Lim''s Team', 'Team that manages all the <$40k accounts for the company.', NULL, 2,12),
-    (18, 'Solutioning Managers - Eric Loh''s Team', 'Team that creates tailored solutions for clients.', NULL, 3, 1)
+    (18, 'Solutioning Managers - Eric Loh''s Team', 'Team that creates tailored solutions for clients.', NULL, 3, 1),
+    (19, 'Testing Team - Colin Mok''s Team', 'Team that tests the code the code', NULL, 9, 1)
 ON CONFLICT (team_id) DO NOTHING;  -- Adjust this as necessary for your team's uniqueness criteria
 
 -- Insert employees into the employees table
@@ -590,7 +592,11 @@ VALUES
 (210041,'Seng','Saon','IT Team',8,11,'Singapore','Seng.Saon@allinone.com.sg',210001,2,'$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
 (210042,'Naron','Savoeun','IT Team',8,11,'Singapore','Naron.Savoeun@allinone.com.sg',210001,2,'$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
 (210043,'Phuc','Luon','IT Team',8,11,'Singapore','Phuc.Luon@allinone.com.sg',210001,2,'$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
-(210044,'Chandara','Tithe','IT Team',8,11,'Singapore','tithe.chandra@allinone.com.sg',210001,2,'$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO');
+(210044,'Chandara','Tithe','IT Team',8,11,'Singapore','tithe.chandra@allinone.com.sg',210001,2,'$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
+(300000, 'Colin','Mok','Developer',9,19,'Singapore', 'colinmok1000@gmail.com', 130002, 3, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
+(400000, 'Fatti','Bom Bom','Developer',9,19,'Singapore', 'colinmok3@gmail.com', 300000, 2, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
+(500000, 'Molin','Cok','Developer',9,19,'Singapore', 'colinmok3@gmail.com', 300000, 1, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO');
+
 
 UPDATE "departments" SET director_id = 130002 WHERE department_id = 1;
 UPDATE "departments" SET director_id = 140001 WHERE department_id = 2;
@@ -600,6 +606,7 @@ UPDATE "departments" SET director_id = 160008 WHERE department_id = 5;
 UPDATE "departments" SET director_id = 170166 WHERE department_id = 6;
 UPDATE "departments" SET director_id = 180001 WHERE department_id = 7;
 UPDATE "departments" SET director_id = 210001 WHERE department_id = 8;
+UPDATE "departments" SET director_id = 300000 WHERE department_id = 9;
 
 UPDATE "teams" SET manager_id = 130002 WHERE team_id = 1;  -- Update the CEO's team manager
 UPDATE "teams" SET manager_id = 180001 WHERE team_id = 2;  -- Update the Consultants team manager
@@ -619,3 +626,4 @@ UPDATE "teams" SET manager_id = 140879 WHERE team_id = 15;  -- Update the Accoun
 UPDATE "teams" SET manager_id = 140894 WHERE team_id = 16;  -- Update the Account Managers team manager
 UPDATE "teams" SET manager_id = 140944 WHERE team_id = 17;  -- Update the Account Managers team manager
 UPDATE "teams" SET manager_id = 150008 WHERE team_id = 18;  -- Update the Solutioning Managers team manager
+UPDATE "teams" SET manager_id = 300000 WHERE team_id = 19;  -- Update the Developers team manager

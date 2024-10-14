@@ -2,7 +2,7 @@ from typing import List
 from fastapi import APIRouter, Depends
 
 from ..models.enums.EmployeeRoleEnum import EmployeeRole
-from ..schemas.ApplicationSchema import ( ApplicationCreateSchema, ApplicationUpdateSchema,
+from ..schemas.ApplicationSchema import ( ApplicationCreateSchema,
                                          ApplicationWithdrawSchema, ApplicationResponse, ApplicationApproveRejectSchema)
 from ..services.ApplicationService import ApplicationService
 from ..services.dependencies import role_required
@@ -63,7 +63,7 @@ def create_application(
 @ApplicationRouter.put("/{application_id}", response_model=ApplicationResponse)
 def update_application(
     application_id: int,
-    application: ApplicationUpdateSchema,
+    application: ApplicationCreateSchema,
     service: ApplicationService = Depends(),
     current_user: dict = Depends(role_required(
         EmployeeRole.HR, EmployeeRole.MANAGER, EmployeeRole.STAFF))
@@ -92,25 +92,25 @@ def get_applications_by_status(
     return service.get_applications_by_status(status)
 
 
-@ApplicationRouter.put("/{application_id}/status", response_model=ApplicationResponse)
-def update_application_status(
-    application_id: int,
-    new_status: str,
-    service: ApplicationService = Depends(),
-    current_user: dict = Depends(role_required(
-        EmployeeRole.HR, EmployeeRole.MANAGER, EmployeeRole.STAFF))
-):
-    return service.update_application_status(application_id, new_status)
+# @ApplicationRouter.put("/{application_id}/status", response_model=ApplicationResponse)
+# def update_application_status(
+#     application_id: int,
+#     new_status: str,
+#     service: ApplicationService = Depends(),
+#     current_user: dict = Depends(role_required(
+#         EmployeeRole.HR, EmployeeRole.MANAGER, EmployeeRole.STAFF))
+# ):
+#     return service.update_application_status(application_id, new_status)
 
 
-@ApplicationRouter.get("/location/{employee_id}")
-def get_all_locations(
-        employee_id: int,
+@ApplicationRouter.get("/location/{manager_id}", response_model=List[ApplicationResponse])
+def get_all_employee_locations_by_manager_id(
+        manager_id: int,
         service: ApplicationService = Depends(),
         current_user: dict = Depends(role_required(
             EmployeeRole.HR, EmployeeRole.MANAGER))
 ):
-    return service.get_employee_approved_application_locations(employee_id=employee_id, current_user_role=current_user["role"])
+    return service.get_employee_approved_application_locations(manager_id=manager_id, current_user_role=current_user["role"])
 # @ApplicationRouter.put("/{application_id}/status", response_model=ApplicationResponse)
 # def update_application_status(
 #     application_id: int,

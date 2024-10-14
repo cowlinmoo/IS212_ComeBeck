@@ -1,6 +1,8 @@
 from datetime import datetime, date
 from typing import Optional, List, Union, Dict
 
+from sqlalchemy.orm import Query
+
 from backend.schemas.EventSchema import EventCreateSchema
 
 
@@ -323,4 +325,356 @@ Application Details:
 --------------------
 Date: {event_info['date']}
 Location: {event_info['location']}
+"""
+def get_cancellation_request_manager_email_subject(staff_id: int, employee_name: str) -> str:
+    return f"Cancellation Request for Employee ID: {staff_id} - {employee_name}"
+
+def get_cancellation_request_employee_email_subject(application_id: int) -> str:
+    return f"Cancellation Request Submitted - Application ID: {application_id}"
+
+def get_cancellation_request_manager_email_template(
+    manager_name: str,
+    employee_name: str,
+    employee_id: int,
+    application_id: int,
+    original_reason: str,
+    requested_date: date,
+    description: str,
+    status: str,
+    created_on: datetime,
+    location: str,
+    recurring: bool = False,
+    recurrence_type: Optional[str] = None,
+    end_date: Optional[date] = None,
+    cancellation_reason: str = None
+) -> str:
+    if recurring:
+        event_info = f"""
+Recurring Details:
+------------------
+Recurrence Type: {recurrence_type}
+Start Date: {requested_date}
+End Date: {end_date}
+"""
+    else:
+        event_info = f"Date: {requested_date}"
+
+    return f"""
+Dear {manager_name},
+
+A cancellation request has been submitted for an existing application that requires your review.
+
+Cancellation Request Details:
+---------------------
+Reason for Cancellation: {cancellation_reason if cancellation_reason else "No reason provided"}
+Submission Date of Cancellation Request: {created_on}
+
+Original Application Details:
+--------------------
+Employee Name: {employee_name}
+Employee ID: {employee_id}
+Application ID: {application_id}
+Status: {status}
+Location: {location}
+Reason: {original_reason}
+Description: {description if description else "No description provided"}
+{event_info}
+
+Please review this cancellation request and take appropriate action. If you require any additional information or have any questions regarding this cancellation request, please don't hesitate to contact the HR department.
+
+Thank you for your prompt attention to this matter.
+
+Best regards,
+HR Department
+
+This is an automated message. Please do not reply directly to this email.
+    """
+
+def get_cancellation_request_employee_email_template(
+    employee_name: str,
+    application_id: int,
+    original_reason: str,
+    requested_date: date,
+    description: str,
+    status: str,
+    created_on: datetime,
+    location: str,
+    recurring: bool = False,
+    recurrence_type: Optional[str] = None,
+    end_date: Optional[date] = None,
+    cancellation_reason: str = None
+) -> str:
+    if recurring:
+        event_info = f"""
+Recurring Details:
+------------------
+Recurrence Type: {recurrence_type}
+Start Date: {requested_date}
+End Date: {end_date}
+"""
+    else:
+        event_info = f"Date: {requested_date}"
+
+    return f"""
+Dear {employee_name},
+
+This email confirms that your cancellation request for an existing application has been successfully submitted.
+
+Cancellation Request Details:
+---------------------
+Reason for Cancellation: {cancellation_reason if cancellation_reason else "No reason provided"}
+Submission Date of Cancellation Request: {created_on}
+
+Original Application Details:
+--------------------
+Application ID: {application_id}
+Status: {status}
+Location: {location}
+Reason: {original_reason}
+Description: {description if description else "No description provided"}
+{event_info}
+
+Your cancellation request has been received and will be reviewed by your manager. You will be notified of any updates or decisions regarding your request.
+
+If you need to make any changes or have any questions about your cancellation request, please contact the HR department.
+
+Thank you for using our application system.
+
+Best regards,
+HR Department
+
+This is an automated message. Please do not reply directly to this email.
+    """
+
+
+def get_cancel_request_employee_email_template(employee_name, application_id, status, outcome_reason, current_time,
+                                               is_recurring, recurrence_type):
+    recurring_info = f"This is a recurring application with {recurrence_type} recurrence." if is_recurring else "This is a one-time application."
+
+    if status == 'approved':
+        body = f"""
+Dear {employee_name},
+
+Your cancellation request for Application ID: {application_id} has been approved.
+
+{recurring_info}
+
+The application has been successfully cancelled as per your request.
+
+If you have any questions, please contact your reporting manager.
+
+Date and Time: {current_time}
+
+Best regards,
+HR Department
+        """
+    else:  # status == 'rejected'
+        body = f"""
+Dear {employee_name},
+
+Your cancellation request for Application ID: {application_id} has been rejected.
+
+{recurring_info}
+
+Reason for rejection: {outcome_reason}
+
+The original approved application remains valid. If you have any questions, please contact your reporting manager.
+
+Date and Time: {current_time}
+
+Best regards,
+HR Department
+        """
+    return body
+
+
+def get_cancel_request_manager_email_template(manager_name, employee_name, application_id, status, outcome_reason,
+                                              current_time, is_recurring, recurrence_type):
+    recurring_info = f"This is a recurring application with {recurrence_type} recurrence." if is_recurring else "This is a one-time application."
+
+    body = f"""
+Dear {manager_name},
+
+This is to confirm that you have {status} the cancellation request for the following application:
+
+Employee: {employee_name}
+Application ID: {application_id}
+
+{recurring_info}
+
+{"The application has been successfully cancelled." if status == 'approved' else "The original approved application remains valid."}
+
+{"Reason for rejection: " + outcome_reason if status == 'rejected' else ""}
+
+Date and Time: {current_time}
+
+Best regards,
+HR Department
+    """
+    return body
+
+def get_change_request_manager_email_subject(staff_id, staff_name):
+    return f"Change Request for Application from {staff_id} - {staff_name}"
+
+def get_change_request_employee_email_subject(application_id):
+    return f"Change Request Submitted for Application ID: {application_id}"
+def get_change_request_manager_email_template(manager_name, employee_name, employee_id, original_application_id, new_application_id, original_details, updated_details, current_time):
+    template = f"""
+Dear {manager_name},
+
+A change request has been submitted for an existing application that requires your review.
+
+Employee: {employee_name} (ID: {employee_id})
+New Application ID: {new_application_id}
+Original Application ID: {original_application_id}
+Submitted on: {current_time}
+
+Updated Application Details:
+----------------------------
+{updated_details}
+
+Original Application Details:
+-----------------------------
+{original_details}
+
+Please review this change request and take appropriate action through the application management system.
+
+Best regards,
+HR Department
+"""
+    return template
+
+def get_change_request_employee_email_template(employee_name, original_application_id, new_application_id, original_details, updated_details, current_time):
+    template = f"""
+Dear {employee_name},
+
+Your change request for Application ID: {original_application_id} has been submitted successfully.
+
+New Application ID: {new_application_id}
+Original Application ID: {original_application_id}
+Submitted on: {current_time}
+
+Updated Application Details:
+----------------------------
+{updated_details}
+
+Original Application Details:
+-----------------------------
+{original_details}
+
+Your manager will review this change request and take appropriate action. You will be notified of any updates.
+
+Best regards,
+HR Department
+"""
+    return template
+
+
+def format_application_details(application):
+    details = [
+        f"Reason: {application.reason}",
+        f"Description: {application.description or 'N/A'}",
+        f"Recurring: {'Yes' if application.recurring else 'No'}"
+    ]
+
+    # Handle location and events
+    if hasattr(application, 'location') and application.location:
+        details.append(f"Location: {application.location}")
+
+    if hasattr(application, 'requested_date') and application.requested_date:
+        details.append(f"Requested Date: {application.requested_date}")
+
+    # Handle recurring information and events
+    if application.recurring:
+        if hasattr(application, 'events'):
+            first_event = application.events.first() if isinstance(application.events, Query) else next(iter(application.events), None)
+            if first_event:
+                details.append(f"Location: {first_event.location}")
+                details.append(f"Requested Date: {first_event.requested_date}")
+        recurrence_type = getattr(application.recurrence_type, 'value', application.recurrence_type) if application.recurrence_type else 'N/A'
+        details.extend([
+            f"Recurrence Type: {recurrence_type}",
+            f"End Date: {application.end_date or 'N/A'}"
+        ])
+    elif hasattr(application, 'events') and application.events:
+        details.append("\nEvents:")
+        for event in application.events:
+            details.append(f"- Date: {event.requested_date}")
+    elif not (hasattr(application, 'location') and application.location):
+        details.append("No location or event information available.")
+
+    return "\n".join(details)
+
+def get_change_request_outcome_employee_email_subject(application_id: int, status: str) -> str:
+    return f"Change Request {status.capitalize()} for Application #{application_id}"
+
+def get_change_request_outcome_employee_email_template(
+    employee_name: str,
+    application_id: int,
+    status: str,
+    outcome_reason: str,
+    current_time: datetime,
+    original_details: str,
+    updated_details: str
+) -> str:
+    return f"""
+Dear {employee_name},
+
+Your change request for Application ID: {application_id} has been {status}.
+
+Status: {status.capitalize()}
+Reason: {outcome_reason}
+Decision Time: {current_time}
+
+{"Note: The original approved application remains valid. If you have any questions, please contact your reporting manager." if status == 'rejected' else ""}
+
+Updated Application Details:
+----------------------------
+{updated_details}
+
+Original Application Details:
+-----------------------------
+{original_details}
+
+If you have any questions, please contact your manager.
+
+Best regards,
+HR Department
+"""
+
+def get_change_request_outcome_manager_email_subject(employee_name: str, status: str) -> str:
+    return f"Change Request {status.capitalize()} for {employee_name}"
+
+def get_change_request_outcome_manager_email_template(
+    manager_name: str,
+    employee_name: str,
+    application_id: int,
+    status: str,
+    outcome_reason: str,
+    current_time: datetime,
+    original_details: str,
+    updated_details: str
+) -> str:
+    return f"""
+Dear {manager_name},
+
+The change request for {employee_name}'s Application ID: {application_id} has been {status}.
+
+Status: {status.capitalize()}
+Reason: {outcome_reason}
+Decision Time: {current_time}
+
+Employee: {employee_name}
+Application ID: {application_id}
+
+Updated Application Details:
+----------------------------
+{updated_details}
+
+Original Application Details:
+----------------------------
+{original_details}
+
+Best regards,
+HR Department
 """
