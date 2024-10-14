@@ -97,11 +97,11 @@ class ApplicationRepository:
         application = self.get_application_by_application_id(application_id)
         return application.status
 
-    def update_application_state(self, application_id, new_state):
+    def update_application_state(self, application_id, new_state, outcome_reason):
         db_application = self.get_application_by_application_id(application_id)
         db_application.application_state = new_state
         db_application.status = 'pending'
-        db_application.outcome_reason = 'Change requested'
+        db_application.outcome_reason = outcome_reason
         self.db.commit()
         self.db.refresh(db_application)
         return db_application

@@ -227,7 +227,8 @@ class ApplicationService:
         # Update application state to 'cancellation_request'
         updated_application = self.application_repository.update_application_state(
             existing_application.application_id,
-            "cancel_request"
+            "cancel_request",
+            "Cancellation requested"
         )
 
         # Fetch employee and manager data
