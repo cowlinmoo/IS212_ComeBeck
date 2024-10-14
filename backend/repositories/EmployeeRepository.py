@@ -9,12 +9,14 @@ import logging
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+
 class EmployeeRepository:
     def __init__(self, db: Session = Depends(get_db_connection)):
         self.db = db
 
     def get_employee(self, staff_id: int) -> Employee:
-        employee = self.db.query(Employee).filter(Employee.staff_id == staff_id).first()
+        employee = self.db.query(Employee).filter(
+            Employee.staff_id == staff_id).first()
         if not employee:
             logging.error(f"Employee with staff ID {staff_id} not found")
             raise HTTPException(status_code=404, detail="Employee not found")
@@ -34,7 +36,8 @@ class EmployeeRepository:
         return new_employee
 
     def update_employee(self, staff_id: int, update_data: dict) -> Employee:
-        employee = self.db.query(Employee).filter(Employee.staff_id == staff_id).first()
+        employee = self.db.query(Employee).filter(
+            Employee.staff_id == staff_id).first()
         if not employee:
             raise HTTPException(status_code=404, detail="Employee not found")
 
@@ -55,6 +58,15 @@ class EmployeeRepository:
         employee = self.get_employee(staff_id)
         return employee.email
 
+    def get_employees_by_ids(self, staff_ids: List[int]) -> List[Employee]:
+        employees = self.db.query(Employee).filter(
+            Employee.staff_id.in_(staff_ids)).all()
+        return employees
+
+    def get_employees_under_manager(self, manager_id: int) -> List[Employee]:
+        employees = self.db.query(Employee).filter(
+            Employee.reporting_manager == manager_id).all()
+        return employees
     def get_employees_by_manager_id(self, manager_id: int) -> List[Type[Employee]]:
         return self.db.query(Employee).filter(Employee.reporting_manager == manager_id).all()
 

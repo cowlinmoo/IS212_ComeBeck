@@ -22,14 +22,17 @@ class ApplicationRepository:
         return applications if applications is not None else []
 
     def get_application_by_application_id(self, application_id: int) -> Application:
-        application = self.db.query(Application).filter(Application.application_id == application_id).first()
+        application = self.db.query(Application).filter(
+            Application.application_id == application_id).first()
         if application is not None:
             return application
         else:
-            raise HTTPException(status_code=404, detail="Application not found")
+            raise HTTPException(
+                status_code=404, detail="Application not found")
 
     def get_application_by_staff_id(self, staff_id: int) -> List[Type[Application]]:
-        applications = self.db.query(Application).filter(Application.staff_id == staff_id).all()
+        applications = self.db.query(Application).filter(
+            Application.staff_id == staff_id).all()
         return applications if applications is not None else []
 
     def create_application(self, application: dict) -> Application:
@@ -51,9 +54,11 @@ class ApplicationRepository:
         return db_application
 
     def update_application(self, application_id: int, application: ApplicationUpdateSchema) -> Application:
-        db_application = self.db.query(Application).filter(Application.application_id == application_id).first()
+        db_application = self.db.query(Application).filter(
+            Application.application_id == application_id).first()
         if db_application is None:
-            raise HTTPException(status_code=404, detail="Application not found")
+            raise HTTPException(
+                status_code=404, detail="Application not found")
 
         update_data = application.model_dump(exclude_unset=True)
         for key, value in update_data.items():
@@ -71,7 +76,8 @@ class ApplicationRepository:
     def update_application_status(self, application_id: int, new_status: str, outcome_reason: str) -> Application:
         db_application = self.db.query(Application).filter(Application.application_id == application_id).first()
         if db_application is None:
-            raise HTTPException(status_code=404, detail="Application not found")
+            raise HTTPException(
+                status_code=404, detail="Application not found")
 
         db_application.status = new_status
         db_application.outcome_reason = outcome_reason

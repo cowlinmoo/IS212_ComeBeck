@@ -5,3 +5,4 @@ __pycache__
 /pgadmin-data
 .coverage
 coverage.xml
+.DS_Store
