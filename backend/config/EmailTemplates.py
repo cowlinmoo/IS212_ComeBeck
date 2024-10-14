@@ -324,3 +324,122 @@ Application Details:
 Date: {event_info['date']}
 Location: {event_info['location']}
 """
+def get_cancellation_request_manager_email_subject(staff_id: int, employee_name: str) -> str:
+    return f"Cancellation Request for Employee ID: {staff_id} - {employee_name}"
+
+def get_cancellation_request_employee_email_subject(application_id: int) -> str:
+    return f"Cancellation Request Submitted - Application ID: {application_id}"
+
+def get_cancellation_request_manager_email_template(
+    manager_name: str,
+    employee_name: str,
+    employee_id: int,
+    application_id: int,
+    original_reason: str,
+    requested_date: date,
+    description: str,
+    status: str,
+    created_on: datetime,
+    location: str,
+    recurring: bool = False,
+    recurrence_type: Optional[str] = None,
+    end_date: Optional[date] = None,
+    cancellation_reason: str = None
+) -> str:
+    if recurring:
+        event_info = f"""
+Recurring Details:
+------------------
+Recurrence Type: {recurrence_type}
+Start Date: {requested_date}
+End Date: {end_date}
+"""
+    else:
+        event_info = f"Date: {requested_date}"
+
+    return f"""
+Dear {manager_name},
+
+A cancellation request has been submitted for an existing application that requires your review.
+
+Cancellation Request Details:
+---------------------
+Reason for Cancellation: {cancellation_reason if cancellation_reason else "No reason provided"}
+Submission Date of Cancellation Request: {created_on}
+
+Original Application Details:
+--------------------
+Employee Name: {employee_name}
+Employee ID: {employee_id}
+Application ID: {application_id}
+Status: {status}
+Location: {location}
+Reason: {original_reason}
+Description: {description if description else "No description provided"}
+{event_info}
+
+Please review this cancellation request and take appropriate action. If you require any additional information or have any questions regarding this cancellation request, please don't hesitate to contact the HR department.
+
+Thank you for your prompt attention to this matter.
+
+Best regards,
+HR Department
+
+This is an automated message. Please do not reply directly to this email.
+    """
+
+def get_cancellation_request_employee_email_template(
+    employee_name: str,
+    application_id: int,
+    original_reason: str,
+    requested_date: date,
+    description: str,
+    status: str,
+    created_on: datetime,
+    location: str,
+    recurring: bool = False,
+    recurrence_type: Optional[str] = None,
+    end_date: Optional[date] = None,
+    cancellation_reason: str = None
+) -> str:
+    if recurring:
+        event_info = f"""
+Recurring Details:
+------------------
+Recurrence Type: {recurrence_type}
+Start Date: {requested_date}
+End Date: {end_date}
+"""
+    else:
+        event_info = f"Date: {requested_date}"
+
+    return f"""
+Dear {employee_name},
+
+This email confirms that your cancellation request for an existing application has been successfully submitted.
+
+Cancellation Request Details:
+---------------------
+Reason for Cancellation: {cancellation_reason if cancellation_reason else "No reason provided"}
+Submission Date of Cancellation Request: {created_on}
+
+Original Application Details:
+--------------------
+Application ID: {application_id}
+Status: {status}
+Location: {location}
+Reason: {original_reason}
+Description: {description if description else "No description provided"}
+{event_info}
+
+Your cancellation request has been received and will be reviewed by your manager. You will be notified of any updates or decisions regarding your request.
+
+If you need to make any changes or have any questions about your cancellation request, please contact the HR department.
+
+Thank you for using our application system.
+
+Best regards,
+HR Department
+
+This is an automated message. Please do not reply directly to this email.
+    """

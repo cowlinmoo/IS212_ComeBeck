@@ -47,17 +47,19 @@ def init_db():
     init_sql_path = os.path.join(os.path.dirname(__file__), '..', '..', 'postgres', 'init.sql')
 
     with Engine.connect() as connection:
-        # Check if data already exists in the departments table
-        data_exists = connection.execute(text(
-            "SELECT EXISTS (SELECT 1 FROM departments LIMIT 1)"
-        )).scalar()
+        # Explicitly start a transaction for the entire operation
+        with connection.begin():
+            # Check if data already exists in the departments table
+            data_exists = connection.execute(text(
+                "SELECT EXISTS (SELECT 1 FROM departments LIMIT 1)"
+            )).scalar()
 
-        if not data_exists:
-            with open(init_sql_path, 'r') as file:
-                sql_script = file.read()
+            if not data_exists:
+                with open(init_sql_path, 'r') as file:
+                    sql_script = file.read()
 
-            with connection.begin():
+                # Execute the script within the same transaction
                 connection.execute(text(sql_script))
-            print("Initial data inserted into the database")
-        else:
-            print("Data already exists in the database, skipping initialization")
+                print("Initial data inserted into the database")
+            else:
+                print("Data already exists in the database, skipping initialization")

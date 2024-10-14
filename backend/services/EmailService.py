@@ -1,17 +1,36 @@
 import smtplib
+from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
+from fastapi import Depends, HTTPException
+
+from backend.config.EmailTemplates import get_new_application_manager_email_subject, \
+    get_new_application_manager_email_template, get_new_application_employee_email_subject, \
+    get_new_application_employee_email_template, get_cancellation_request_manager_email_subject, \
+    get_cancellation_request_manager_email_template, get_cancellation_request_employee_email_subject, \
+    get_cancellation_request_employee_email_template, get_application_outcome_employee_email_subject, \
+    get_application_outcome_employee_email_template, get_application_outcome_approver_email_subject, \
+    get_application_outcome_approver_email_template, get_application_auto_rejected_employee_email_subject, \
+    get_application_auto_rejected_employee_email_template, get_application_withdrawn_manager_email_subject, \
+    get_application_withdrawn_manager_email_template, get_application_withdrawn_employee_email_subject, \
+    get_application_withdrawn_employee_email_template
 from backend.config.Environment import get_environment_variables
+from backend.models import Application, Employee
+from backend.models.generators import get_current_date, get_current_datetime_sgt
+from backend.repositories.EmployeeRepository import EmployeeRepository
+from backend.schemas.ApplicationSchema import ApplicationCreateSchema, ApplicationWithdrawSchema
 
 env = get_environment_variables()
 
 class EmailService:
-    def __init__(self):
+    def __init__(self,
+                 employee_repository: EmployeeRepository = Depends()):
         self.smtp_server = env.SMTP_SERVER
         self.smtp_port = env.SMTP_PORT
         self.sender_email = env.SENDER_EMAIL
         self.sender_password = env.SENDER_PASSWORD
+        self.employee_repository = employee_repository
 
     def send_email(self, recipient_email, subject, body):
         message = MIMEMultipart()
@@ -30,3 +49,214 @@ class EmailService:
         except Exception as e:
             print(f"Failed to send email: {str(e)}")
             return False
+
+    def send_application_creation_emails(self, application: ApplicationCreateSchema, new_application: Application, manager: Employee,
+                     employee: Employee, staff_name: str):
+        # Determine if the application has multiple events
+        has_multiple_events = len(application.events) > 1 if application.events else False
+
+        # Create base subject lines
+        prefix = "MULTIPLE: " if has_multiple_events else ("RECURRING: " if application.recurring else "ONE-TIME: ")
+
+        # Send email to manager
+        base_manager_subject = get_new_application_manager_email_subject(application.staff_id, staff_name)
+        manager_subject = f"{prefix}{base_manager_subject}"
+        manager_body = get_new_application_manager_email_template(
+            manager_name=f"{manager.staff_fname} {manager.staff_lname}",
+            employee_name=staff_name,
+            employee_id=application.staff_id,
+            application_id=new_application.application_id,
+            reason=application.reason,
+            requested_date=application.requested_date,
+            description=application.description,
+            status=new_application.status,
+            created_on=get_current_date(),
+            recurring=application.recurring,
+            location=application.location,
+            recurrence_type=application.recurrence_type.value if application.recurring else None,
+            end_date=application.end_date if application.recurring else None,
+            events=application.events if has_multiple_events else None
+        )
+        self.send_email(manager.email, manager_subject, manager_body)
+
+        # Send email to employee
+        base_employee_subject = get_new_application_employee_email_subject(new_application.application_id)
+        employee_subject = f"{prefix}{base_employee_subject}"
+        employee_body = get_new_application_employee_email_template(
+            employee_name=staff_name,
+            application_id=new_application.application_id,
+            reason=application.reason,
+            requested_date=application.requested_date,
+            description=application.description,
+            status=new_application.status,
+            created_on=get_current_date(),
+            recurring=application.recurring,
+            location=application.location,
+            recurrence_type=application.recurrence_type.value if application.recurring else None,
+            end_date=application.end_date if application.recurring else None,
+            events=application.events if has_multiple_events else None
+        )
+        self.send_email(employee.email, employee_subject, employee_body)
+
+    def send_outcome_emails(self, application):
+        # Fetch employee and approver data
+        employee = self.employee_repository.get_employee(application.staff_id)
+        approver = self.employee_repository.get_employee(application.approver_id)
+
+        if not employee or not approver:
+            raise HTTPException(status_code=404, detail="Employee or approver not found")
+
+        current_time = get_current_datetime_sgt()
+        staff_name = f"{employee.staff_fname} {employee.staff_lname}"
+        approver_name = f"{approver.staff_fname} {approver.staff_lname}"
+
+        # Determine application type and prepare event_info
+        if application.recurring:
+            app_type = "recurring"
+            event_info = {
+                "recurrence_type": application.recurrence_type.value,
+                "start_date": application.events[0].requested_date,
+                "end_date": application.end_date
+            }
+        elif len(application.events) > 1:
+            app_type = "multiple_dates"
+            event_info = [{"date": event.requested_date, "location": event.location} for event in application.events]
+        else:
+            app_type = "one_time"
+            event_info = {
+                "date": application.events[0].requested_date,
+                "location": application.events[0].location
+            }
+
+        # Send email to employee
+        employee_subject = get_application_outcome_employee_email_subject(
+            application_id=application.application_id,
+            status=application.status,
+        )
+        employee_body = get_application_outcome_employee_email_template(
+            employee_name=staff_name,
+            application_id=application.application_id,
+            status=application.status,
+            reason=application.outcome_reason,
+            description=application.description,
+            decided_on=current_time,
+            decided_by=approver_name,
+            app_type=app_type,
+            event_info=event_info
+        )
+        self.send_email(employee.email, employee_subject, employee_body)
+
+        # Send email to approver (confirmation of their action)
+        approver_subject = get_application_outcome_approver_email_subject(
+            application_id=application.application_id,
+            status=application.status,
+            employee_name=staff_name,
+        )
+        approver_body = get_application_outcome_approver_email_template(
+            approver_name=approver_name,
+            employee_name=staff_name,
+            employee_id=application.staff_id,
+            application_id=application.application_id,
+            status=application.status,
+            reason=application.outcome_reason,
+            description=application.description,
+            decided_on=current_time,
+            app_type=app_type,
+            event_info=event_info
+        )
+        self.send_email(approver.email, approver_subject, approver_body)
+
+    def send_cancellation_request_emails(self, existing_application: Application, cancellation_request: ApplicationWithdrawSchema,
+                                         employee: Employee, manager: Employee, current_time: datetime):
+        staff_name = f"{employee.staff_fname} {employee.staff_lname}"
+        manager_name = f"{manager.staff_fname} {manager.staff_lname}"
+
+        # Determine if it's a recurring application
+        recurring = existing_application.recurring
+
+        # Get the first event's requested date and location
+        first_event = existing_application.events[0] if existing_application.events else None
+        requested_date = first_event.requested_date if first_event else None
+        location = first_event.location if first_event else None
+
+        # Prepare common email data
+        common_email_data = {
+            "application_id": existing_application.application_id,
+            "original_reason": existing_application.reason,
+            "requested_date": requested_date,
+            "description": existing_application.description,
+            "status": existing_application.status,
+            "created_on": current_time,
+            "location": location,
+            "recurring": recurring,
+            "recurrence_type": existing_application.recurrence_type,
+            "end_date": existing_application.end_date,
+            "cancellation_reason": cancellation_request.withdraw_reason
+        }
+
+        # Send email to manager
+        manager_subject = get_cancellation_request_manager_email_subject(existing_application.staff_id, staff_name)
+        manager_body = get_cancellation_request_manager_email_template(
+            manager_name=manager_name,
+            employee_name=staff_name,
+            employee_id=existing_application.staff_id,
+            **common_email_data
+        )
+        self.send_email(manager.email, manager_subject, manager_body)
+
+        # Send email to employee
+        employee_subject = get_cancellation_request_employee_email_subject(existing_application.application_id)
+        employee_body = get_cancellation_request_employee_email_template(
+            employee_name=staff_name,
+            **common_email_data
+        )
+        self.send_email(employee.email, employee_subject, employee_body)
+
+    def send_rejection_emails(self, application: Application,req_date):
+        employee = self.employee_repository.get_employee(application.staff_id)
+        staff_name = f"{employee.staff_fname} {employee.staff_lname}"
+
+        employee_subject = get_application_auto_rejected_employee_email_subject(application.application_id)
+        employee_body = get_application_auto_rejected_employee_email_template(
+            employee_name=staff_name,
+            application_id=application.application_id,
+            reason=application.outcome_reason,
+            status=application.status,
+            date_req=req_date
+        )
+        self.send_email(employee.email, employee_subject, employee_body)
+    def send_withdrawal_emails(self, withdrawn_application: Application, employee: Employee, editor: Employee,
+                               manager: Employee, is_employee: bool, current_time: datetime):
+        staff_name = f"{employee.staff_fname} {employee.staff_lname}"
+        editor_name = f"{editor.staff_fname} {editor.staff_lname}"
+
+        # Send email to manager
+        if manager and manager.email:
+            manager_subject = get_application_withdrawn_manager_email_subject(
+                withdrawn_application.staff_id, staff_name, is_employee
+            )
+            manager_body = get_application_withdrawn_manager_email_template(
+                manager_name=f"{manager.staff_fname} {manager.staff_lname}",
+                employee_name=staff_name,
+                employee_id=withdrawn_application.staff_id,
+                application_id=withdrawn_application.application_id,
+                reason=withdrawn_application.outcome_reason,
+                status=withdrawn_application.status,
+                withdrawn_on=current_time,
+                withdrawn_by="employee" if is_employee else "you"
+            )
+            self.send_email(manager.email, manager_subject, manager_body)
+
+        # Send email to employee
+        employee_subject = get_application_withdrawn_employee_email_subject(
+            withdrawn_application.application_id, is_employee
+        )
+        employee_body = get_application_withdrawn_employee_email_template(
+            employee_name=staff_name,
+            application_id=withdrawn_application.application_id,
+            reason=withdrawn_application.outcome_reason,
+            status=withdrawn_application.status,
+            withdrawn_on=current_time,
+            withdrawn_by="you" if is_employee else editor_name
+        )
+        self.send_email(employee.email, employee_subject, employee_body)

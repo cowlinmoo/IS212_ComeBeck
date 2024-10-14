@@ -86,4 +86,16 @@ class ApplicationRepository:
 
     def get_applications_by_approver_id(self, approver_id):
         return self.db.query(Application).filter(Application.approver_id == approver_id).all()
-    
+
+    def get_application_status_by_application_id(self, application_id: int) -> str:
+        application = self.get_application_by_application_id(application_id)
+        return application.status
+
+    def update_application_state(self, application_id, new_state):
+        db_application = self.get_application_by_application_id(application_id)
+        db_application.application_state = new_state
+        db_application.status = 'pending'
+        db_application.outcome_reason = 'Change requested'
+        self.db.commit()
+        self.db.refresh(db_application)
+        return db_application
