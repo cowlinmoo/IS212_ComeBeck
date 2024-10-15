@@ -6,7 +6,7 @@ from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
 from backend.config.Database import get_db_connection
-from backend.models import Application
+from backend.models import Application, Event
 from backend.models.generators import get_current_datetime_sgt
 from backend.schemas.ApplicationSchema import ApplicationWithdrawSchema, \
     ApplicationCreateSchema
@@ -103,6 +103,26 @@ class ApplicationRepository:
         db_application.application_state = new_state
         db_application.status = status
         db_application.outcome_reason = outcome_reason
+        self.db.commit()
+        self.db.refresh(db_application)
+        return db_application
+
+    def update_original_application_id(self, application_id, original_application_id):
+        db_application = self.get_application_by_application_id(application_id)
+        db_application.original_application_id = original_application_id
+        self.db.commit()
+        self.db.refresh(db_application)
+        return db_application
+
+    def delete_application(self, application_id):
+        db_application = self.get_application_by_application_id(application_id)
+        self.db.delete(db_application)
+        self.db.commit()
+        return db_application
+
+    def add_event_to_application(self, application_id, event: Event):
+        db_application = self.get_application_by_application_id(application_id)
+        db_application.events.append(event)
         self.db.commit()
         self.db.refresh(db_application)
         return db_application

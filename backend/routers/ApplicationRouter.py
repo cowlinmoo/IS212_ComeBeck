@@ -4,7 +4,8 @@ from fastapi import APIRouter, Depends
 from ..models.enums.EmployeeRoleEnum import EmployeeRole
 from ..schemas.ApplicationSchema import (ApplicationCreateSchema,
                                          ApplicationWithdrawSchema, ApplicationResponse, ApplicationApproveRejectSchema,
-                                         ApprovedApplicationLocationSchema)
+                                         ApprovedApplicationLocationSchema, ApplicationWithdrawEventSchema)
+from ..schemas.EventSchema import EventSchema
 from ..services.ApplicationService import ApplicationService
 from ..services.dependencies import role_required
 
@@ -51,14 +52,14 @@ def get_applications_by_approver_id(
 ):
     return service.get_applications_by_approver_id(approver_id)
 
-@ApplicationRouter.post("/", response_model=ApplicationCreateSchema)
+@ApplicationRouter.post("/", response_model=ApplicationResponse)
 def create_application(
     application: ApplicationCreateSchema,
     service: ApplicationService = Depends(),
     current_user: dict = Depends(role_required(
         EmployeeRole.HR, EmployeeRole.MANAGER, EmployeeRole.STAFF))
 ):
-    return service.create_application(application)
+    return service.create_application(application, "new_application")
 
 
 @ApplicationRouter.put("/{application_id}", response_model=ApplicationResponse)
@@ -82,6 +83,16 @@ def withdraw_application(
 ):
     return service.withdraw_application(application_id, application)
 
+@ApplicationRouter.put("/withdraw/{application_id}/{event_id}", response_model=EventSchema)
+def withdraw_application_event(
+    application_id: int,
+    event_id: int,
+    application: ApplicationWithdrawEventSchema,
+    service: ApplicationService = Depends(),
+    current_user: dict = Depends(role_required(
+        EmployeeRole.HR, EmployeeRole.MANAGER, EmployeeRole.STAFF))
+):
+    return service.withdraw_application_event(application_id, event_id, application)
 
 @ApplicationRouter.get("/status/{status}", response_model=List[ApplicationResponse])
 def get_applications_by_status(

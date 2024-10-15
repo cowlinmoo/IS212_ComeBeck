@@ -94,6 +94,13 @@ class ApplicationWithdrawSchema(BaseModel):
     class Config:
         from_attributes = True
 
+class ApplicationWithdrawEventSchema(BaseModel):
+    status: str = Field(examples=["withdrawn"])
+    editor_id: int = Field(examples=[101, 102, 103])
+    withdraw_reason: Optional[str] = Field(default=None, examples=["Personal reasons", "Change of plans"])
+    class Config:
+        from_attributes = True
+
 class ApplicationApproveRejectSchema(BaseModel):
     status: str = Field(examples=["approved", "rejected"])
     approver_id: int = Field(examples=[100, 102, 103])

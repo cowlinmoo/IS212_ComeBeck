@@ -7,10 +7,11 @@ from backend.models.enums.RecurrenceType import RecurrenceType
 from backend.models.generators import get_current_datetime_sgt
 from backend.models.generators import get_current_date
 from backend.repositories.ApplicationRepository import ApplicationRepository
-from backend.models import Application
+from backend.models import Application, Event
 from backend.repositories.EmployeeRepository import EmployeeRepository
 from backend.schemas.ApplicationSchema import (ApplicationCreateSchema,
-                                               ApplicationWithdrawSchema, ApplicationApproveRejectSchema, ApprovedApplicationLocationSchema)
+                                               ApplicationWithdrawSchema, ApplicationApproveRejectSchema,
+                                               ApprovedApplicationLocationSchema, ApplicationWithdrawEventSchema)
 from backend.services.EmailService import EmailService
 from backend.repositories.EventRepository import EventRepository
 from backend.services.EventService import EventService
@@ -79,7 +80,7 @@ class ApplicationService:
             raise HTTPException(status_code=404, detail="Employee not found")
         return self.application_repository.get_applications_by_approver_id(approver_id)
 
-    def create_application(self, application: ApplicationCreateSchema) -> ApplicationCreateSchema:
+    def create_application(self, application: ApplicationCreateSchema, application_state: str) -> Application:
         # check if employee exists in the database
         employee = self.employee_repository.get_employee(application.staff_id)
         if employee is None:
@@ -101,7 +102,7 @@ class ApplicationService:
         application_dict["created_on"] = get_current_datetime_sgt()
         application_dict["last_updated_on"] = get_current_datetime_sgt()
         application_dict["approver_id"] = employee.reporting_manager
-        application_dict["application_state"] = "new_application"
+        application_dict["application_state"] = application_state
         # Create new application
         new_application = self.application_repository.create_application(
             application_dict)
@@ -112,8 +113,9 @@ class ApplicationService:
         manager = self.employee_repository.get_employee(manager_id)
         staff_name = f"{employee.staff_fname} {employee.staff_lname}"
         # Send emails
-        self.email_service.send_application_creation_emails(application, new_application, manager, employee, staff_name)
-        return application
+        if application_state == "new_application":
+            self.email_service.send_application_creation_emails(application, new_application, manager, employee, staff_name)
+        return new_application
 
     def update_application(self, application_id: int, application: ApplicationCreateSchema) -> Application:
         existing_application = self.application_repository.get_application_by_application_id(
@@ -125,6 +127,50 @@ class ApplicationService:
                 status_code=409, detail="Application has already been withdrawn or rejected")
         else:
             return self.change_request(existing_application, application)
+
+    def withdraw_application_event(self, application_id, event_id, application:ApplicationWithdrawEventSchema) -> Event:
+        existing_application = self.application_repository.get_application_by_application_id(application_id)
+        existing_event = self.event_repository.get_event_by_event_id(event_id)
+        # remove the event from the application
+
+        if existing_application is None:
+            raise HTTPException(
+                status_code=404, detail="Application not found")
+
+        # Fetch employee and editor data
+        employee = self.employee_repository.get_employee(existing_application.staff_id)
+        manager = self.employee_repository.get_employee(employee.reporting_manager)
+        editor = self.employee_repository.get_employee(application.editor_id)
+
+        if editor is None:
+            raise HTTPException(status_code=404, detail="Editor not found")
+
+        # Check if the editor is authorized (either the employee themselves or their manager)
+        is_employee = existing_application.staff_id == application.editor_id
+        is_manager = employee.reporting_manager == application.editor_id
+
+        if not (is_employee or is_manager):
+            raise HTTPException(status_code=403, detail="You are not authorized to withdraw this application")
+
+        if existing_application.status == "withdrawn":
+            raise HTTPException(status_code=409, detail="Application already withdrawn")
+
+        if existing_application.status == "approved" and is_employee:
+            return self.cancel_request_one(application_id, event_id, application.withdraw_reason)
+        self.event_repository.delete_event(event_id)
+
+        # Prepare email data
+        current_time = get_current_datetime_sgt()
+        # Send withdrawal emails
+        self.email_service.send_event_withdrawal_emails(
+            withdrawn_event=existing_event,
+            employee=employee,
+            manager=manager,
+            is_employee=is_employee,
+            current_time=current_time
+        )
+        return existing_event
+
     def withdraw_application(self, application_id: int, application: ApplicationWithdrawSchema) -> Application:
         existing_application = self.application_repository.get_application_by_application_id(
             application_id)
@@ -225,7 +271,7 @@ class ApplicationService:
                 self.application_repository.update_application_status(application_id, 'approved', application.outcome_reason)
             modified_application = self.application_repository.get_application_by_application_id(application_id)
             self.email_service.send_cancel_request_outcome_emails(modified_application)
-        else:
+        elif existing_application.application_state=="change_request":
             old_application = self.application_repository.get_application_by_application_id(existing_application.original_application_id)
             if application.status == "approved":
                 self.application_repository.update_application_status(existing_application.application_id, 'approved', application.outcome_reason)
@@ -235,6 +281,21 @@ class ApplicationService:
                 self.application_repository.update_application_status(old_application.application_id, 'approved', f"Change request rejected (Application ID: {existing_application.application_id})")
             modified_application = self.application_repository.get_application_by_application_id(existing_application.application_id)
             self.email_service.send_change_request_outcome_emails(modified_application)
+        elif existing_application.application_state=="cancel_one_request":
+            if application.status == "approved":
+                event = self.event_repository.get_first_event_by_application_id(application_id)
+                self.event_repository.delete_event(event.event_id)
+                self.application_repository.delete_application(application_id)
+                self.email_service.send_cancel_one_request_outcome_emails(event, "approved")
+            elif application.status == "rejected":
+                previous_application = self.application_repository.get_application_by_application_id(existing_application.original_application_id)
+                event = self.event_repository.get_first_event_by_application_id(application_id)
+                self.event_repository.update_application_id(event.event_id, previous_application.application_id)
+                self.application_repository.delete_application(application_id)
+                self.email_service.send_cancel_one_request_outcome_emails(event, "rejected")
+            modified_application = self.application_repository.get_application_by_application_id(existing_application.original_application_id)
+        else:
+            modified_application = existing_application
         return modified_application
 
     def cancel_request(self, existing_application: Application,
@@ -304,3 +365,30 @@ class ApplicationService:
         )
 
         return new_application
+
+    def cancel_request_one(self, application_id, event_id, withdraw_reason) -> Event:
+        existing_application = self.application_repository.get_application_by_application_id(application_id)
+        existing_event = self.event_repository.get_event_by_event_id(event_id)
+        existing_date = existing_event.requested_date
+        # create a new application with the event to be removed, and mark the status as pending
+        application_to_be_cancelled = ApplicationCreateSchema(
+            location=existing_event.location,
+            reason=existing_application.reason,
+            requested_date=existing_date,
+            description=existing_application.description,
+            staff_id=existing_application.staff_id
+        )
+        new_application = self.create_application(application_to_be_cancelled, "cancel_one_request")
+        self.application_repository.update_original_application_id(new_application.application_id, application_id)
+        # remove the event from the application
+        new_event = self.event_repository.get_first_event_by_application_id(new_application.application_id)
+        self.event_repository.update_original_event_id(new_event.event_id, event_id)
+        self.event_repository.delete_event(event_id)
+        # Prepare email data
+        employee = self.employee_repository.get_employee(existing_application.staff_id)
+        manager = self.employee_repository.get_employee(employee.reporting_manager)
+        current_time = get_current_datetime_sgt()
+        # Send cancellation emails
+        cancellation_reason = withdraw_reason
+        self.email_service.send_cancel_one_request_emails(existing_event, employee, manager, cancellation_reason)
+        return existing_event

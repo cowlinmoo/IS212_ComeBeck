@@ -19,9 +19,15 @@ from backend.config.EmailTemplates import get_new_application_manager_email_subj
     get_change_request_manager_email_template, \
     get_change_request_employee_email_template, get_change_request_employee_email_subject, \
     get_change_request_outcome_manager_email_subject, get_change_request_outcome_manager_email_template, \
-    get_change_request_outcome_employee_email_template, get_change_request_outcome_employee_email_subject
+    get_change_request_outcome_employee_email_template, get_change_request_outcome_employee_email_subject, \
+    get_event_withdrawn_manager_email_subject, get_event_withdrawn_employee_email_subject, \
+    get_event_withdrawn_manager_email_template, get_event_withdrawn_employee_email_template, \
+    get_event_cancellation_employee_email_template, get_event_cancellation_manager_email_template, \
+    get_event_cancellation_manager_email_subject, get_event_cancellation_employee_email_subject, \
+    get_cancel_one_request_outcome_manager_email_subject, get_cancel_one_request_outcome_employee_email_subject, \
+    get_cancel_one_request_outcome_manager_email_template, get_cancel_one_request_outcome_employee_email_template
 from backend.config.Environment import get_environment_variables
-from backend.models import Application, Employee
+from backend.models import Application, Employee, Event
 from backend.models.generators import get_current_date, get_current_datetime_sgt
 from backend.repositories.EmployeeRepository import EmployeeRepository
 from backend.schemas.ApplicationSchema import ApplicationCreateSchema, ApplicationWithdrawSchema
@@ -398,3 +404,105 @@ class EmailService:
             updated_details=updated_details
         )
         self.send_email(manager.email, manager_subject, manager_body)
+
+    def send_event_withdrawal_emails(self, withdrawn_event, employee, manager, is_employee, current_time):
+        event_id = withdrawn_event.event_id
+        application_id = withdrawn_event.application_id
+        employee_name = f"{employee.staff_fname} {employee.staff_lname}"
+        withdrawn_by = "you" if is_employee else manager.staff_fname
+
+        # Determine the email subjects
+        manager_subject = get_event_withdrawn_manager_email_subject(event_id, application_id)
+        employee_subject = get_event_withdrawn_employee_email_subject(event_id, application_id)
+
+        # Prepare the email bodies
+        manager_body = get_event_withdrawn_manager_email_template(
+            manager_name=manager.staff_fname,
+            employee_name=employee_name,
+            event_id=event_id,
+            application_id=application_id,
+            requested_date=withdrawn_event.requested_date,
+            location=withdrawn_event.location,
+            withdrawn_on=current_time,
+            withdrawn_by=withdrawn_by
+        )
+
+        employee_body = get_event_withdrawn_employee_email_template(
+            employee_name=employee_name,
+            event_id=event_id,
+            application_id=application_id,
+            requested_date=withdrawn_event.requested_date,
+            location=withdrawn_event.location,
+            withdrawn_on=current_time,
+            withdrawn_by=withdrawn_by
+        )
+
+        # Send emails
+        self.send_email(manager.email, manager_subject, manager_body)
+        self.send_email(employee.email, employee_subject, employee_body)
+
+    def send_cancel_one_request_emails(self, event: Event, employee: Employee, manager: Employee,
+                                       cancellation_reason: str):
+        staff_name = f"{employee.staff_fname} {employee.staff_lname}"
+        manager_name = f"{manager.staff_fname} {manager.staff_lname}"
+
+        # Get current time for the email
+        current_time = datetime.now()
+
+        # Prepare subjects
+        manager_subject = get_event_cancellation_manager_email_subject(event.event_id, staff_name)
+        employee_subject = get_event_cancellation_employee_email_subject(event.event_id)
+
+        # Prepare email bodies
+        manager_body = get_event_cancellation_manager_email_template(
+            manager_name=manager_name,
+            employee_name=staff_name,
+            employee_id=employee.staff_id,
+            event_id=event.event_id,
+            requested_date=event.requested_date,
+            location=event.location,
+            cancellation_reason=cancellation_reason,
+            current_time=current_time
+        )
+
+        employee_body = get_event_cancellation_employee_email_template(
+            employee_name=staff_name,
+            event_id=event.event_id,
+            requested_date=event.requested_date,
+            location=event.location,
+            cancellation_reason=cancellation_reason,
+            current_time=current_time
+        )
+
+        # Send emails
+        self.send_email(manager.email, manager_subject, manager_body)
+        self.send_email(employee.email, employee_subject, employee_body)
+
+    def send_cancel_one_request_outcome_emails(self, event, outcome: str):
+        employee = self.employee_repository.get_employee(event.application.staff_id)
+        manager = self.employee_repository.get_employee(employee.reporting_manager)
+        current_time = datetime.now()
+
+        # Prepare email subjects
+        manager_subject = get_cancel_one_request_outcome_manager_email_subject(event.original_event_id, outcome)
+        employee_subject = get_cancel_one_request_outcome_employee_email_subject(event.original_event_id, outcome)
+
+        # Prepare email bodies
+        manager_body = get_cancel_one_request_outcome_manager_email_template(
+            manager_name=f"{manager.staff_fname} {manager.staff_lname}",
+            employee_name=f"{employee.staff_fname} {employee.staff_lname}",
+            event_id=event.original_event_id,
+            outcome=outcome,
+            current_time=current_time
+        )
+
+        employee_body = get_cancel_one_request_outcome_employee_email_template(
+            employee_name=f"{employee.staff_fname} {employee.staff_lname}",
+            event_id=event.original_event_id,
+            outcome=outcome,
+            current_time=current_time
+        )
+
+        # Send emails
+        self.send_email(manager.email, manager_subject, manager_body)
+        self.send_email(employee.email, employee_subject, employee_body)

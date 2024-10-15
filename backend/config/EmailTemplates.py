@@ -678,3 +678,157 @@ Original Application Details:
 Best regards,
 HR Department
 """
+def get_event_withdrawn_manager_email_subject(event_id: int, application_id: int) -> str:
+    return f"Event Withdrawn - Event ID: {event_id} (Application ID: {application_id})"
+
+def get_event_withdrawn_employee_email_subject(event_id: int, application_id: int) -> str:
+    return f"Event Withdrawal Confirmation - Event ID: {event_id}"
+
+def get_event_withdrawn_manager_email_template(manager_name: str, employee_name: str, event_id: int, application_id: int, requested_date: date, location: str, withdrawn_on: datetime, withdrawn_by: str) -> str:
+    return f"""
+Dear {manager_name},
+
+This is to inform you that an event associated with an application has been withdrawn.
+
+Event Details:
+--------------------
+Employee Name: {employee_name}
+Event ID: {event_id}
+Application ID: {application_id}
+Requested Date: {requested_date}
+Location: {location}
+Withdrawn On: {withdrawn_on}
+Withdrawn By: {withdrawn_by}
+
+If you have any questions regarding this withdrawal, please contact the HR department.
+
+Best regards,
+HR Department
+
+This is an automated message. Please do not reply directly to this email.
+    """
+
+def get_event_withdrawn_employee_email_template(employee_name: str, event_id: int, application_id: int, requested_date: date, location: str, withdrawn_on: datetime, withdrawn_by: str) -> str:
+    return f"""
+Dear {employee_name},
+
+This email confirms that your event has been withdrawn.
+
+Event Details:
+--------------------
+Event ID: {event_id}
+Application ID: {application_id}
+Requested Date: {requested_date}
+Location: {location}
+Withdrawn On: {withdrawn_on}
+Withdrawn By: {withdrawn_by}
+
+If you need to submit a new event or have any questions, please contact the HR department.
+
+Thank you for using our application system.
+
+Best regards,
+HR Department
+
+This is an automated message. Please do not reply directly to this email.
+    """
+def get_event_cancellation_manager_email_template(manager_name: str, employee_name: str, employee_id: int, event_id: int, requested_date: date, location: str, cancellation_reason: str, current_time: datetime) -> str:
+    return f"""
+Dear {manager_name},
+
+An event cancellation request has been submitted by {employee_name}.
+
+Event Details:
+--------------------
+Employee Name: {employee_name}
+Employee ID: {employee_id}
+Event ID: {event_id}
+Requested Date: {requested_date}
+Location: {location}
+Cancellation Reason: {cancellation_reason if cancellation_reason else "No reason provided"}
+Submission Date and Time: {current_time}
+
+Please review this cancellation request and take appropriate action. If you have any questions, please contact the HR department.
+
+Best regards,
+HR Department
+
+This is an automated message. Please do not reply directly to this email.
+    """
+
+def get_event_cancellation_employee_email_template(employee_name: str, event_id: int, requested_date: date, location: str, cancellation_reason: str, current_time: datetime) -> str:
+    return f"""
+Dear {employee_name},
+
+Your event cancellation request has been submitted successfully.
+
+Event Details:
+--------------------
+Event ID: {event_id}
+Requested Date: {requested_date}
+Location: {location}
+Cancellation Reason: {cancellation_reason if cancellation_reason else "No reason provided"}
+Submission Date and Time: {current_time}
+
+Your request will be reviewed by your manager. You will be notified of any updates.
+
+If you have any questions, please contact the HR department.
+
+Best regards,
+HR Department
+
+This is an automated message. Please do not reply directly to this email.
+    """
+def get_event_cancellation_manager_email_subject(event_id: int, employee_name: str) -> str:
+    return f"Event Cancellation Request - Event ID: {event_id} - {employee_name}"
+
+def get_event_cancellation_employee_email_subject(event_id: int) -> str:
+    return f"Event Cancellation Submitted - Event ID: {event_id}"
+
+def get_cancel_one_request_outcome_manager_email_template(manager_name: str, employee_name: str, event_id: int, outcome: str, current_time: datetime) -> str:
+    outcome_message = "approved" if outcome == "approved" else "rejected"
+    return f"""
+Dear {manager_name},
+
+The cancellation request for Event ID: {event_id} has been {outcome_message}.
+
+Event Details:
+--------------------
+Employee Name: {employee_name}
+Event ID: {event_id}
+Outcome: {outcome_message.capitalize()}
+Date and Time: {current_time}
+
+Please contact the HR department if you have any questions.
+
+Best regards,
+HR Department
+
+This is an automated message. Please do not reply directly to this email.
+    """
+
+def get_cancel_one_request_outcome_employee_email_template(employee_name: str, event_id: int, outcome: str, current_time: datetime) -> str:
+    outcome_message = "approved" if outcome == "approved" else "rejected"
+    return f"""
+Dear {employee_name},
+
+Your cancellation request for Event ID: {event_id} has been {outcome_message}.
+
+Event Details:
+--------------------
+Event ID: {event_id}
+Outcome: {outcome_message.capitalize()}
+Date and Time: {current_time}
+
+Please contact your manager if you have any questions.
+
+Best regards,
+HR Department
+
+This is an automated message. Please do not reply directly to this email.
+    """
+def get_cancel_one_request_outcome_manager_email_subject(event_id: int, outcome: str) -> str:
+    return f"Cancellation Request {outcome.capitalize()} - Event ID: {event_id}"
+
+def get_cancel_one_request_outcome_employee_email_subject(event_id: int, outcome: str) -> str:
+    return f"Cancellation Request {outcome.capitalize()} - Event ID: {event_id}"

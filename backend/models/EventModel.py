@@ -11,5 +11,6 @@ class Event(EntityMeta):
     requested_date = Column(Date, nullable=False, default=get_current_datetime_sgt)
     location = Column(String(10), nullable=False)
     application_id = Column(BigInteger, ForeignKey('application.application_id'), nullable=False)
+    original_event_id = Column(BigInteger, nullable=True)
 
     application = relationship("Application", back_populates="events")

@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch, create_autospec, ANY
 from fastapi import HTTPException
 from dateutil.relativedelta import relativedelta
 
+from backend.models import Event
 from backend.models.enums.EmployeeRoleEnum import EmployeeRole
 from backend.models.generators import get_current_datetime_sgt
 from backend.schemas.EventSchema import EventCreateSchema
@@ -11,7 +12,7 @@ from backend.services.ApplicationService import ApplicationService
 from backend.models.enums.RecurrenceType import RecurrenceType
 from backend.models import Application, Event, Employee
 from backend.schemas.ApplicationSchema import ApplicationCreateSchema,  \
-    ApplicationWithdrawSchema, ApplicationApproveRejectSchema
+    ApplicationWithdrawSchema, ApplicationApproveRejectSchema, ApplicationWithdrawEventSchema
 
 
 @pytest.fixture
@@ -118,9 +119,11 @@ def test_create_application_success(mock_datetime, application_service, mock_app
         recurring=False
     )
 
-    result = application_service.create_application(application_data)
+    result = application_service.create_application(application_data, "new_application")
 
-    assert result == application_data
+    # Check that the result is the mock_application, not application_data
+    assert result == mock_application
+
     mock_application_repository.create_application.assert_called_once()
     mock_event_service.create_events.assert_called_once()
     mock_email_service.send_application_creation_emails.assert_called_once()
@@ -164,7 +167,7 @@ def test_create_application_employee_not_found(application_service, mock_employe
     )
 
     with pytest.raises(HTTPException) as exc_info:
-        application_service.create_application(application_data)
+        application_service.create_application(application_data, "new_application")
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Employee not found"
@@ -184,7 +187,7 @@ def test_create_application_recurring_missing_fields(application_service, mock_e
     )
 
     with pytest.raises(HTTPException) as exc_info:
-        application_service.create_application(application_data)
+        application_service.create_application(application_data, "new_application")
 
     assert exc_info.value.status_code == 400
     assert exc_info.value.detail == "Recurring applications must have recurrence_type and end_date set"
@@ -246,7 +249,7 @@ def test_create_application_end_date_too_far(application_service, mock_employee_
     )
 
     with pytest.raises(HTTPException) as exc_info:
-        application_service.create_application(application_data)
+        application_service.create_application(application_data, "new_application")
 
     assert exc_info.value.status_code == 400
     assert exc_info.value.detail == "End date cannot be more than 3 months away from the requested date"
