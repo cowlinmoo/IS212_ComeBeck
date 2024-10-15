@@ -38,6 +38,7 @@ class ApplicationSchema(BaseModel):
 class ApplicationResponse(BaseModel):
     staff: BaseEmployeeInfo = Field(default_factory=BaseEmployeeInfo)
     application_id: int = Field(examples=[201, 202, 203])
+    application_state: Optional[str] = Field(default=None, examples=["new_application", "cancel_one_request", "cancel_request", "change_request"])
     reason: str = Field(
         examples=["Vacation request", "Sick leave", "Personal day"])
     description: Optional[str] = Field(
