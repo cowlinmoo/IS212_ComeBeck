@@ -27,7 +27,7 @@ export default function Component() {
         {/* Header */}
         <Header />
         {/* Page Content */}
-        <Applications staffId = {userId} token= {token}/>
+        <Applications staffId = {userId || ''} token= {token || ''}/>
       </div>
       </div>
   );

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -15,8 +16,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { format, addMonths, subMonths, isWeekend, isSameDay } from "date-fns";
-import { DayMouseEventHandler } from "react-day-picker";
+import { format, addMonths, subMonths, isWeekend } from "date-fns";
 import {
   Popover,
   PopoverContent,
@@ -37,6 +37,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
 import { CheckCircle2 } from "lucide-react";
+
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const URL = `${BASE_URL}/application`;
 
 //formschema
 const applyFormSchema = z.object({
@@ -83,7 +86,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
       const headers = { Authorization: `Bearer ${token}` };
       try {
         const response = await fetch(
-          "http://localhost:8080/api/application/staff/" + staffId,
+          `${URL}/staff/` + staffId,
           { headers }
         );
         if (!response.ok) {
@@ -109,7 +112,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
       }
     }
     fetchData();
-  },[]);
+  },[staffId, token]);
 
   // restricted calendar
   const [fromDate, setFromDate] = useState<Date>(new Date());
@@ -142,10 +145,10 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
   // disable weekends and all dates with existing wfh arrangements or pending wfh applications
   const isDateDisabled = (date: Date) => {
     let hasApplication = false
-    for (const d of wfhApplications){
-      if (d.toDateString() === date.toDateString()){
-        hasApplication = true
-        break
+    for (const d of wfhApplications) {
+      if ((d as Date).toDateString() === date.toDateString()) {
+        hasApplication = true;
+        break;
       }
     }
     return isWeekend(date) || date < fromDate || date > toDate || hasApplication ;
@@ -169,7 +172,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
   //Alert variable if reason text area is not filled
   const [showEmptyReasonAlert, setShowEmptyReasonAlert] = useState(false);
   //Apply form
-  const applyForm = useForm<z.infer<typeof applyFormSchema>>({
+  const applyForm = useForm<z.infer<typeof applyFormSchema> & { arrangementType: string }>({
     resolver: zodResolver(applyFormSchema),
     defaultValues: {
       arrangementType: "WFH",
@@ -242,7 +245,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
         console.log(content);
         try {
           const response = await fetch(
-            "http://localhost:8080/api/application/",
+            URL,
             { headers: headers, method: "POST", body: JSON.stringify(content) }
           );
           if (!response.ok) {
@@ -283,7 +286,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
         };
         try {
           const response = await fetch(
-            "http://localhost:8080/api/application/",
+            URL,
             {
               headers: headers,
               method: "POST",
@@ -442,7 +445,9 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                                 selected={field.value}
                                 onSelect={(date) => {
                                   field.onChange(date);
-                                  setFromEndDate(date)
+                                  if (date) {
+                                    setFromEndDate(date);
+                                  }
                                   
                                 }}
                                 fromDate={fromDate}
@@ -473,7 +478,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                             onValueChange={(value)=>{
                               field.onChange(value)
                               if (value === "No"){
-                                applyForm.setValue("dateRange", undefined)
+                                applyForm.setValue("singleDate", undefined)
                               }
                             }}
                             defaultValue= {field.value}

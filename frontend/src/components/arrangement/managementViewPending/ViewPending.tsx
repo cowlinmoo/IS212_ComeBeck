@@ -73,7 +73,7 @@ export default function ViewPending({ data, token, userId }: { data: Application
                         pendingRequests.map((request) => (
                             <Card key={request.application_id} className="mb-4">
                                 <CardHeader>
-                                    <CardTitle>Requested By: {request.staff.staff_fname} {request.staff.staff_lname}</CardTitle>
+                                    {/* <CardTitle>Requested By: {request.staff.staff_fname} {request.staff.staff_lname}</CardTitle> */}
                                     <CardDescription>Request ID: {request.application_id}</CardDescription>
                                     <CardDescription>Request Type: {request.description}</CardDescription>
                                 </CardHeader>
