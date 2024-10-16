@@ -5,7 +5,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Badge } from "@/components/ui/badge"
 import { Home, Briefcase } from "lucide-react"
 import { EmployeeLocation } from "@/app/schedule/api"
-import { HomeIcon, Component2Icon, PersonIcon } from "@radix-ui/react-icons"
+import { PersonIcon } from "@radix-ui/react-icons"
 
 // Mock data for team members and schedules
 const teamMembers = [
@@ -16,6 +16,7 @@ const teamMembers = [
 ]
 
 const generateSchedule = (startDate: Date, days: number) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const schedule: Record<string, any> = {}
   for (let i = 0; i < days; i++) {
     const date = new Date(startDate)

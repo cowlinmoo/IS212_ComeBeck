@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -141,10 +142,10 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
   // disable weekends and all dates with existing wfh arrangements or pending wfh applications
   const isDateDisabled = (date: Date) => {
     let hasApplication = false
-    for (const d of wfhApplications){
-      if (d.toDateString() === date.toDateString()){
-        hasApplication = true
-        break
+    for (const d of wfhApplications) {
+      if ((d as Date).toDateString() === date.toDateString()) {
+        hasApplication = true;
+        break;
       }
     }
     return isWeekend(date) || date < fromDate || date > toDate || hasApplication ;
@@ -168,7 +169,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
   //Alert variable if reason text area is not filled
   const [showEmptyReasonAlert, setShowEmptyReasonAlert] = useState(false);
   //Apply form
-  const applyForm = useForm<z.infer<typeof applyFormSchema>>({
+  const applyForm = useForm<z.infer<typeof applyFormSchema> & { arrangementType: string }>({
     resolver: zodResolver(applyFormSchema),
     defaultValues: {
       arrangementType: "WFH",
@@ -441,7 +442,9 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                                 selected={field.value}
                                 onSelect={(date) => {
                                   field.onChange(date);
-                                  setFromEndDate(date)
+                                  if (date) {
+                                    setFromEndDate(date);
+                                  }
                                   
                                 }}
                                 fromDate={fromDate}
@@ -472,7 +475,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                             onValueChange={(value)=>{
                               field.onChange(value)
                               if (value === "No"){
-                                applyForm.setValue("dateRange", undefined)
+                                applyForm.setValue("singleDate", undefined)
                               }
                             }}
                             defaultValue= {field.value}
