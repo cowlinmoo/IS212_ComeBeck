@@ -38,6 +38,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
 import { CheckCircle2 } from "lucide-react";
 
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const URL = `${BASE_URL}/application`;
+
 //formschema
 const applyFormSchema = z.object({
   arangementType: z.string().default("WFH"),
@@ -83,7 +86,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
       const headers = { Authorization: `Bearer ${token}` };
       try {
         const response = await fetch(
-          "http://localhost:8080/api/application/staff/" + staffId,
+          `${URL}/staff/` + staffId,
           { headers }
         );
         if (!response.ok) {
@@ -242,7 +245,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
         console.log(content);
         try {
           const response = await fetch(
-            "http://localhost:8080/api/application/",
+            URL,
             { headers: headers, method: "POST", body: JSON.stringify(content) }
           );
           if (!response.ok) {
@@ -283,7 +286,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
         };
         try {
           const response = await fetch(
-            "http://localhost:8080/api/application/",
+            URL,
             {
               headers: headers,
               method: "POST",

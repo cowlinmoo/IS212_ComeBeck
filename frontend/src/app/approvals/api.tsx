@@ -1,4 +1,6 @@
-const URL = 'http://localhost:8080/api/application';
+
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const URL = `${BASE_URL}/application`;
 
 export const GetApplicationOfStaff = async (staff_id: number, token: string) => {
     

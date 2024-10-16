@@ -8,6 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useRouter } from 'next/navigation';
 import { storeToken } from '@/lib/cookie';
 
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const URL = `${BASE_URL}/authenticate`;
+
 export default function LoginPage() {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
@@ -23,7 +26,7 @@ export default function LoginPage() {
     formData.append('password', password);
   
     try {
-      const response = await fetch('http://localhost:8080/api/authenticate', {
+      const response = await fetch(URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
