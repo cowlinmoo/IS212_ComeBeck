@@ -58,6 +58,16 @@ export default function ViewPending({ data, token, userId }: { data: Application
     };
 
     const isReasonValid = reviewReason.trim().length > 0;
+    let requestType = '';
+    const setRequestType = (request: string) => {
+        if (request === 'new_application') {
+            requestType = 'New Application';
+        } else if (request === 'change_request') {
+            requestType = 'Change Request';
+        } else {
+            requestType = 'Cancellation Request';
+        }
+    };
 
     return (
         <div className="container mx-auto p-4">
@@ -71,11 +81,12 @@ export default function ViewPending({ data, token, userId }: { data: Application
                             <p>No pending requests.</p>
                         ): (
                         pendingRequests.map((request) => (
+                            setRequestType(request.application_state),
                             <Card key={request.application_id} className="mb-4">
                                 <CardHeader>
-                                    {/* <CardTitle>Requested By: {request.staff.staff_fname} {request.staff.staff_lname}</CardTitle> */}
+                                    <CardTitle>Requested By: {request.staff.staff_fname} {request.staff.staff_lname}</CardTitle>
                                     <CardDescription>Request ID: {request.application_id}</CardDescription>
-                                    <CardDescription>Request Type: {request.description}</CardDescription>
+                                    <CardDescription>Request Type: {requestType}</CardDescription>
                                 </CardHeader>
                                 <CardContent>
                                     <p>Reason: {request.reason}</p>                                  
