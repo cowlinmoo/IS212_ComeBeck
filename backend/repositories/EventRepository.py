@@ -28,6 +28,10 @@ class EventRepository:
         events = self.db.query(Event).filter(Event.application_id == application_id).all()
         return events if events is not None else []
 
+    def get_first_event_by_application_id(self, application_id: int) -> Event:
+        event = self.db.query(Event).filter(Event.application_id == application_id).first()
+        return event
+
     def create_event(self, event: Event) -> Event:
         self.db.add(event)
         self.db.commit()
@@ -50,3 +54,17 @@ class EventRepository:
     
     def get_events_by_application_ids(self, application_ids: List[int]) -> List[Type[Event]]:
         return self.db.query(Event).filter(Event.application_id.in_(application_ids)).all()
+
+    def update_application_id(self, event_id: int, application_id: int) -> Event:
+        event = self.get_event_by_event_id(event_id)
+        event.application_id = application_id
+        self.db.commit()
+        self.db.refresh(event)
+        return event
+
+    def update_original_event_id(self, event_id: int, original_event_id: int) -> Event:
+        event = self.get_event_by_event_id(event_id)
+        event.original_event_id = original_event_id
+        self.db.commit()
+        self.db.refresh(event)
+        return event

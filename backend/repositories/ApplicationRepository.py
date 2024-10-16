@@ -6,9 +6,10 @@ from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
 from backend.config.Database import get_db_connection
-from backend.models import Application
+from backend.models import Application, Event
 from backend.models.generators import get_current_datetime_sgt
-from backend.schemas.ApplicationSchema import ApplicationUpdateSchema, ApplicationWithdrawSchema
+from backend.schemas.ApplicationSchema import ApplicationWithdrawSchema, \
+    ApplicationCreateSchema
 
 
 class ApplicationRepository:
@@ -53,7 +54,7 @@ class ApplicationRepository:
         self.db.refresh(db_application)
         return db_application
 
-    def update_application(self, application_id: int, application: ApplicationUpdateSchema) -> Application:
+    def update_application(self, application_id: int, application: ApplicationCreateSchema) -> Application:
         db_application = self.db.query(Application).filter(
             Application.application_id == application_id).first()
         if db_application is None:
@@ -92,4 +93,36 @@ class ApplicationRepository:
 
     def get_applications_by_approver_id(self, approver_id):
         return self.db.query(Application).filter(Application.approver_id == approver_id).all()
-    
+
+    def get_application_status_by_application_id(self, application_id: int) -> str:
+        application = self.get_application_by_application_id(application_id)
+        return application.status
+
+    def update_application_state(self, application_id, new_state, outcome_reason, status):
+        db_application = self.get_application_by_application_id(application_id)
+        db_application.application_state = new_state
+        db_application.status = status
+        db_application.outcome_reason = outcome_reason
+        self.db.commit()
+        self.db.refresh(db_application)
+        return db_application
+
+    def update_original_application_id(self, application_id, original_application_id):
+        db_application = self.get_application_by_application_id(application_id)
+        db_application.original_application_id = original_application_id
+        self.db.commit()
+        self.db.refresh(db_application)
+        return db_application
+
+    def delete_application(self, application_id):
+        db_application = self.get_application_by_application_id(application_id)
+        self.db.delete(db_application)
+        self.db.commit()
+        return db_application
+
+    def add_event_to_application(self, application_id, event: Event):
+        db_application = self.get_application_by_application_id(application_id)
+        db_application.events.append(event)
+        self.db.commit()
+        self.db.refresh(db_application)
+        return db_application

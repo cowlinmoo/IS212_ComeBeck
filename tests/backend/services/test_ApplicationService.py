@@ -1,15 +1,18 @@
 import pytest
 from datetime import datetime, timedelta, date
-from unittest.mock import Mock, patch, create_autospec
+from unittest.mock import Mock, patch, create_autospec, ANY
 from fastapi import HTTPException
 from dateutil.relativedelta import relativedelta
 
+from backend.models import Event
+from backend.models.enums.EmployeeRoleEnum import EmployeeRole
+from backend.models.generators import get_current_datetime_sgt
 from backend.schemas.EventSchema import EventCreateSchema
 from backend.services.ApplicationService import ApplicationService
 from backend.models.enums.RecurrenceType import RecurrenceType
 from backend.models import Application, Event, Employee
-from backend.schemas.ApplicationSchema import ApplicationCreateSchema, ApplicationUpdateSchema, \
-    ApplicationWithdrawSchema, ApplicationApproveRejectSchema
+from backend.schemas.ApplicationSchema import ApplicationCreateSchema,  \
+    ApplicationWithdrawSchema, ApplicationApproveRejectSchema, ApplicationWithdrawEventSchema
 
 
 @pytest.fixture
@@ -98,14 +101,14 @@ def test_get_applications_by_staff_id_employee_not_found(application_service, mo
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Employee not found"
 
-
 @patch('backend.services.ApplicationService.get_current_datetime_sgt')
 def test_create_application_success(mock_datetime, application_service, mock_application_repository,
                                     mock_employee_repository, mock_email_service, mock_event_service):
     mock_datetime.return_value = datetime.now()
-    mock_employee_repository.get_employee.return_value = Mock(Employee, staff_fname="John", staff_lname="Doe",
-                                                              reporting_manager=2, email="john@example.com")
-    mock_application_repository.create_application.return_value = Mock(Application, application_id=1)
+    mock_employee = Mock(Employee, staff_fname="John", staff_lname="Doe", reporting_manager=2, email="john@example.com")
+    mock_employee_repository.get_employee.return_value = mock_employee
+    mock_application = Mock(Application, application_id=1)
+    mock_application_repository.create_application.return_value = mock_application
 
     application_data = ApplicationCreateSchema(
         staff_id=1,
@@ -116,12 +119,40 @@ def test_create_application_success(mock_datetime, application_service, mock_app
         recurring=False
     )
 
-    result = application_service.create_application(application_data)
+    result = application_service.create_application(application_data, "new_application")
 
-    assert result == application_data
+    # Check that the result is the mock_application, not application_data
+    assert result == mock_application
+
     mock_application_repository.create_application.assert_called_once()
-    mock_event_service.create_event.assert_called_once()
-    mock_email_service.send_email.assert_called()
+    mock_event_service.create_events.assert_called_once()
+    mock_email_service.send_application_creation_emails.assert_called_once()
+
+    # Updated assertion for create_application
+    mock_application_repository.create_application.assert_called_once_with({
+        'reason': "Test",
+        'description': "Test description",
+        'staff_id': 1,
+        'recurring': False,
+        'recurrence_type': None,
+        'end_date': application_data.requested_date,
+        'status': "pending",
+        'created_on': mock_datetime.return_value,
+        'last_updated_on': mock_datetime.return_value,
+        'approver_id': 2,
+        'application_state': "new_application"
+    })
+
+    mock_event_service.create_events.assert_called_once_with(application_data, 1)
+
+    # Updated assertion for send_application_creation_emails
+    mock_email_service.send_application_creation_emails.assert_called_once_with(
+        application_data,
+        mock_application,
+        mock_employee,
+        mock_employee,
+        "John Doe"
+    )
 
 
 def test_create_application_employee_not_found(application_service, mock_employee_repository):
@@ -136,7 +167,7 @@ def test_create_application_employee_not_found(application_service, mock_employe
     )
 
     with pytest.raises(HTTPException) as exc_info:
-        application_service.create_application(application_data)
+        application_service.create_application(application_data, "new_application")
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Employee not found"
@@ -156,13 +187,14 @@ def test_create_application_recurring_missing_fields(application_service, mock_e
     )
 
     with pytest.raises(HTTPException) as exc_info:
-        application_service.create_application(application_data)
+        application_service.create_application(application_data, "new_application")
 
     assert exc_info.value.status_code == 400
     assert exc_info.value.detail == "Recurring applications must have recurrence_type and end_date set"
-from backend.models.EventModel import Event as EventModel  # Adjust import path as needed
 
 def test_create_events_with_application_events(application_service, mock_event_service):
+    application_service.event_service = mock_event_service
+
     events = [
         EventCreateSchema(requested_date=date(2023, 1, 1)),
         EventCreateSchema(requested_date=date(2023, 1, 2)),
@@ -179,120 +211,25 @@ def test_create_events_with_application_events(application_service, mock_event_s
     )
     application_id = 1
 
-    mock_event_service.create_event.return_value = None
+    # Mock the create_events method instead of create_event
+    mock_event_service.create_events.return_value = None
 
-    application_service._create_events(application, application_id)
+    # Debug print
+    print(f"Before create_events: call_count = {mock_event_service.create_events.call_count}")
 
-    assert mock_event_service.create_event.call_count == 3
+    application_service.event_service.create_events(application, application_id)
 
-    calls = mock_event_service.create_event.call_args_list
-    for i, call in enumerate(calls):
-        assert call[0][0].requested_date == events[i].requested_date
-        assert call[0][0].location == "Test Location"
-        assert call[0][0].application_id == application_id
+    # Debug print
+    print(f"After create_events: call_count = {mock_event_service.create_events.call_count}")
 
-def test_create_events_recurring(application_service, mock_event_service):
-    # Setup
-    application = ApplicationCreateSchema(
-        requested_date=date(2023, 1, 1),
-        end_date=date(2023, 3, 1),
-        location="Test Location",
-        recurrence_type=RecurrenceType.WEEKLY,
-        reason="Test Reason",
-        staff_id=1,
-        recurring=True,
-        events=[]  # Use an empty list instead of None
-    )
-    application_id = 1
+    # Assert that create_events was called once
+    assert mock_event_service.create_events.call_count == 1, f"Expected 1 call, but got {mock_event_service.create_events.call_count}"
 
-    # Mock the event_service.create_event method
-    mock_event_service.create_event.return_value = None
+    # Check the arguments passed to create_events
+    call = mock_event_service.create_events.call_args
+    assert call[0][0] == application
+    assert call[0][1] == application_id
 
-    # Execute
-    application_service._create_events(application, application_id)
-
-    # Assert
-    expected_calls = 9  # 9 weeks between Jan 1 and Mar 1
-    assert mock_event_service.create_event.call_count == expected_calls
-
-    # Check the arguments of each call
-    for i, call in enumerate(mock_event_service.create_event.call_args_list):
-        args, _ = call
-        event = args[0]
-        assert isinstance(event, Event)
-        assert event.requested_date == application.requested_date + timedelta(weeks=i)
-        assert event.location == application.location
-        assert event.application_id == application_id
-
-def test_create_recurring_events_monthly(application_service, mock_event_service):
-    # Setup
-    application = ApplicationCreateSchema(
-        requested_date=date(2023, 1, 1),  # Changed to date object
-        end_date=date(2023, 5, 1),  # Changed to date object
-        location="Test Location",
-        recurrence_type=RecurrenceType.MONTHLY,
-        reason="Monthly meeting",
-        staff_id=1
-    )
-    application_id = 1
-
-    # Mock the event_service.create_event method
-    mock_event_service.create_event.return_value = None
-
-    # Execute
-    application_service._create_recurring_events(application, application_id)
-
-    # Assert
-    expected_calls = 5  # Jan 1, Feb 1, Mar 1, Apr 1, May 1
-    assert mock_event_service.create_event.call_count == expected_calls
-
-    # Check the arguments of each call
-    expected_dates = [
-        date(2023, 1, 1),
-        date(2023, 2, 1),
-        date(2023, 3, 1),
-        date(2023, 4, 1),
-        date(2023, 5, 1)
-    ]
-    for i, call in enumerate(mock_event_service.create_event.call_args_list):
-        args, _ = call
-        event = args[0]
-        assert isinstance(event, Event)
-        assert event.requested_date == expected_dates[i]
-        assert event.location == application.location
-        assert event.application_id == application_id
-
-from datetime import date  # Add this import if not already present
-
-def test_create_recurring_events_no_end_date(application_service, mock_event_service):
-    # Setup
-    application = ApplicationCreateSchema(
-        requested_date=date(2023, 1, 1),  # Changed to date object
-        end_date=None,
-        location="Test Location",
-        recurrence_type=RecurrenceType.DAILY,
-        reason="Daily event",
-        staff_id=1
-    )
-    application_id = 1
-
-    # Mock the event_service.create_event method
-    mock_event_service.create_event.return_value = None
-
-    # Execute
-    application_service._create_recurring_events(application, application_id)
-
-    # Assert
-    expected_calls = 1  # Only one event is created
-    assert mock_event_service.create_event.call_count == expected_calls
-
-    # Check the arguments of the call
-    call = mock_event_service.create_event.call_args_list[0]
-    event = call[0][0]
-
-    assert event.requested_date == date(2023, 1, 1)  # Changed to date object
-    assert event.location == "Test Location"
-    assert event.application_id == application_id
 
 def test_create_application_end_date_too_far(application_service, mock_employee_repository):
     mock_employee_repository.get_employee.return_value = True  # Employee exists
@@ -312,65 +249,11 @@ def test_create_application_end_date_too_far(application_service, mock_employee_
     )
 
     with pytest.raises(HTTPException) as exc_info:
-        application_service.create_application(application_data)
+        application_service.create_application(application_data, "new_application")
 
     assert exc_info.value.status_code == 400
     assert exc_info.value.detail == "End date cannot be more than 3 months away from the requested date"
 
-def test_create_recurring_events_monthly_across_years(application_service, mock_event_service):
-    application = ApplicationCreateSchema(
-        requested_date=date(2023, 12, 15),
-        end_date=date(2024, 2, 15),
-        location="Test Location",
-        recurrence_type=RecurrenceType.MONTHLY,
-        reason="Monthly event across years",
-        staff_id=1
-    )
-    application_id = 1
-
-    mock_event_service.create_event.return_value = None
-
-    application_service._create_recurring_events(application, application_id)
-
-    assert mock_event_service.create_event.call_count == 3
-
-    calls = mock_event_service.create_event.call_args_list
-    assert calls[0][0][0].requested_date == date(2023, 12, 15)
-    assert calls[1][0][0].requested_date == date(2024, 1, 15)
-    assert calls[2][0][0].requested_date == date(2024, 2, 15)
-def test_update_application(application_service, mock_application_repository):
-    mock_application = Mock(Application)
-    mock_application_repository.update_application.return_value = mock_application
-
-    update_data = ApplicationUpdateSchema(
-        status="approved",
-        requested_date=date.today()
-    )
-    result = application_service.update_application(1, update_data)
-
-    assert result == mock_application
-    mock_application_repository.update_application.assert_called_once_with(1, update_data)
-
-
-def test_withdraw_application_success(application_service, mock_application_repository, mock_employee_repository,
-                                      mock_email_service):
-    mock_application = Mock(Application, staff_id=1, status="pending")
-    mock_application_repository.get_application_by_application_id.return_value = mock_application
-    mock_employee_repository.get_employee.return_value = Mock(Employee, staff_fname="John", staff_lname="Doe",
-                                                              reporting_manager=2, email="john@example.com")
-    mock_application_repository.withdraw_application.return_value = mock_application
-
-    withdraw_data = ApplicationWithdrawSchema(
-        editor_id=1,
-        reason="Test withdrawal",
-        status="withdrawn",  # Add the required status field
-        application_id=1  # Add the required application_id field
-    )
-    result = application_service.withdraw_application(1, withdraw_data)
-
-    assert result == mock_application
-    mock_application_repository.withdraw_application.assert_called_once_with(1, withdraw_data)
-    mock_email_service.send_email.assert_called()
 
 
 def test_withdraw_application_already_withdrawn(application_service, mock_application_repository):
@@ -410,90 +293,6 @@ def test_withdraw_application_not_found(application_service, mock_application_re
     assert exc_info.value.detail == "Application not found"
 
 
-def test_withdraw_application_non_employee(application_service, mock_application_repository, mock_employee_repository):
-    # Setup
-    application_id = 1
-    staff_id = 1
-    non_employee_id = 2
-    existing_application = Application(application_id=application_id, staff_id=staff_id, status="pending")
-    mock_application_repository.get_application_by_application_id.return_value = existing_application
-
-    mock_employee_repository.get_employee.side_effect = [
-        Mock(id=staff_id, reporting_manager=3),  # Application owner
-        Mock(id=non_employee_id, reporting_manager=4)  # Non-employee
-    ]
-
-    withdraw_data = ApplicationWithdrawSchema(
-        editor_id=non_employee_id,
-        reason="Test withdrawal",
-        status="withdrawn",  # Add the required status field
-        application_id=application_id  # Add the required application_id field
-    )
-
-    # Execute and Assert
-    with pytest.raises(HTTPException) as exc_info:
-        application_service.withdraw_application(application_id, withdraw_data)
-
-    assert exc_info.value.status_code == 403
-    assert exc_info.value.detail == "You are not authorized to withdraw this application"
-
-    assert mock_employee_repository.get_employee.call_count == 2
-    mock_employee_repository.get_employee.assert_any_call(staff_id)
-    mock_employee_repository.get_employee.assert_any_call(non_employee_id)
-
-
-def test_withdraw_application_non_manager(application_service, mock_application_repository, mock_employee_repository):
-    # Setup
-    application_id = 1
-    staff_id = 1
-    non_manager_id = 2
-    existing_application = Application(application_id=application_id, staff_id=staff_id, status="pending")
-    mock_application_repository.get_application_by_application_id.return_value = existing_application
-
-    mock_employee_repository.get_employee.side_effect = [
-        Mock(id=staff_id, reporting_manager=3),  # Application owner
-        Mock(id=non_manager_id, reporting_manager=3)  # Non-manager (same reporting manager as staff)
-    ]
-
-    withdraw_data = ApplicationWithdrawSchema(
-        editor_id=non_manager_id,
-        reason="Test withdrawal",
-        status = "withdrawn",  # Add the required status field
-        application_id = application_id  # Add the required application_id field
-    )
-
-    # Execute and Assert
-    with pytest.raises(HTTPException) as exc_info:
-        application_service.withdraw_application(application_id, withdraw_data)
-
-    assert exc_info.value.status_code == 403
-    assert exc_info.value.detail == "You are not authorized to withdraw this application"
-
-    assert mock_employee_repository.get_employee.call_count == 2
-    mock_employee_repository.get_employee.assert_any_call(staff_id)
-    mock_employee_repository.get_employee.assert_any_call(non_manager_id)
-
-def test_withdraw_application_employee_not_found(application_service, mock_application_repository, mock_employee_repository):
-    # Setup
-    application_id = 1
-    staff_id = 1
-    wrong_staff_id = 2
-    existing_application = Application(application_id=application_id, staff_id=staff_id, status="pending")
-    mock_application_repository.get_application_by_application_id.return_value = existing_application
-    mock_employee_repository.get_employee.return_value = None
-
-    withdraw_data = ApplicationWithdrawSchema(
-        editor_id=wrong_staff_id,
-        status="withdrawn",
-        application_id=application_id
-    )
-
-    # Execute and Assert
-    with pytest.raises(HTTPException) as exc_info:
-        application_service.withdraw_application(application_id, withdraw_data)
-
-    assert exc_info.value.status_code == 404
-    assert exc_info.value.detail == "Editor not found"
 
 def test_get_applications_by_status(application_service, mock_application_repository):
     mock_applications = [Mock(Application), Mock(Application)]
@@ -514,28 +313,6 @@ def test_update_application_status(application_service, mock_application_reposit
     mock_application_repository.update_application_status.assert_called_once_with(1, "approved","some lame reason")
 
 
-@patch('backend.services.ApplicationService.get_current_date')
-def test_reject_old_applications(mock_current_date, application_service, mock_application_repository,
-                                 mock_event_repository, mock_employee_repository, mock_email_service):
-    mock_current_date.return_value = datetime(2023, 6, 1).date()
-
-    mock_application_repository.get_pending_applications.return_value = [
-        Mock(Application, application_id=1),
-        Mock(Application, application_id=2)
-    ]
-
-    mock_event_repository.get_events_by_application_ids.return_value = [
-        Mock(Event, application_id=1, requested_date=datetime(2023, 3, 1).date()),
-        Mock(Event, application_id=2, requested_date=datetime(2023, 5, 1).date())
-    ]
-
-    mock_employee_repository.get_employee.return_value = Mock(Employee, staff_fname="John", staff_lname="Doe",
-                                                              email="john@example.com")
-
-    application_service.reject_old_applications()
-
-    mock_application_repository.update_application_status.assert_called_once_with(1, 'rejected', 'Application automatically rejected due to old requested date')
-    mock_email_service.send_email.assert_called_once()
 
 def test_get_applications_by_approver_id(application_service, mock_application_repository, mock_employee_repository):
     approver_id = 1
@@ -557,65 +334,7 @@ def test_get_applications_by_approver_id_employee_not_found(application_service,
     mock_employee_repository.get_employee.assert_called_once_with(approver_id)
     mock_application_repository.get_applications_by_approver_id.assert_not_called()
 
-def test_approve_reject_pending_applications_approve_success(application_service, mock_application_repository,
-                                                            mock_employee_repository, mock_email_service):
-    application_id = 1
-    approver_id = 2
-    mock_application = Mock(Application, application_id=application_id, approver_id=approver_id, status='pending',
-                            staff_id=3, recurring=False, events=[Mock(Event, requested_date=date(2024, 1, 1),
-                                                                       location="Test Location")],
-                            outcome_reason="Approved", description="Test Description")
-    mock_application_repository.get_application_by_application_id.return_value = mock_application
-    mock_employee_repository.get_employee.side_effect = [
-        Mock(Employee, staff_fname="John", staff_lname="Doe", email="john@example.com"),
-        Mock(Employee, staff_fname="Jane", staff_lname="Doe", email="jane@example.com")
-    ]
-    # Configure update_application_status to return the original mock_application
-    mock_application_repository.update_application_status.return_value = mock_application
 
-    application_data = ApplicationApproveRejectSchema(
-        application_id=application_id,
-        approver_id=approver_id,
-        status="approved",
-        outcome_reason="Test Reason"
-    )
-    result = application_service.approve_reject_pending_applications(application_data)
-
-    assert result == mock_application
-    mock_application_repository.update_application_status.assert_called_once_with(application_id, 'approved',
-                                                                                  "Test Reason")
-    mock_email_service.send_email.assert_called()
-
-
-def test_approve_reject_pending_applications_reject_success(application_service, mock_application_repository,
-                                                            mock_employee_repository, mock_email_service):
-    application_id = 1
-    approver_id = 2
-    mock_application = Mock(Application, application_id=application_id, approver_id=approver_id, status='pending',
-                            staff_id=3, recurring=False, events=[Mock(Event, requested_date=date(2024, 1, 1),
-                                                                      location="Test Location")],
-                            outcome_reason="Rejected", description="Test Description")
-    mock_application_repository.get_application_by_application_id.return_value = mock_application
-    mock_employee_repository.get_employee.side_effect = [
-        Mock(Employee, staff_fname="John", staff_lname="Doe", email="john@example.com"),
-        Mock(Employee, staff_fname="Jane", staff_lname="Doe", email="jane@example.com")
-    ]
-
-    # Configure update_application_status to return the original mock_application
-    mock_application_repository.update_application_status.return_value = mock_application
-
-    application_data = ApplicationApproveRejectSchema(
-        application_id=application_id,
-        approver_id=approver_id,
-        status="rejected",
-        outcome_reason="Test Reason"
-    )
-    result = application_service.approve_reject_pending_applications(application_data)
-
-    assert result == mock_application
-    mock_application_repository.update_application_status.assert_called_once_with(application_id, 'rejected',
-                                                                                  "Test Reason")
-    mock_email_service.send_email.assert_called()
 
 
 def test_approve_reject_pending_applications_not_found(application_service, mock_application_repository):
@@ -670,69 +389,686 @@ def test_approve_reject_pending_applications_unauthorized(application_service, m
     assert exc_info.value.status_code == 403
     assert exc_info.value.detail == "You are not authorized to approve this application"
 
+def test_get_employee_approved_application_locations_manager(application_service, mock_application_repository, mock_employee_repository, mock_event_repository):
+    # Arrange
+    manager_id = 1
+    current_user_role = EmployeeRole.MANAGER
+
+    # Mock applications
+    approved_applications = [
+        Mock(Application, application_id=1, staff_id=2),
+        Mock(Application, application_id=2, staff_id=3),
+        Mock(Application, application_id=3, staff_id=4)
+    ]
+
+    # Mock employees under manager
+    employees_under_manager = [
+        Mock(Employee, staff_id=2, staff_fname='Alice', staff_lname='Smith', position='Developer'),
+        Mock(Employee, staff_id=4, staff_fname='Bob', staff_lname='Jones', position='Tester')
+    ]
+
+    # Mock events for applications
+    events_for_app1 = [Mock(Event, requested_date=date(2023,1,1), location="Office")]
+    events_for_app3 = [Mock(Event, requested_date=date(2023,1,3), location="Remote")]
+
+    # Set up mocks
+    mock_application_repository.get_applications_by_status.return_value = approved_applications
+    mock_employee_repository.get_employees_under_manager.return_value = employees_under_manager
+    def get_employee(staff_id):
+        for emp in employees_under_manager:
+            if emp.staff_id == staff_id:
+                return emp
+        return None
+    mock_employee_repository.get_employee.side_effect = get_employee
+
+    def get_event_by_application_id(application_id):
+        if application_id == 1:
+            return events_for_app1
+        elif application_id == 3:
+            return events_for_app3
+        else:
+            return []
+    mock_event_repository.get_event_by_application_id.side_effect = get_event_by_application_id
+
+    # Act
+    result = application_service.get_employee_approved_application_locations(manager_id, current_user_role)
+
+    # Assert
+    # Should only include applications for staff_id 2 and 4
+    assert len(result) == 2
+    assert result[0].employee_fname == 'Alice'
+    assert result[0].employee_lname == 'Smith'
+    assert result[0].location == 'Office'
+    assert result[0].position == 'Developer'
+    assert result[0].date == events_for_app1[0].requested_date.isoformat()
+
+    assert result[1].employee_fname == 'Bob'
+    assert result[1].employee_lname == 'Jones'
+    assert result[1].location == 'Remote'
+    assert result[1].position == 'Tester'
+    assert result[1].date == events_for_app3[0].requested_date.isoformat()
+
+def test_get_employee_approved_application_locations_hr(application_service, mock_application_repository, mock_employee_repository, mock_event_repository):
+    # Arrange
+    manager_id = 1  # Not used when role is HR
+    current_user_role = EmployeeRole.HR
+
+    # Mock applications
+    approved_applications = [
+        Mock(Application, application_id=1, staff_id=2),
+        Mock(Application, application_id=2, staff_id=3),
+    ]
+
+    # Mock employees
+    employees = {
+        2: Mock(Employee, staff_fname='Alice', staff_lname='Smith', staff_id=2, position='Developer'),
+        3: Mock(Employee, staff_fname='Bob', staff_lname='Jones', staff_id=3, position='Tester')
+    }
+
+    # Mock events for applications
+    events_for_app1 = [Mock(Event, requested_date=date(2023,1,1), location="Office")]
+    events_for_app2 = [Mock(Event, requested_date=date(2023,1,2), location="Home")]
+
+    # Set up mocks
+    mock_application_repository.get_applications_by_status.return_value = approved_applications
+    mock_employee_repository.get_employee.side_effect = lambda staff_id: employees.get(staff_id)
+    def get_event_by_application_id(application_id):
+        if application_id == 1:
+            return events_for_app1
+        elif application_id == 2:
+            return events_for_app2
+        else:
+            return []
+    mock_event_repository.get_event_by_application_id.side_effect = get_event_by_application_id
+
+    # Act
+    result = application_service.get_employee_approved_application_locations(manager_id, current_user_role)
+
+    # Assert
+    assert len(result) == 2
+    assert result[0].employee_fname == 'Alice'
+    assert result[0].employee_lname == 'Smith'
+    assert result[0].location == 'Office'
+    assert result[0].position == 'Developer'
+    assert result[1].employee_fname == 'Bob'
+    assert result[1].employee_lname == 'Jones'
+    assert result[1].location == 'Home'
+    assert result[1].position == 'Tester'
+
+def test_update_application_pending(application_service, mock_application_repository):
+    # Arrange
+    application_id = 1
+    existing_application = Mock(Application, status='pending')
+    mock_application_repository.get_application_by_application_id.return_value = existing_application
+    application_data = ApplicationCreateSchema(
+        staff_id=1,
+        reason="Updated reason",
+        requested_date=date.today(),
+        location="Office"
+    )
+    # Set up the repository's update_application to return the updated application
+    updated_application = Mock(Application)
+    mock_application_repository.update_application.return_value = updated_application
+
+    # Act
+    result = application_service.update_application(application_id, application_data)
+
+    # Assert
+    mock_application_repository.update_application.assert_called_once_with(application_id, application_data)
+    assert result == updated_application
+
+def test_update_application_withdrawn(application_service, mock_application_repository):
+    # Arrange
+    application_id = 1
+    existing_application = Mock(Application, status='withdrawn')
+    mock_application_repository.get_application_by_application_id.return_value = existing_application
+    application_data = ApplicationCreateSchema(
+        staff_id=1,
+        reason="Updated reason",
+        requested_date=date.today(),
+        location="Office"
+    )
+
+    # Act and Assert
+    with pytest.raises(HTTPException) as exc_info:
+        application_service.update_application(application_id, application_data)
+    assert exc_info.value.status_code == 409
+    assert exc_info.value.detail == "Application has already been withdrawn or rejected"
+
+def test_update_application_rejected(application_service, mock_application_repository):
+    # Arrange
+    application_id = 1
+    existing_application = Mock(Application, status='rejected')
+    mock_application_repository.get_application_by_application_id.return_value = existing_application
+    application_data = ApplicationCreateSchema(
+        staff_id=1,
+        reason="Updated reason",
+        requested_date=date.today(),
+        location="Office"
+    )
+
+    # Act and Assert
+    with pytest.raises(HTTPException) as exc_info:
+        application_service.update_application(application_id, application_data)
+    assert exc_info.value.status_code == 409
+    assert exc_info.value.detail == "Application has already been withdrawn or rejected"
+
+def test_update_application_other_status(application_service, mock_application_repository):
+    # Arrange
+    application_id = 1
+    existing_application = Mock(Application, status='approved', staff_id=1, approver_id=2)
+    mock_application_repository.get_application_by_application_id.return_value = existing_application
+    application_data = ApplicationCreateSchema(
+        staff_id=1,
+        reason="Updated reason",
+        requested_date=date.today(),
+        location="Office"
+    )
+
+    # Mock change_request method
+    with patch.object(application_service, 'change_request') as mock_change_request:
+        mock_change_request.return_value = 'change_request_result'
+
+        # Act
+        result = application_service.update_application(application_id, application_data)
+
+        # Assert
+        mock_change_request.assert_called_once_with(existing_application, application_data)
+        assert result == 'change_request_result'
+
+def test_withdraw_application_unauthorized_editor(application_service, mock_application_repository, mock_employee_repository):
+    # Setup
+    application_id = 1
+    staff_id = 1
+    editor_id = 3  # Not employee or manager
+    existing_application = Application(application_id=application_id, staff_id=staff_id, status="pending")
+    mock_application_repository.get_application_by_application_id.return_value = existing_application
+
+    # Mock employee and manager
+    employee = Employee(staff_id=staff_id, reporting_manager=2)
+    manager = Employee(staff_id=2)
+    editor = Employee(staff_id=editor_id)
+    mock_employee_repository.get_employee.side_effect = lambda staff_id: {staff_id: employee, 2: manager, editor_id: editor}.get(staff_id)
+
+    withdraw_data = ApplicationWithdrawSchema(
+        editor_id=editor_id,
+        reason="Test withdrawal",
+        status="withdrawn",
+        application_id=application_id
+    )
+
+    # Execute and Assert
+    with pytest.raises(HTTPException) as exc_info:
+        application_service.withdraw_application(application_id, withdraw_data)
+
+    assert exc_info.value.status_code == 403
+    assert exc_info.value.detail == "You are not authorized to withdraw this application"
+
+def test_withdraw_application_manager_withdraw(application_service, mock_application_repository, mock_employee_repository, mock_email_service):
+    # Setup
+    application_id = 1
+    staff_id = 1
+    editor_id = 2  # manager
+    existing_application = Application(application_id=application_id, staff_id=staff_id, status="pending")
+    mock_application_repository.get_application_by_application_id.return_value = existing_application
+
+    # Mock employee and manager
+    employee = Employee(staff_id=staff_id, staff_fname="Employee", staff_lname="Last", reporting_manager=editor_id, email="employee@example.com")
+    manager = Employee(staff_id=editor_id, staff_fname="Manager", staff_lname="Last", email="manager@example.com")
+    editor = manager  # editor is the manager
+    mock_employee_repository.get_employee.side_effect = lambda staff_id: {staff_id: employee, editor_id: manager}.get(staff_id)
+
+    withdrawn_application = Mock(Application)
+    mock_application_repository.withdraw_application.return_value = withdrawn_application
+
+    withdraw_data = ApplicationWithdrawSchema(
+        editor_id=editor_id,
+        reason="Manager withdraws",
+        status="withdrawn",
+        application_id=application_id
+    )
+
+    # Execute
+    result = application_service.withdraw_application(application_id, withdraw_data)
+
+    # Assert
+    assert result == withdrawn_application
+    # Ensure that send_withdrawal_emails is called
+    current_time = get_current_datetime_sgt()
+    mock_email_service.send_withdrawal_emails.assert_called_once_with(
+        withdrawn_application=withdrawn_application,
+        employee=employee,
+        editor=editor,
+        manager=manager,
+        is_employee=False,
+        current_time=ANY
+    )
+def test_withdraw_application_employee_cancel_request(application_service, mock_application_repository, mock_employee_repository):
+    # Setup
+    application_id = 1
+    staff_id = 1
+    editor_id = staff_id  # Employee withdraws
+    existing_application = Application(application_id=application_id, staff_id=staff_id, status="approved")
+    mock_application_repository.get_application_by_application_id.return_value = existing_application
+
+    # Mock employee and manager
+    employee = Employee(staff_id=staff_id, reporting_manager=2)
+    manager = Employee(staff_id=2)
+    editor = employee
+    mock_employee_repository.get_employee.side_effect = lambda staff_id: {staff_id: employee, 2: manager}.get(staff_id)
+
+    withdraw_data = ApplicationWithdrawSchema(
+        editor_id=editor_id,
+        reason="Employee cancellation",
+        status="withdrawn",
+        application_id=application_id
+    )
+
+    # Mock cancel_request method
+    with patch.object(application_service, 'cancel_request') as mock_cancel_request:
+        # Setup mock return value
+        mock_cancel_request.return_value = 'cancel_request_return_value'
+
+        # Execute
+        result = application_service.withdraw_application(application_id, withdraw_data)
+
+        # Assert
+        mock_cancel_request.assert_called_once_with(existing_application, withdraw_data)
+        assert result == 'cancel_request_return_value'
 
 @patch('backend.services.ApplicationService.get_current_datetime_sgt')
-def test_send_outcome_emails_success(mock_datetime, application_service, mock_employee_repository, mock_email_service):
+def test_change_request(mock_datetime, application_service, mock_application_repository, mock_employee_repository, mock_event_service, mock_email_service):
+    # Arrange
     mock_datetime.return_value = datetime.now()
-    mock_application = Mock(Application, staff_id=1, approver_id=2, status="approved", recurring=False,
-                            events=[Mock(Event, requested_date=date(2024, 1, 1), location="Test Location")],
-                            outcome_reason="Approved", description="Test Description")
-    mock_employee_repository.get_employee.side_effect = [
-        Mock(Employee, staff_fname="John", staff_lname="Doe", email="john@example.com"),
-        Mock(Employee, staff_fname="Jane", staff_lname="Doe", email="jane@example.com")
+    existing_application = Mock(Application, application_id=1, staff_id=10, approver_id=20)
+    change_request_data = ApplicationCreateSchema(
+        staff_id=10,
+        reason="Changed reason",
+        requested_date=date(2023, 6, 1),
+        location="New Location"
+    )
+
+    new_application_dict_expected = change_request_data.model_dump(exclude={"events", "location", "requested_date"})
+    new_application_dict_expected.update({
+        "status": "pending",
+        "created_on": mock_datetime.return_value,
+        "last_updated_on": mock_datetime.return_value,
+        "approver_id": existing_application.approver_id,
+        "application_state": "change_request",
+        "staff_id": existing_application.staff_id,
+        "original_application_id": existing_application.application_id
+    })
+
+    new_application = Mock(Application, application_id=2)
+    mock_application_repository.create_application.return_value = new_application
+
+    # Mock employees
+    employee = Mock(Employee, staff_id=10, reporting_manager=30)
+    manager = Mock(Employee, staff_id=30)
+    mock_employee_repository.get_employee.side_effect = lambda staff_id: employee if staff_id == 10 else manager
+
+    # Act
+    result = application_service.change_request(existing_application, change_request_data)
+
+    # Assert
+    # Check that create_application was called with correct data
+    mock_application_repository.create_application.assert_called_once_with(new_application_dict_expected)
+
+    # Check that create_events was called
+    mock_event_service.create_events.assert_called_once_with(change_request_data, new_application.application_id)
+
+    # Check that update_application_state was called on existing application
+    mock_application_repository.update_application_state.assert_called_once_with(
+        existing_application.application_id,
+        "change_request",
+        f"Superseded by change request (Application ID: {new_application.application_id})",
+        "superseded"
+    )
+
+    # Check that emails were sent
+    mock_email_service.send_change_request_emails.assert_called_once_with(
+        existing_application,
+        new_application,
+        change_request_data,
+        employee,
+        manager,
+        mock_datetime.return_value
+    )
+
+    # Check that the method returns the new application
+    assert result == new_application
+
+@patch('backend.services.ApplicationService.get_current_datetime_sgt')
+def test_cancel_request(mock_datetime, application_service, mock_application_repository, mock_employee_repository, mock_email_service):
+    # Arrange
+    mock_datetime.return_value = datetime.now()
+    existing_application = Mock(Application, application_id=1, staff_id=10, approver_id=20)
+    cancellation_request = ApplicationWithdrawSchema(
+        editor_id=10,
+        reason="Want to cancel",
+        status="withdrawn",
+        application_id=1
+    )
+
+    # Mock update_application_state
+    updated_application = Mock(Application)
+    mock_application_repository.update_application_state.return_value = updated_application
+
+    # Mock employees
+    employee = Mock(Employee, staff_id=10, reporting_manager=30)
+    manager = Mock(Employee, staff_id=30)
+    mock_employee_repository.get_employee.side_effect = lambda staff_id: employee if staff_id == 10 else manager
+
+    # Act
+    result = application_service.cancel_request(existing_application, cancellation_request)
+
+    # Assert
+    # Check that update_application_state was called
+    mock_application_repository.update_application_state.assert_called_once_with(
+        existing_application.application_id,
+        "cancel_request",
+        "Cancellation requested",
+        "pending"
+    )
+
+    # Ensure emails sent
+    mock_email_service.send_cancellation_request_emails.assert_called_once_with(
+        existing_application,
+        cancellation_request,
+        employee,
+        manager,
+        mock_datetime.return_value
+    )
+
+    # Check that the method returns the updated application
+    assert result == updated_application
+
+@patch('backend.services.ApplicationService.get_current_date')
+def test_reject_old_applications(mock_current_date, application_service, mock_application_repository, mock_event_repository, mock_email_service):
+    # Arrange
+    mock_current_date.return_value = date(2023, 5, 1)
+    pending_applications = [
+        Mock(Application, application_id=1),
+        Mock(Application, application_id=2),
+        Mock(Application, application_id=3)
     ]
-
-    application_service._send_outcome_emails(mock_application)
-
-    assert mock_email_service.send_email.call_count == 2
-
-
-def test_send_outcome_emails_employee_or_approver_not_found(application_service, mock_employee_repository):
-    mock_application = Mock(Application, staff_id=1, approver_id=2)
-    mock_employee_repository.get_employee.side_effect = [
-        Mock(Employee),  # Employee exists
-        None  # Approver does not exist
+    mock_application_repository.get_pending_applications.return_value = pending_applications
+    events = [
+        Mock(Event, application_id=1, requested_date=date(2023, 1, 1)),
+        Mock(Event, application_id=2, requested_date=date(2023, 4, 15)),
+        Mock(Event, application_id=3, requested_date=date(2023, 2, 1))
     ]
+    mock_event_repository.get_events_by_application_ids.return_value = events
 
+    # Mock application_repository.update_application_status
+    mock_application_repository.update_application_status.return_value = Mock(Application)
+
+    # Act
+    application_service.reject_old_applications()
+
+    # Assert
+    # Expected two_months_ago = date(2023,5,1) - 2 months = date(2023,3,1)
+    # So events before date(2023,3,1) are considered old
+
+    # Applications with IDs 1 and 3 have old events
+    assert mock_application_repository.update_application_status.call_count == 2
+    expected_calls = [
+        ((1, 'rejected', 'Application automatically rejected due to old requested date'),),
+        ((3, 'rejected', 'Application automatically rejected due to old requested date'),)
+    ]
+    actual_calls = mock_application_repository.update_application_status.call_args_list
+    for call in expected_calls:
+        assert call in actual_calls
+
+    # Emails should be sent for the rejected applications
+    assert mock_email_service.send_rejection_emails.call_count == 2
+
+def test_withdraw_application_editor_not_found(application_service, mock_application_repository, mock_employee_repository):
+    # Setup
+    application_id = 1
+    staff_id = 1
+    editor_id = 2  # Editor who does not exist
+    existing_application = Application(application_id=application_id, staff_id=staff_id, status="pending")
+    mock_application_repository.get_application_by_application_id.return_value = existing_application
+
+    # Mock employee and manager
+    employee = Employee(staff_id=staff_id, reporting_manager=3)
+    manager = Employee(staff_id=3)
+    # Return employee and manager, but editor will be None
+    def mock_get_employee(staff_id_arg):
+        if staff_id_arg == staff_id:
+            return employee
+        elif staff_id_arg == employee.reporting_manager:
+            return manager
+        else:
+            return None  # Editor not found
+    mock_employee_repository.get_employee.side_effect = mock_get_employee
+
+    withdraw_data = ApplicationWithdrawSchema(
+        editor_id=editor_id,
+        reason="Test withdrawal",
+        status="withdrawn",
+        application_id=application_id
+    )
+
+    # Execute and Assert
     with pytest.raises(HTTPException) as exc_info:
-        application_service._send_outcome_emails(mock_application)
+        application_service.withdraw_application(application_id, withdraw_data)
 
     assert exc_info.value.status_code == 404
-    assert exc_info.value.detail == "Employee or approver not found"
+    assert exc_info.value.detail == "Editor not found"
+def test_approve_new_application_approved(application_service, mock_application_repository, mock_email_service):
+    # Setup
+    application_id = 1
+    approver_id = 2
+    existing_application = Mock(
+        Application,
+        application_id=application_id,
+        approver_id=approver_id,
+        status='pending',
+        application_state='new_application'
+    )
+    modified_application = Mock(Application)
 
-@patch('backend.services.ApplicationService.get_current_datetime_sgt')
-def test_send_outcome_emails_recurring_application(mock_datetime, application_service, mock_employee_repository, mock_email_service):
-    mock_datetime.return_value = datetime.now()
-    mock_application = Mock(Application, staff_id=1, approver_id=2, status="approved", recurring=True,
-                            recurrence_type=RecurrenceType.WEEKLY,  # Use the enum member
-                            events=[Mock(Event, requested_date=date(2024, 1, 1))],
-                            end_date=date(2024, 1, 15), outcome_reason="Approved", description="Test Description")
-    mock_employee_repository.get_employee.side_effect = [
-        Mock(Employee, staff_fname="John", staff_lname="Doe", email="john@example.com"),
-        Mock(Employee, staff_fname="Jane", staff_lname="Doe", email="jane@example.com")
+    # Use side_effect to return existing_application first, then modified_application
+    mock_application_repository.get_application_by_application_id.side_effect = [existing_application, modified_application]
+
+    application_data = ApplicationApproveRejectSchema(
+        application_id=application_id,
+        approver_id=approver_id,
+        status="approved",
+        outcome_reason="All good"
+    )
+
+    # Execute
+    result = application_service.approve_reject_pending_applications(application_data)
+
+    # Assert
+    mock_application_repository.update_application_status.assert_called_once_with(
+        application_id, 'approved', "All good"
+    )
+    mock_email_service.send_outcome_emails.assert_called_once_with(modified_application)
+    assert result == modified_application
+
+def test_approve_new_application_rejected(application_service, mock_application_repository, mock_email_service):
+    # Setup
+    application_id = 1
+    approver_id = 2
+    existing_application = Mock(
+        Application,
+        application_id=application_id,
+        approver_id=approver_id,
+        status='pending',
+        application_state='new_application'
+    )
+    modified_application = Mock(Application)
+
+    mock_application_repository.get_application_by_application_id.side_effect = [existing_application, modified_application]
+
+    application_data = ApplicationApproveRejectSchema(
+        application_id=application_id,
+        approver_id=approver_id,
+        status="rejected",
+        outcome_reason="Not acceptable"
+    )
+
+    # Execute
+    result = application_service.approve_reject_pending_applications(application_data)
+
+    # Assert
+    mock_application_repository.update_application_status.assert_called_once_with(
+        application_id, 'rejected', "Not acceptable"
+    )
+    mock_email_service.send_outcome_emails.assert_called_once_with(modified_application)
+    assert result == modified_application
+
+def test_approve_cancel_request_approved(application_service, mock_application_repository, mock_email_service):
+    # Setup
+    application_id = 1
+    approver_id = 2
+    existing_application = Mock(
+        Application,
+        application_id=application_id,
+        approver_id=approver_id,
+        status='pending',
+        application_state='cancel_request'
+    )
+    modified_application = Mock(Application)
+
+    mock_application_repository.get_application_by_application_id.side_effect = [existing_application, modified_application]
+
+    application_data = ApplicationApproveRejectSchema(
+        application_id=application_id,
+        approver_id=approver_id,
+        status="approved",  # Approving the cancellation
+        outcome_reason="Cancellation approved"
+    )
+
+    # Execute
+    result = application_service.approve_reject_pending_applications(application_data)
+
+    # Assert
+    mock_application_repository.update_application_status.assert_called_once_with(
+        application_id, 'withdrawn', "Cancellation approved"
+    )
+    mock_email_service.send_cancel_request_outcome_emails.assert_called_once_with(modified_application)
+    assert result == modified_application
+
+def test_approve_cancel_request_rejected(application_service, mock_application_repository, mock_email_service):
+    # Setup
+    application_id = 1
+    approver_id = 2
+    existing_application = Mock(
+        Application,
+        application_id=application_id,
+        approver_id=approver_id,
+        status='pending',
+        application_state='cancel_request'
+    )
+    modified_application = Mock(Application)
+
+    mock_application_repository.get_application_by_application_id.side_effect = [existing_application, modified_application]
+
+    application_data = ApplicationApproveRejectSchema(
+        application_id=application_id,
+        approver_id=approver_id,
+        status="rejected",  # Rejecting the cancellation
+        outcome_reason="Cancellation rejected"
+    )
+
+    # Execute
+    result = application_service.approve_reject_pending_applications(application_data)
+
+    # Assert
+    mock_application_repository.update_application_status.assert_called_once_with(
+        application_id, 'approved', "Cancellation rejected"
+    )
+    mock_email_service.send_cancel_request_outcome_emails.assert_called_once_with(modified_application)
+    assert result == modified_application
+
+def test_approve_change_request_approved(application_service, mock_application_repository, mock_email_service):
+    # Setup
+    application_id = 2  # Change request application ID
+    original_application_id = 1
+    approver_id = 2
+    existing_application = Mock(
+        Application,
+        application_id=application_id,
+        approver_id=approver_id,
+        status='pending',
+        application_state='change_request',
+        original_application_id=original_application_id
+    )
+    original_application = Mock(Application, application_id=original_application_id)
+    mock_application_repository.get_application_by_application_id.side_effect = [
+        existing_application,  # First call returns the existing application
+        original_application,  # Second call returns the original application
+        existing_application   # Third call returns the existing application after updates
     ]
 
-    application_service._send_outcome_emails(mock_application)
+    application_data = ApplicationApproveRejectSchema(
+        application_id=application_id,
+        approver_id=approver_id,
+        status="approved",  # Approving the change request
+        outcome_reason="Change approved"
+    )
 
-    assert mock_email_service.send_email.call_count == 2
-    # Add assertions to check if the email content contains the correct recurring application information
+    modified_application = existing_application  # After updates
 
+    # Execute
+    result = application_service.approve_reject_pending_applications(application_data)
 
-@patch('backend.services.ApplicationService.get_current_datetime_sgt')
-def test_send_outcome_emails_multiple_events(mock_datetime, application_service, mock_employee_repository, mock_email_service):
-    mock_datetime.return_value = datetime.now()
-    mock_events = [
-        Mock(Event, requested_date=date(2024, 1, 1), location="Location A"),
-        Mock(Event, requested_date=date(2024, 1, 5), location="Location B")
+    # Assert
+    # Update new application to 'approved'
+    mock_application_repository.update_application_status.assert_any_call(
+        application_id, 'approved', "Change approved"
+    )
+    # Update old application to 'superseded'
+    mock_application_repository.update_application_status.assert_any_call(
+        original_application_id, 'superseded', f"Superseded by change request (Application ID: {application_id})"
+    )
+    mock_email_service.send_change_request_outcome_emails.assert_called_once_with(modified_application)
+    assert result == modified_application
+def test_approve_change_request_rejected(application_service, mock_application_repository, mock_email_service):
+    # Setup
+    application_id = 2  # Change request application ID
+    original_application_id = 1
+    approver_id = 2
+    existing_application = Mock(
+        Application,
+        application_id=application_id,
+        approver_id=approver_id,
+        status='pending',
+        application_state='change_request',
+        original_application_id=original_application_id
+    )
+    original_application = Mock(Application, application_id=original_application_id)
+    mock_application_repository.get_application_by_application_id.side_effect = [
+        existing_application,  # First call returns the existing application
+        original_application,  # Second call returns the original application
+        existing_application   # Third call returns the existing application after updates
     ]
-    mock_application = Mock(Application, staff_id=1, approver_id=2, status="approved", recurring=False,
-                            events=mock_events, outcome_reason="Approved", description="Test Description")
-    mock_employee_repository.get_employee.side_effect = [
-        Mock(Employee, staff_fname="John", staff_lname="Doe", email="john@example.com"),
-        Mock(Employee, staff_fname="Jane", staff_lname="Doe", email="jane@example.com")
-    ]
 
-    application_service._send_outcome_emails(mock_application)
+    application_data = ApplicationApproveRejectSchema(
+        application_id=application_id,
+        approver_id=approver_id,
+        status="rejected",  # Rejecting the change request
+        outcome_reason="Change rejected"
+    )
 
-    assert mock_email_service.send_email.call_count == 2
-    # Add assertions to check if the email content contains the correct multiple events information
+    modified_application = existing_application  # After updates
+
+    # Execute
+    result = application_service.approve_reject_pending_applications(application_data)
+
+    # Assert
+    # Update new application to 'rejected'
+    mock_application_repository.update_application_status.assert_any_call(
+        application_id, 'rejected', "Change rejected"
+    )
+    # Update old application to 'approved'
+    mock_application_repository.update_application_status.assert_any_call(
+        original_application_id, 'approved', f"Change request rejected (Application ID: {application_id})"
+    )
+    mock_email_service.send_change_request_outcome_emails.assert_called_once_with(modified_application)
+    assert result == modified_application

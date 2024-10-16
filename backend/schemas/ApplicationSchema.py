@@ -38,6 +38,7 @@ class ApplicationSchema(BaseModel):
 class ApplicationResponse(BaseModel):
     staff: BaseEmployeeInfo = Field(default_factory=BaseEmployeeInfo)
     application_id: int = Field(examples=[201, 202, 203])
+    application_state: Optional[str] = Field(default=None, examples=["new_application", "cancel_one_request", "cancel_request", "change_request"])
     reason: str = Field(
         examples=["Vacation request", "Sick leave", "Personal day"])
     description: Optional[str] = Field(
@@ -86,22 +87,17 @@ class ApplicationCreateSchema(BaseModel):
         validate_assignment = True
         from_attributes = True
 
-
-class ApplicationUpdateSchema(BaseModel):
-    reason: Optional[str] = Field(default=None, examples=[
-                                  "Vacation request", "Sick leave", "Personal day"])
-    requested_date: date = Field(examples=[date.today()])
-    description: Optional[str] = Field(
-        default=None, examples=["Going on a family vacation", "Doctor's appointment"])
-    status: Optional[str] = Field(default=None, examples=[
-                                  "pending", "approved", "rejected", "withdrawn"])
-    approver_id: Optional[int] = Field(default=None, examples=[101, 102, 103])
-    class Config:
-        from_attributes = True
 class ApplicationWithdrawSchema(BaseModel):
     status: str = Field(examples=["withdrawn"])
     editor_id: int = Field(examples=[101, 102, 103])
     application_id: int = Field(examples=[201, 202, 203])
+    withdraw_reason: Optional[str] = Field(default=None, examples=["Personal reasons", "Change of plans"])
+    class Config:
+        from_attributes = True
+
+class ApplicationWithdrawEventSchema(BaseModel):
+    status: str = Field(examples=["withdrawn"])
+    editor_id: int = Field(examples=[101, 102, 103])
     withdraw_reason: Optional[str] = Field(default=None, examples=["Personal reasons", "Change of plans"])
     class Config:
         from_attributes = True
