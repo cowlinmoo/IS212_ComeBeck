@@ -9,7 +9,7 @@ AuthRouter = APIRouter(
     tags=["Authentication Endpoints"],
 )
 
-@AuthRouter.post("/", response_model=Token)
+@AuthRouter.post("", response_model=Token)
 def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
     auth_service: AuthenticationService = Depends()

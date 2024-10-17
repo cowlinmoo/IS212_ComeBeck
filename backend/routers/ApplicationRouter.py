@@ -16,7 +16,7 @@ ApplicationRouter = APIRouter(
 )
 
 
-@ApplicationRouter.get("/", response_model=List[ApplicationResponse])
+@ApplicationRouter.get("", response_model=List[ApplicationResponse])
 def get_all_applications(
         service: ApplicationService = Depends(),
         current_user: dict = Depends(role_required(
@@ -52,7 +52,7 @@ def get_applications_by_approver_id(
 ):
     return service.get_applications_by_approver_id(approver_id)
 
-@ApplicationRouter.post("/", response_model=ApplicationResponse)
+@ApplicationRouter.post("", response_model=ApplicationResponse)
 def create_application(
     application: ApplicationCreateSchema,
     service: ApplicationService = Depends(),
