@@ -76,8 +76,8 @@ const applyFormSchema = z.object({
 });
 
 interface IApplications {
-  staffId: string;
-  token: string;
+  staffId: string | undefined;
+  token: string | undefined;
 }
 const Applications: React.FC<IApplications> = ({ staffId, token }) => {
   // fetching wfh applications currently existing

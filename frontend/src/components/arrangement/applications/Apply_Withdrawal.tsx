@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { TabsContent } from "@/components/ui/tabs";
-import { subWeeks, addWeeks } from "date-fns";
+import { subWeeks, addWeeks, getYear, addYears,subYears, getMonth } from "date-fns";
 import {
   Select,
   SelectContent,
@@ -43,6 +44,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const URL = `${BASE_URL}/application`;
+
 //formschema
 const withdrawalFormSchema = z.object({
   arrangementType: z.enum(["Pending Approval", "Approved"], {
@@ -50,18 +54,18 @@ const withdrawalFormSchema = z.object({
   }),
   selectedArrangement: z
     .object({
-      eventID: z.number(),
-      applicationID: z.number(),
+      eventID: z.string(),
+      applicationID: z.string()
     })
-    .refine((data) => data.id !== "", {
+    .refine((data) => data.eventID !== "", {
       message: "Please select an arrangement to withdraw.",
     }),
   reason: z.string(),
 });
 
 interface IApplications {
-  staffId: string;
-  token: string;
+  staffId: string | undefined;
+  token: string | undefined;
 }
 const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
   //Success alert if form has been successfully submitted
@@ -77,12 +81,16 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
   // fetching wfh applications currently existing
   const [appovedApplications, setApprovedApplications] = useState(Array);
   const [pendingApplications, setPendingApplications] = useState(Array);
+
+  //all months for pending application filtering
+  const [filterMonths, setFilterMonths] = useState(Array);
+
   useEffect(() => {
     async function fetchData() {
       const headers = { Authorization: `Bearer ${token}` };
       try {
         const response = await fetch(
-          "http://localhost:8080/api/application/staff/" + staffId,
+          `${URL}/staff/` + staffId,
           { headers }
         );
         if (!response.ok) {
@@ -91,9 +99,11 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
           const data = await response.json();
           let approvedApplications = [];
           let pendingApplications = [];
+          let filterMonths: number[]=[];
           if (data.length < 1) {
             pendingApplications = [];
             approvedApplications = [];
+            filterMonths = [];
           } else {
             for (const application of data) {
               let type = "";
@@ -107,11 +117,14 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                     Number(dateSplit[1]) - 1,
                     Number(dateSplit[2])
                   );
+                  if (filterMonths.includes(getMonth(date))===false){
+                    filterMonths.push(getMonth(date))
+                  }
                   pendingApplications.push({
                     application_type: type,
                     date: date,
-                    application_id: application["application_id"],
-                    event_id: application["events"][0]["event_id"],
+                    application_id: application["application_id"].toString(),
+                    event_id: application["events"][0]["event_id"].toString(),
                   });
                 } else {
                   if (application["recurring"] === true) {
@@ -126,8 +139,8 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                       pendingApplications.push({
                         application_type: type,
                         date: date,
-                        application_id: application["application_id"],
-                        event_id: event["event_id"],
+                        application_id: application["application_id"].toString(),
+                        event_id: event["event_id"].toString(),
                       });
                     }
                   } else {
@@ -142,8 +155,8 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                       pendingApplications.push({
                         application_type: type,
                         date: date,
-                        application_id: application["application_id"],
-                        event_id: event["event_id"],
+                        application_id: application["application_id"].toString(),
+                        event_id: event["event_id"].toString(),
                       });
                     }
                   }
@@ -163,8 +176,8 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                     approvedApplications.push({
                       application_type: type,
                       date: date,
-                      application_id: application["application_id"],
-                      event_id: application["events"][0]["event_id"],
+                      application_id: application["application_id"].toString(),
+                      event_id: application["events"][0]["event_id"].toString(),
                     });
                   } else if (date > currentDate) {
                     const futureBoundary = addWeeks(currentDate, 2);
@@ -172,8 +185,8 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                       approvedApplications.push({
                         application_type: type,
                         date: date,
-                        application_id: application["application_id"],
-                        event_id: application["events"][0]["event_id"],
+                        application_id: application["application_id"].toString(),
+                        event_id: application["events"][0]["event_id"].toString(),
                       });
                     }
                   } else {
@@ -182,8 +195,8 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                       approvedApplications.push({
                         application_type: type,
                         date: date,
-                        application_id: application["application_id"],
-                        event_id: application["events"][0]["event_id"],
+                        application_id: application["application_id"].toString(),
+                        event_id: application["events"][0]["event_id"].toString(),
                       });
                     }
                   }
@@ -204,16 +217,16 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                         approvedApplications.push({
                           application_type: type,
                           date: date,
-                          application_id: application["application_id"],
-                          event_id: event["event_id"],
+                          application_id: application["application_id"].toString(),
+                          event_id: event["event_id"].toString(),
                         });
                       } else if (date > currentDate) {
                         if (date <= futureBoundary) {
                           approvedApplications.push({
                             application_type: type,
                             date: date,
-                            application_id: application["application_id"],
-                            event_id: event["event_id"],
+                            application_id: application["application_id"].toString(),
+                            event_id: event["event_id"].toString(),
                           });
                         }
                       } else {
@@ -221,8 +234,8 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                           approvedApplications.push({
                             application_type: type,
                             date: date,
-                            application_id: application["application_id"],
-                            event_id: event["event_id"],
+                            application_id: application["application_id"].toString(),
+                            event_id: event["event_id"].toString(),
                           });
                         }
                       }
@@ -243,16 +256,16 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                         approvedApplications.push({
                           application_type: type,
                           date: date,
-                          application_id: application["application_id"],
-                          event_id: event["event_id"],
+                          application_id: application["application_id"].toString(),
+                          event_id: event["event_id"].toString(),
                         });
                       } else if (date > currentDate) {
                         if (date <= futureBoundary) {
                           approvedApplications.push({
                             application_type: type,
                             date: date,
-                            application_id: application["application_id"],
-                            event_id: event["event_id"],
+                            application_id: application["application_id"].toString(),
+                            event_id: event["event_id"].toString(),
                           });
                         }
                       } else {
@@ -260,8 +273,8 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                           approvedApplications.push({
                             application_type: type,
                             date: date,
-                            application_id: application["application_id"],
-                            event_id: event["event_id"],
+                            application_id: application["application_id"].toString(),
+                            event_id: event["event_id"].toString(),
                           });
                         }
                       }
@@ -272,6 +285,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
             }
             setApprovedApplications(approvedApplications);
             setPendingApplications(pendingApplications);
+            setFilterMonths(filterMonths)
           }
         }
       } catch (error: any) {
@@ -279,11 +293,11 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
       }
     }
     fetchData();
-  }, []);
+  }, [staffId, token]);
 
   //filter
   useEffect(() => {
-    const filtered = pendingApplications.filter((arrangement) => {
+    const filtered = pendingApplications.filter((arrangement:any) => {
       const arrangementMonth = arrangement.date.getMonth() + 1;
       const arrangementYear = arrangement.date.getFullYear();
       return (
@@ -301,7 +315,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
     resolver: zodResolver(withdrawalFormSchema),
     defaultValues: {
       arrangementType: "Pending Approval",
-      selectedArrangement: { eventID: 0, applicationID: 0 },
+      selectedArrangement: { eventID: "", applicationID: "" },
       reason: "",
     },
   });
@@ -310,6 +324,11 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
     setSelectYear("");
     setFilteredPendingArrangements(pendingApplications);
   }
+  // filter year boundaries
+  const currentYear = getYear(new Date());
+  const aheadYear = getYear(addYears(new Date(), 1));
+  const behindYear = getYear(subYears(new Date(), 1));
+
 
   //Submission for apply form
   async function applySubmit(values: z.infer<typeof withdrawalFormSchema>) {
@@ -318,10 +337,10 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
     } else {
       setShowEmptyReasonAlert(false);
     }
-    if (values.selectedArrangement.eventID === 0) {
+    if (values.selectedArrangement.eventID === "") {
       setShowNoSelectionAlert(true);
     }
-    if (showEmptyReasonAlert === false) {
+    if (showEmptyReasonAlert === false && showNoSelectionAlert === false) {
       const headers = {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
@@ -331,7 +350,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
       console.log(values.selectedArrangement.applicationID);
       console.log(values.selectedArrangement.eventID);
       if (values.arrangementType === "Pending Approval") {
-        let content = {
+        const content = {
           status: "withdrawn",
           editor_id: staffId,
           withdraw_reason: values.reason,
@@ -339,10 +358,10 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
         console.log(content);
         try {
           const response = await fetch(
-            "http://localhost:8080/api/application/withdraw/" +
-              values.selectedArrangement.applicationID.toString() +
+            `${URL}/withdraw/` +
+              values.selectedArrangement.applicationID +
               "/" +
-              values.selectedArrangement.eventID.toString(),
+              values.selectedArrangement.eventID,
             { headers: headers, method: "PUT", body: JSON.stringify(content) }
           );
           if (!response.ok) {
@@ -362,17 +381,17 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
       }
       //multiple dates selected
       else if (values.arrangementType === "Approved") {
-        let content = {
+        const content = {
           status: "withdrawn",
           editor_id: staffId,
           withdraw_reason: values.reason,
         };
         try {
           const response = await fetch(
-            "http://localhost:8080/api/application/withdraw/" +
-              +values.selectedArrangement.applicationID.toString() +
+            `${URL}/withdraw/` +
+              +values.selectedArrangement.applicationID +
               "/" +
-              values.selectedArrangement.eventID.toString(),
+              values.selectedArrangement.eventID,
             {
               headers: headers,
               method: "PUT",
@@ -451,17 +470,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                     </FormLabel>
                     <FormControl>
                       <RadioGroup
-                        onValueChange={(value) => {
-                          field.onChange(value);
-                          if (value === "Pending Approval") {
-                            withdrawalForm.setValue(
-                              "Pending Approval",
-                              undefined
-                            );
-                          } else {
-                            withdrawalForm.setValue("Approved", undefined);
-                          }
-                        }}
+                        onValueChange={field.onChange}
                         defaultValue={field.value}
                         className="flex flex-col space-y-1"
                       >
@@ -499,16 +508,14 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                           <SelectValue placeholder="Select month" />
                         </SelectTrigger>
                         <SelectContent>
-                          {Array.from({ length: 12 }, (_, i) => i + 1).map(
-                            (month) => (
-                              <SelectItem key={month} value={month.toString()}>
-                                {new Date(2000, month - 1, 1).toLocaleString(
-                                  "default",
-                                  { month: "long" }
-                                )}
-                              </SelectItem>
-                            )
-                          )}
+                          {filterMonths.map((month:any) => (
+                            <SelectItem key={month} value={month.toString()}>
+                            {new Date(2000, month - 1, 1).toLocaleString(
+                              "default",
+                              { month: "long" }
+                            )}
+                          </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <Select onValueChange={setSelectYear} value={selectYear}>
@@ -516,7 +523,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                           <SelectValue placeholder="Select year" />
                         </SelectTrigger>
                         <SelectContent>
-                          {[2023, 2024, 2025].map((year) => (
+                          {[behindYear, currentYear, aheadYear].map((year) => (
                             <SelectItem key={year} value={year.toString()}>
                               {year}
                             </SelectItem>
@@ -556,7 +563,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                             </TableHeader>
                             <TableBody>
                               {filteredpendingArrangements.map(
-                                (arrangement) => (
+                                (arrangement:any) => (
                                   <TableRow key={arrangement.event_id}>
                                     <TableCell className="font-medium">
                                       <RadioGroup
@@ -626,7 +633,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {appovedApplications.map((arrangement) => (
+                            {appovedApplications.map((arrangement:any) => (
                               <TableRow key={arrangement.event_id}>
                                 <TableCell className="font-medium">
                                   <RadioGroup

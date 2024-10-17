@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -12,72 +13,53 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {  TabsContent } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
-import { format, addMonths, subMonths, isWeekend, isSameDay } from "date-fns";
-import { DayMouseEventHandler } from "react-day-picker";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-} from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertTriangle } from "lucide-react";
-import { CheckCircle2 } from "lucide-react";
 
-//formschema
-const changeFormSchema = z.object({
-  arangementType: z.string().default("WFH"),
-  isMultiple: z.enum(["Yes", "No"], {
-    required_error: "Please specify if this is for multiple dates.",
-  }),
-  singleDate: z
-    .date({
-      required_error: "Please select a date.",
-    })
-    .refine((date) => !isWeekend(date), { message: "Weekends are not allowed" })
-    .optional(),
-  multipleDate: z
-    .array(
-      z.date({
-        required_error: "Please select dates (at least 2), excluding weekends.",
-      })
-    )
-    .refine(
-      (dates) => dates.length > 1 && dates.every((date) => !isWeekend(date)),
-      { message: "Please select dates (at least 2), excluding weekends." }
-    )
-    .optional(),
-  isRecurring: z.enum(["Yes","No"]).optional(),
-  recurringType: z.enum(["Weekly","Monthly"]).optional(),
-  endDate: z.date({
-    required_error: "Please select a date.",
-  })
-  .refine((date) => !isWeekend(date), { message: "Weekends are not allowed" })
-  .optional(),
-  reason: z.string(),
-});
+// import {  addMonths, subMonths } from "date-fns";
+
+// import * as z from "zod";
+
+
+// const changeFormSchema = z.object({
+//   arangementType: z.string().default("WFH"),
+//   isMultiple: z.enum(["Yes", "No"], {
+//     required_error: "Please specify if this is for multiple dates.",
+//   }),
+//   singleDate: z
+//     .date({
+//       required_error: "Please select a date.",
+//     })
+//     .refine((date) => !isWeekend(date), { message: "Weekends are not allowed" })
+//     .optional(),
+//   multipleDate: z
+//     .array(
+//       z.date({
+//         required_error: "Please select dates (at least 2), excluding weekends.",
+//       })
+//     )
+//     .refine(
+//       (dates) => dates.length > 1 && dates.every((date) => !isWeekend(date)),
+//       { message: "Please select dates (at least 2), excluding weekends." }
+//     )
+//     .optional(),
+//   isRecurring: z.enum(["Yes","No"]).optional(),
+//   recurringType: z.enum(["Weekly","Monthly"]).optional(),
+//   endDate: z.date({
+//     required_error: "Please select a date.",
+//   })
+//   .refine((date) => !isWeekend(date), { message: "Weekends are not allowed" })
+//   .optional(),
+//   reason: z.string(),
+// });
 
 interface IApply_Change {
-  staffId: string;
-  token: string;
+  staffId: string | undefined;
+  token: string | undefined;
 }
 const Apply_Change: React.FC<IApply_Change> = ({ staffId, token }) => {
   // fetching wfh applications currently existing
-  const [wfhApplications, setwfhApplications] = useState(Array);
+//   const [wfhApplications, setwfhApplications] = useState(Array);
   useEffect(() => {
     async function fetchData() {
       const headers = { Authorization: `Bearer ${token}` };
@@ -101,7 +83,7 @@ const Apply_Change: React.FC<IApply_Change> = ({ staffId, token }) => {
                 applications.push(new Date(Number(dateSplit[0]), Number(dateSplit[1])-1, Number(dateSplit[2])));
                   }
             }
-            setwfhApplications(applications)
+            // setwfhApplications(applications)
           }
         }
       } catch (error:any) {
@@ -109,15 +91,14 @@ const Apply_Change: React.FC<IApply_Change> = ({ staffId, token }) => {
       }
     }
     fetchData();
-  },[]);
+  },[token, staffId]);
 
-  // restricted calendar
-  const [fromDate, setFromDate] = useState<Date>(new Date());
-  const [toDate, setToDate] = useState<Date>(new Date());
+//   // restricted calendar
+//   const [fromDate, setFromDate] = useState<Date>(new Date());
+//   const [toDate, setToDate] = useState<Date>(new Date());
 
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
-  const [activeTab, setActiveTab] = useState("apply");
-
+ 
   const handleDateSelect = (date: Date) => {
     setSelectedDates((prev) =>
       prev.some((d) => d.toDateString() === date.toDateString())
@@ -125,45 +106,45 @@ const Apply_Change: React.FC<IApply_Change> = ({ staffId, token }) => {
         : [...prev, date]
     );
   };
-  useEffect(() => {
-    const currentDate = new Date();
-    setFromDate(subMonths(currentDate, 2));
-    setToDate(addMonths(currentDate, 3));
-  },[]);
+//   useEffect(() => {
+//     // const currentDate = new Date();
+//     // setFromDate(subMonths(currentDate, 2));
+//     // setToDate(addMonths(currentDate, 3));
+//   },[]);
 
-  //end date variables and restriction
-  const [fromEndDate, setFromEndDate] = useState<Date>(new Date());
-  const [toEndDate, setToEndDate] = useState<Date>(new Date());
-  useEffect(() => {
-    const currentDate = fromEndDate;
-    setToEndDate(addMonths(currentDate, 3));
-  },[fromEndDate]);
+//   //end date variables and restriction
+//   const [fromEndDate, setFromEndDate] = useState<Date>(new Date());
+//   const [toEndDate, setToEndDate] = useState<Date>(new Date());
+//   useEffect(() => {
+//     const currentDate = fromEndDate;
+//     setToEndDate(addMonths(currentDate, 3));
+//   },[fromEndDate]);
 
   // disable weekends and all dates with existing wfh arrangements or pending wfh applications
-  const isDateDisabled = (date: Date) => {
-    let hasApplication = false
-    for (const d of wfhApplications){
-      if (d.toDateString() === date.toDateString()){
-        hasApplication = true
-        break
-      }
-    }
-    return isWeekend(date) || date < fromDate || date > toDate || hasApplication ;
-  };
-  const onlyDisableWeekend = (date: Date) => {
-    return isWeekend(date) || date < fromDate || date > toDate ;
-  };
+//   const isDateDisabled = (date: Date) => {
+//     let hasApplication = false
+//     for (const d of wfhApplications){
+//       if (d.toDateString() === date.toDateString()){
+//         hasApplication = true
+//         break
+//       }
+//     }
+//     return isWeekend(date) || date < fromDate || date > toDate || hasApplication ;
+//   };
+//   const onlyDisableWeekend = (date: Date) => {
+//     return isWeekend(date) || date < fromDate || date > toDate ;
+//   };
 
   //Apply form
-  const applyForm = useForm<z.infer<typeof changeFormSchema>>({
-    resolver: zodResolver(changeFormSchema),
-    defaultValues: {
-      arrangementType: "WFH",
-      isMultiple: "No",
-      isRecurring: "No",
-      reason: "",
-    },
-  });
+//   const applyForm = useForm<z.infer<typeof changeFormSchema>>({
+//     resolver: zodResolver(changeFormSchema),
+//     defaultValues: {
+//       arrangementType: "WFH",
+//       isMultiple: "No",
+//       isRecurring: "No",
+//       reason: "",
+//     },
+//   });
 
   return (
         <TabsContent value="change">
