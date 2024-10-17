@@ -14,7 +14,7 @@ from backend.services.EmailService import EmailService
 from backend.services.EventService import EventService
 from backend.services.SchedulerService import SchedulerService
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/authenticate/")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/authenticate")
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
