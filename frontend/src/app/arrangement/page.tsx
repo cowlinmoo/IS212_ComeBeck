@@ -32,6 +32,7 @@ export default function Component() {
         {/* Header */}
         <Header />
         {/* Page Content */}
+
         <div className="container mx-auto p-4">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full h-full grid-cols-3 bg-white text-black ">
@@ -44,6 +45,7 @@ export default function Component() {
         <Apply_Withdrawal staffId = {userId} token= {token}/>
         </Tabs>
         </div>
+
       </div>
       </div>
   );

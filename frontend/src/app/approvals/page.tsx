@@ -45,7 +45,7 @@ export default function Component() {
         console.error("Failed to fetch staff application:", error);
       }
     }
-  }, [userId]);
+  }, [userId, token]);
 
   if (pageLoading || (!pageLoading && token === undefined)) {
     return <div className='flex items-center justify-center h-screen w-screen'>Loading...</div>;
