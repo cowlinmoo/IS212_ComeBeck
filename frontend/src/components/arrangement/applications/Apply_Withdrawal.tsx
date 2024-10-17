@@ -298,7 +298,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
   //filter
   useEffect(() => {
     const filtered = pendingApplications.filter((arrangement:any) => {
-      const arrangementMonth = arrangement.date.getMonth() + 1;
+      const arrangementMonth = arrangement.date.getMonth();
       const arrangementYear = arrangement.date.getFullYear();
       return (
         (!selectMonth || arrangementMonth.toString() === selectMonth) &&
@@ -510,7 +510,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                         <SelectContent>
                           {filterMonths.map((month:any) => (
                             <SelectItem key={month} value={month.toString()}>
-                            {new Date(2000, month - 1, 1).toLocaleString(
+                            {new Date(2000, month, 1).toLocaleString(
                               "default",
                               { month: "long" }
                             )}
