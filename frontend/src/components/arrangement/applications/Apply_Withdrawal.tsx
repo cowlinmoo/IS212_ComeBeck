@@ -1,0 +1,704 @@
+"use client";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { TabsContent } from "@/components/ui/tabs";
+import { subWeeks, addWeeks } from "date-fns";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+} from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableHead,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+//formschema
+const withdrawalFormSchema = z.object({
+  arrangementType: z.enum(["Pending Approval", "Approved"], {
+    required_error: "Please specify your arrangement type",
+  }),
+  selectedArrangement: z
+    .object({
+      eventID: z.number(),
+      applicationID: z.number(),
+    })
+    .refine((data) => data.id !== "", {
+      message: "Please select an arrangement to withdraw.",
+    }),
+  reason: z.string(),
+});
+
+interface IApplications {
+  staffId: string;
+  token: string;
+}
+const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
+  //Success alert if form has been successfully submitted
+  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+  //alert if no selection of arrangement
+  const [showNoSelectionAlert, setShowNoSelectionAlert] = useState(false);
+  //filtering
+  const [filteredpendingArrangements, setFilteredPendingArrangements] =
+    useState(Array);
+  const [selectMonth, setSelectMonth] = useState<string>("");
+  const [selectYear, setSelectYear] = useState<string>("");
+
+  // fetching wfh applications currently existing
+  const [appovedApplications, setApprovedApplications] = useState(Array);
+  const [pendingApplications, setPendingApplications] = useState(Array);
+  useEffect(() => {
+    async function fetchData() {
+      const headers = { Authorization: `Bearer ${token}` };
+      try {
+        const response = await fetch(
+          "http://localhost:8080/api/application/staff/" + staffId,
+          { headers }
+        );
+        if (!response.ok) {
+          throw new Error(`GET Application API validation ERROR`);
+        } else {
+          const data = await response.json();
+          let approvedApplications = [];
+          let pendingApplications = [];
+          if (data.length < 1) {
+            pendingApplications = [];
+            approvedApplications = [];
+          } else {
+            for (const application of data) {
+              let type = "";
+              if (application["status"] === "pending") {
+                if (application["events"].length === 1) {
+                  type = "Single";
+                  const dateSplit =
+                    application["events"][0]["requested_date"].split("-");
+                  const date = new Date(
+                    Number(dateSplit[0]),
+                    Number(dateSplit[1]) - 1,
+                    Number(dateSplit[2])
+                  );
+                  pendingApplications.push({
+                    application_type: type,
+                    date: date,
+                    application_id: application["application_id"],
+                    event_id: application["events"][0]["event_id"],
+                  });
+                } else {
+                  if (application["recurring"] === true) {
+                    type = "Recurring";
+                    for (const event of application["events"]) {
+                      const dateSplit = event["requested_date"].split("-");
+                      const date = new Date(
+                        Number(dateSplit[0]),
+                        Number(dateSplit[1]) - 1,
+                        Number(dateSplit[2])
+                      );
+                      pendingApplications.push({
+                        application_type: type,
+                        date: date,
+                        application_id: application["application_id"],
+                        event_id: event["event_id"],
+                      });
+                    }
+                  } else {
+                    type = "Multiple";
+                    for (const event of application["events"]) {
+                      const dateSplit = event["requested_date"].split("-");
+                      const date = new Date(
+                        Number(dateSplit[0]),
+                        Number(dateSplit[1]) - 1,
+                        Number(dateSplit[2])
+                      );
+                      pendingApplications.push({
+                        application_type: type,
+                        date: date,
+                        application_id: application["application_id"],
+                        event_id: event["event_id"],
+                      });
+                    }
+                  }
+                }
+              } else if (application["status"] === "approved") {
+                if (application["events"].length === 1) {
+                  type = "Single";
+                  const dateSplit =
+                    application["events"][0]["requested_date"].split("-");
+                  const date = new Date(
+                    Number(dateSplit[0]),
+                    Number(dateSplit[1]) - 1,
+                    Number(dateSplit[2])
+                  );
+                  const currentDate = new Date();
+                  if (date === currentDate) {
+                    approvedApplications.push({
+                      application_type: type,
+                      date: date,
+                      application_id: application["application_id"],
+                      event_id: application["events"][0]["event_id"],
+                    });
+                  } else if (date > currentDate) {
+                    const futureBoundary = addWeeks(currentDate, 2);
+                    if (date <= futureBoundary) {
+                      approvedApplications.push({
+                        application_type: type,
+                        date: date,
+                        application_id: application["application_id"],
+                        event_id: application["events"][0]["event_id"],
+                      });
+                    }
+                  } else {
+                    const pastBoundary = subWeeks(currentDate, 2);
+                    if (date >= pastBoundary) {
+                      approvedApplications.push({
+                        application_type: type,
+                        date: date,
+                        application_id: application["application_id"],
+                        event_id: application["events"][0]["event_id"],
+                      });
+                    }
+                  }
+                } else {
+                  if (application["recurring"] === true) {
+                    type = "Recurring";
+                    const currentDate = new Date();
+                    const futureBoundary = addWeeks(currentDate, 2);
+                    const pastBoundary = subWeeks(currentDate, 2);
+                    for (const event of application["events"]) {
+                      const dateSplit = event["requested_date"].split("-");
+                      const date = new Date(
+                        Number(dateSplit[0]),
+                        Number(dateSplit[1]) - 1,
+                        Number(dateSplit[2])
+                      );
+                      if (date === currentDate) {
+                        approvedApplications.push({
+                          application_type: type,
+                          date: date,
+                          application_id: application["application_id"],
+                          event_id: event["event_id"],
+                        });
+                      } else if (date > currentDate) {
+                        if (date <= futureBoundary) {
+                          approvedApplications.push({
+                            application_type: type,
+                            date: date,
+                            application_id: application["application_id"],
+                            event_id: event["event_id"],
+                          });
+                        }
+                      } else {
+                        if (date >= pastBoundary) {
+                          approvedApplications.push({
+                            application_type: type,
+                            date: date,
+                            application_id: application["application_id"],
+                            event_id: event["event_id"],
+                          });
+                        }
+                      }
+                    }
+                  } else {
+                    type = "Multiple";
+                    const currentDate = new Date();
+                    const futureBoundary = addWeeks(currentDate, 2);
+                    const pastBoundary = subWeeks(currentDate, 2);
+                    for (const event of application["events"]) {
+                      const dateSplit = event["requested_date"].split("-");
+                      const date = new Date(
+                        Number(dateSplit[0]),
+                        Number(dateSplit[1]) - 1,
+                        Number(dateSplit[2])
+                      );
+                      if (date === currentDate) {
+                        approvedApplications.push({
+                          application_type: type,
+                          date: date,
+                          application_id: application["application_id"],
+                          event_id: event["event_id"],
+                        });
+                      } else if (date > currentDate) {
+                        if (date <= futureBoundary) {
+                          approvedApplications.push({
+                            application_type: type,
+                            date: date,
+                            application_id: application["application_id"],
+                            event_id: event["event_id"],
+                          });
+                        }
+                      } else {
+                        if (date >= pastBoundary) {
+                          approvedApplications.push({
+                            application_type: type,
+                            date: date,
+                            application_id: application["application_id"],
+                            event_id: event["event_id"],
+                          });
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            setApprovedApplications(approvedApplications);
+            setPendingApplications(pendingApplications);
+          }
+        }
+      } catch (error: any) {
+        console.log("GET API fetching error.", error.message);
+      }
+    }
+    fetchData();
+  }, []);
+
+  //filter
+  useEffect(() => {
+    const filtered = pendingApplications.filter((arrangement) => {
+      const arrangementMonth = arrangement.date.getMonth() + 1;
+      const arrangementYear = arrangement.date.getFullYear();
+      return (
+        (!selectMonth || arrangementMonth.toString() === selectMonth) &&
+        (!selectYear || arrangementYear.toString() === selectYear)
+      );
+    });
+    setFilteredPendingArrangements(filtered);
+  }, [selectMonth, selectYear, pendingApplications]);
+
+  //Alert variable if reason text area is not filled
+  const [showEmptyReasonAlert, setShowEmptyReasonAlert] = useState(false);
+  //Apply form
+  const withdrawalForm = useForm<z.infer<typeof withdrawalFormSchema>>({
+    resolver: zodResolver(withdrawalFormSchema),
+    defaultValues: {
+      arrangementType: "Pending Approval",
+      selectedArrangement: { eventID: 0, applicationID: 0 },
+      reason: "",
+    },
+  });
+  function resetFilters() {
+    setSelectMonth("");
+    setSelectYear("");
+    setFilteredPendingArrangements(pendingApplications);
+  }
+
+  //Submission for apply form
+  async function applySubmit(values: z.infer<typeof withdrawalFormSchema>) {
+    if (values.reason.trim() === "") {
+      setShowEmptyReasonAlert(true);
+    } else {
+      setShowEmptyReasonAlert(false);
+    }
+    if (values.selectedArrangement.eventID === 0) {
+      setShowNoSelectionAlert(true);
+    }
+    if (showEmptyReasonAlert === false) {
+      const headers = {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        accept: "application/json",
+      };
+      //
+      console.log(values.selectedArrangement.applicationID);
+      console.log(values.selectedArrangement.eventID);
+      if (values.arrangementType === "Pending Approval") {
+        let content = {
+          status: "withdrawn",
+          editor_id: staffId,
+          withdraw_reason: values.reason,
+        };
+        console.log(content);
+        try {
+          const response = await fetch(
+            "http://localhost:8080/api/application/withdraw/" +
+              values.selectedArrangement.applicationID.toString() +
+              "/" +
+              values.selectedArrangement.eventID.toString(),
+            { headers: headers, method: "PUT", body: JSON.stringify(content) }
+          );
+          if (!response.ok) {
+            console.log(await response.json());
+            throw new Error(`POST Application API validation ERROR`);
+          } else {
+            console.log(response.json());
+            setShowSuccessAlert(true);
+            //reset form once submission is successful
+            withdrawalForm.reset();
+            //set timeout for alert
+            setTimeout(() => setShowSuccessAlert(false), 5000);
+          }
+        } catch (error: any) {
+          console.log("POST API fetching error.", error.message);
+        }
+      }
+      //multiple dates selected
+      else if (values.arrangementType === "Approved") {
+        let content = {
+          status: "withdrawn",
+          editor_id: staffId,
+          withdraw_reason: values.reason,
+        };
+        try {
+          const response = await fetch(
+            "http://localhost:8080/api/application/withdraw/" +
+              +values.selectedArrangement.applicationID.toString() +
+              "/" +
+              values.selectedArrangement.eventID.toString(),
+            {
+              headers: headers,
+              method: "PUT",
+              body: JSON.stringify(content),
+            }
+          );
+          if (!response.ok) {
+            console.log(await response.json());
+            throw new Error(`POST Application API validation ERROR`);
+          } else {
+            console.log(response.json());
+            setShowSuccessAlert(true);
+            //reset form once submission is successful
+            withdrawalForm.reset();
+            //set timeout for alert
+            setTimeout(() => setShowSuccessAlert(false), 5000);
+          }
+        } catch (error: any) {
+          console.log("POST API fetching error.", error.message);
+        }
+      }
+    }
+  }
+
+  return (
+    <TabsContent value="withdraw">
+      <Card>
+        <CardHeader>
+          <CardTitle>Withdraw Arrangement</CardTitle>
+          <CardDescription>
+            Withdraw an approved arrangement or cancel a pending request.
+          </CardDescription>
+        </CardHeader>
+        <Form {...withdrawalForm}>
+          <form onSubmit={withdrawalForm.handleSubmit(applySubmit)}>
+            <CardContent className="space-y-4">
+              {showEmptyReasonAlert && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Warning</AlertTitle>
+                  <AlertDescription>
+                    Please indicate the reason for your withdrawal/cancellation.
+                  </AlertDescription>
+                </Alert>
+              )}
+              {showNoSelectionAlert && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Warning</AlertTitle>
+                  <AlertDescription>
+                    No arrangement has been chosen
+                  </AlertDescription>
+                </Alert>
+              )}
+              {showSuccessAlert && (
+                <Alert
+                  variant="default"
+                  className="bg-green-100 border-green-500"
+                >
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  <AlertTitle className="text-green-800">Success</AlertTitle>
+                  <AlertDescription className="text-green-700">
+                    Your WFH withdrawal/cancellation request has been
+                    successfully submitted.
+                  </AlertDescription>
+                </Alert>
+              )}
+              <FormField
+                control={withdrawalForm.control}
+                name="arrangementType"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel>
+                      Select which arrangement would you like to
+                      withdraw/cancel?
+                    </FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          if (value === "Pending Approval") {
+                            withdrawalForm.setValue(
+                              "Pending Approval",
+                              undefined
+                            );
+                          } else {
+                            withdrawalForm.setValue("Approved", undefined);
+                          }
+                        }}
+                        defaultValue={field.value}
+                        className="flex flex-col space-y-1"
+                      >
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="Pending Approval" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            Pending Approval (Cancel)
+                          </FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="Approved" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            Approved (Withdraw){" "}
+                          </FormLabel>
+                        </FormItem>
+                      </RadioGroup>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              {withdrawalForm.watch("arrangementType") ===
+                "Pending Approval" && (
+                <>
+                  <div className="space-y-4">
+                    <div className="flex space-x-4">
+                      <Select
+                        onValueChange={setSelectMonth}
+                        value={selectMonth}
+                      >
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Select month" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 12 }, (_, i) => i + 1).map(
+                            (month) => (
+                              <SelectItem key={month} value={month.toString()}>
+                                {new Date(2000, month - 1, 1).toLocaleString(
+                                  "default",
+                                  { month: "long" }
+                                )}
+                              </SelectItem>
+                            )
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <Select onValueChange={setSelectYear} value={selectYear}>
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Select year" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[2023, 2024, 2025].map((year) => (
+                            <SelectItem key={year} value={year.toString()}>
+                              {year}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={resetFilters}
+                        className="h-10 px-6"
+                      >
+                        Reset
+                      </Button>
+                    </div>
+                  </div>
+                  <FormField
+                    control={withdrawalForm.control}
+                    name="selectedArrangement"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>
+                          Select a pending arrangement to withdraw
+                        </FormLabel>
+                        <FormControl>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead className="w-[100px]">
+                                  Select
+                                </TableHead>
+                                <TableHead>Application ID</TableHead>
+                                <TableHead>Date</TableHead>
+                                <TableHead>Type</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {filteredpendingArrangements.map(
+                                (arrangement) => (
+                                  <TableRow key={arrangement.event_id}>
+                                    <TableCell className="font-medium">
+                                      <RadioGroup
+                                        onValueChange={(value) =>
+                                          field.onChange({
+                                            eventID: value,
+                                            applicationID:
+                                              arrangement.application_id,
+                                          })
+                                        }
+                                        value={field.value.eventID}
+                                        className="space-y-1"
+                                      >
+                                        <RadioGroupItem
+                                          value={arrangement.event_id}
+                                          id={arrangement.event_id}
+                                        />
+                                        <label
+                                          htmlFor={arrangement.event_id}
+                                          className="flex items-center space-x-2 cursor-pointer"
+                                        >
+                                          <span className="sr-only">
+                                            Select arrangement
+                                          </span>
+                                        </label>
+                                      </RadioGroup>
+                                    </TableCell>
+                                    <TableCell>
+                                      {arrangement.application_id}
+                                    </TableCell>
+                                    <TableCell>
+                                      {arrangement.date.toLocaleDateString()}
+                                    </TableCell>
+                                    <TableCell>
+                                      {arrangement.application_type}
+                                    </TableCell>
+                                  </TableRow>
+                                )
+                              )}
+                            </TableBody>
+                          </Table>
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </>
+              )}
+              {withdrawalForm.watch("arrangementType") === "Approved" && (
+                <FormField
+                  control={withdrawalForm.control}
+                  name="selectedArrangement"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>
+                        Select a WFH arrangement to withdraw
+                      </FormLabel>
+                      <FormControl>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="w-[100px]">
+                                Select
+                              </TableHead>
+                              <TableHead>Application ID</TableHead>
+                              <TableHead>Date</TableHead>
+                              <TableHead>Type</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {appovedApplications.map((arrangement) => (
+                              <TableRow key={arrangement.event_id}>
+                                <TableCell className="font-medium">
+                                  <RadioGroup
+                                    onValueChange={(value) =>
+                                      field.onChange({
+                                        eventID: value,
+                                        applicationID:
+                                          arrangement.application_id,
+                                      })
+                                    }
+                                    value={field.value.eventID}
+                                    className="space-y-1"
+                                  >
+                                    <RadioGroupItem
+                                      value={arrangement.event_id}
+                                      id={arrangement.event_id}
+                                    />
+                                    <label
+                                      htmlFor={arrangement.event_id}
+                                      className="flex items-center space-x-2 cursor-pointer"
+                                    >
+                                      <span className="sr-only">
+                                        Select arrangement
+                                      </span>
+                                    </label>
+                                  </RadioGroup>
+                                </TableCell>
+                                <TableCell>
+                                  {arrangement.application_id}
+                                </TableCell>
+                                <TableCell>
+                                  {arrangement.date.toLocaleDateString()}
+                                </TableCell>
+                                <TableCell>
+                                  {arrangement.application_type}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </FormControl>
+                      <FormDescription>
+                        Only arrangements that are 2 weeks ahead and before
+                        current date can be withdrawn
+                      </FormDescription>
+                    </FormItem>
+                  )}
+                />
+              )}
+              <FormField
+                control={withdrawalForm.control}
+                name="reason"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Reason for withdrawal/cancellation:</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Please provide a reason for your withdrawal/cancellation request."
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+            <CardFooter>
+              <Button type="submit">Confirm Withdrawal</Button>
+            </CardFooter>
+          </form>
+        </Form>
+      </Card>
+    </TabsContent>
+  );
+};
+export default Apply_Withdrawal;
