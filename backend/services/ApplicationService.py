@@ -373,6 +373,7 @@ class ApplicationService:
         # create a new application with the event to be removed, and mark the status as pending
         application_to_be_cancelled = ApplicationCreateSchema(
             location=existing_event.location,
+            application_hour=existing_event.application_hour,
             reason=existing_application.reason,
             requested_date=existing_date,
             description=existing_application.description,
