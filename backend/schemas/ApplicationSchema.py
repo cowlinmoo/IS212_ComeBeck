@@ -3,6 +3,7 @@ from datetime import datetime, date, timedelta
 from typing import Optional, List
 
 from backend.models.enums import EventLocationEnum
+from backend.models.enums.ApplicationHourEnum import ApplicationHourEnum
 from backend.models.enums.EmployeeRoleEnum import EmployeeRole
 from backend.models.enums.RecurrenceType import RecurrenceType
 
@@ -47,7 +48,6 @@ class ApplicationResponse(BaseModel):
     last_updated_on: Optional[datetime] = Field(
         default=None, examples=[datetime.now()])
     staff_id: int = Field(examples=[101, 102, 103])
-    last_updated_on: Optional[datetime] = Field(default=None, examples=[datetime.now()])
     status: str = Field(examples=["pending", "approved", "rejected", "withdrawn"])
     approver_id: Optional[int] = Field(default=None, examples=[101, 102, 103])
     recurring: bool = Field(examples=[True, False])
@@ -61,6 +61,8 @@ class ApplicationCreateSchema(BaseModel):
     reason: str = Field(
         examples=["Vacation request", "Sick leave", "Personal day"])
     requested_date: date = Field(examples=[date.today()])
+    application_hour: ApplicationHourEnum = Field(
+        examples=[ApplicationHourEnum.FULLDAY, ApplicationHourEnum.AM, ApplicationHourEnum.PM])
     description: Optional[str] = Field(
         default=None, examples=["Going on a family vacation", "Doctor's appointment"])
     staff_id: int = Field(examples=[101, 102, 103])
@@ -72,8 +74,8 @@ class ApplicationCreateSchema(BaseModel):
     events: List[EventCreateSchema] = Field(default=[],
                                             examples=[
         [
-            {"requested_date": date.today()},
-            {"requested_date": date.today() + timedelta(days=3)}
+            {"requested_date": date.today(), "application_hour": ApplicationHourEnum.FULLDAY},
+            {"requested_date": date.today() + timedelta(days=3), "application_hour": ApplicationHourEnum.FULLDAY}
         ]
     ])
 

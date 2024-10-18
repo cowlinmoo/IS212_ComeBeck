@@ -47,7 +47,8 @@ class EventService:
                 new_event = Event(
                     requested_date=event.requested_date,
                     location=application.location,
-                    application_id=application_id
+                    application_id=application_id,
+                    application_hour=event.application_hour
                 )
                 self.create_event(new_event)
         elif application.recurring:
@@ -59,7 +60,8 @@ class EventService:
         event = Event(
             requested_date=application.requested_date,
             location=application.location,
-            application_id=application_id
+            application_id=application_id,
+            application_hour=application.application_hour
         )
         self.create_event(event)
 
@@ -72,7 +74,8 @@ class EventService:
             event = Event(
                 requested_date=current_date,
                 location=application.location,
-                application_id=application_id
+                application_id=application_id,
+                application_hour=application.application_hour
             )
             self.create_event(event)
 
