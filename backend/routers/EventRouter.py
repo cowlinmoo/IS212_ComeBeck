@@ -11,7 +11,7 @@ EventRouter = APIRouter(
     tags=["Event Endpoints"],
 )
 
-@EventRouter.get("/", response_model=List[EventSchema])
+@EventRouter.get("", response_model=List[EventSchema])
 def get_all_events(event_service: EventService = Depends(),
                     current_user: dict = Depends(role_required(EmployeeRole.HR, EmployeeRole.MANAGER, EmployeeRole.STAFF))):
     return event_service.get_all_events()

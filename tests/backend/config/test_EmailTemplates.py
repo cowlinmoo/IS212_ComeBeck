@@ -1,5 +1,7 @@
 import pytest
 from datetime import date, datetime
+
+from backend.models.enums.ApplicationHourEnum import ApplicationHourEnum
 from backend.schemas.EventSchema import EventCreateSchema
 from backend.config.EmailTemplates import (
     get_new_application_manager_email_subject,
@@ -139,7 +141,7 @@ def test_get_application_auto_rejected_employee_email_template():
 
 @pytest.mark.parametrize("recurring,recurrence_type,end_date,events,expected_text", [
     (True, "Weekly", date(2023, 7, 31), None, "Recurrence Type: Weekly"),
-    (False, None, None, [EventCreateSchema(requested_date=date(2023, 7, 1)), EventCreateSchema(requested_date=date(2023, 7, 8))], "Multiple Dates:"),
+    (False, None, None, [EventCreateSchema(requested_date=date(2023, 7, 1), application_hour=ApplicationHourEnum.FULLDAY), EventCreateSchema(requested_date=date(2023, 7, 8), application_hour=ApplicationHourEnum.FULLDAY)], "Multiple Dates:"),
     (False, None, None, None, "Requested Date: 2023-07-01"),
 ])
 def test_get_new_application_manager_email_template_variations(recurring, recurrence_type, end_date, events, expected_text):
@@ -163,7 +165,7 @@ def test_get_new_application_manager_email_template_variations(recurring, recurr
 
 @pytest.mark.parametrize("recurring,recurrence_type,end_date,events,expected_text", [
     (True, "Weekly", date(2023, 7, 31), None, "Recurrence Type: Weekly"),
-    (False, None, None, [EventCreateSchema(requested_date=date(2023, 7, 1)), EventCreateSchema(requested_date=date(2023, 7, 8))], "Multiple Dates:"),
+    (False, None, None, [EventCreateSchema(requested_date=date(2023, 7, 1), application_hour=ApplicationHourEnum.FULLDAY), EventCreateSchema(requested_date=date(2023, 7, 8), application_hour=ApplicationHourEnum.FULLDAY)], "Multiple Dates:"),
     (False, None, None, None, "Requested Date: 2023-07-01"),
 ])
 def test_get_new_application_employee_email_template_variations(recurring, recurrence_type, end_date, events, expected_text):

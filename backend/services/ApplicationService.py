@@ -96,7 +96,7 @@ class ApplicationService:
                                 detail="End date cannot be more than 3 months away from the requested date")
         # Prepare application data
         application_dict = application.model_dump(
-            exclude={"events", "location", "requested_date"})
+            exclude={"events", "location", "requested_date", "application_hour"})
         # set status to pending as it is a new application
         application_dict["status"] = "pending"
         application_dict["created_on"] = get_current_datetime_sgt()
@@ -373,6 +373,7 @@ class ApplicationService:
         # create a new application with the event to be removed, and mark the status as pending
         application_to_be_cancelled = ApplicationCreateSchema(
             location=existing_event.location,
+            application_hour=existing_event.application_hour,
             reason=existing_application.reason,
             requested_date=existing_date,
             description=existing_application.description,

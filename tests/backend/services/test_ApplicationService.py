@@ -6,6 +6,7 @@ from dateutil.relativedelta import relativedelta
 
 from backend.models import Event
 from backend.models.enums.EmployeeRoleEnum import EmployeeRole
+from backend.models.enums.ApplicationHourEnum import ApplicationHourEnum
 from backend.models.generators import get_current_datetime_sgt
 from backend.schemas.EventSchema import EventCreateSchema
 from backend.services.ApplicationService import ApplicationService
@@ -114,6 +115,7 @@ def test_create_application_success(mock_datetime, application_service, mock_app
         staff_id=1,
         reason="Test",
         requested_date=datetime.now().date(),
+        application_hour = ApplicationHourEnum.FULLDAY,
         description="Test description",
         location="Test location",
         recurring=False
@@ -161,6 +163,7 @@ def test_create_application_employee_not_found(application_service, mock_employe
     application_data = ApplicationCreateSchema(
         staff_id=1,
         requested_date=date.today(),
+        application_hour = ApplicationHourEnum.PM,
         status="pending",
         location="Office",  # Add the required location field
         reason="Regular work day"  # Add the required reason field
@@ -179,6 +182,7 @@ def test_create_application_recurring_missing_fields(application_service, mock_e
     application_data = ApplicationCreateSchema(
         staff_id=1,
         requested_date=date.today(),
+        application_hour=ApplicationHourEnum.AM,
         status="pending",
         recurring=True,
         location="Home",  # Add the required location field
@@ -196,12 +200,13 @@ def test_create_events_with_application_events(application_service, mock_event_s
     application_service.event_service = mock_event_service
 
     events = [
-        EventCreateSchema(requested_date=date(2023, 1, 1)),
-        EventCreateSchema(requested_date=date(2023, 1, 2)),
-        EventCreateSchema(requested_date=date(2023, 1, 3))
+        EventCreateSchema(requested_date=date(2023, 1, 1), application_hour=ApplicationHourEnum.FULLDAY),
+        EventCreateSchema(requested_date=date(2023, 1, 2), application_hour=ApplicationHourEnum.PM),
+        EventCreateSchema(requested_date=date(2023, 1, 3), application_hour=ApplicationHourEnum.AM)
     ]
     application = ApplicationCreateSchema(
         requested_date=date(2023, 1, 1),
+        application_hour=ApplicationHourEnum.FULLDAY,
         end_date=date(2023, 1, 3),
         location="Test Location",
         recurrence_type=RecurrenceType.DAILY,
@@ -240,6 +245,7 @@ def test_create_application_end_date_too_far(application_service, mock_employee_
     application_data = ApplicationCreateSchema(
         staff_id=1,
         requested_date=requested_date,
+        application_hour=ApplicationHourEnum.AM,
         status="pending",
         recurring=True,
         recurrence_type="weekly",
@@ -504,6 +510,7 @@ def test_update_application_pending(application_service, mock_application_reposi
         staff_id=1,
         reason="Updated reason",
         requested_date=date.today(),
+        application_hour = ApplicationHourEnum.FULLDAY,
         location="Office"
     )
     # Set up the repository's update_application to return the updated application
@@ -526,6 +533,7 @@ def test_update_application_withdrawn(application_service, mock_application_repo
         staff_id=1,
         reason="Updated reason",
         requested_date=date.today(),
+        application_hour=ApplicationHourEnum.FULLDAY,
         location="Office"
     )
 
@@ -544,6 +552,7 @@ def test_update_application_rejected(application_service, mock_application_repos
         staff_id=1,
         reason="Updated reason",
         requested_date=date.today(),
+        application_hour=ApplicationHourEnum.FULLDAY,
         location="Office"
     )
 
@@ -562,6 +571,7 @@ def test_update_application_other_status(application_service, mock_application_r
         staff_id=1,
         reason="Updated reason",
         requested_date=date.today(),
+        application_hour=ApplicationHourEnum.FULLDAY,
         location="Office"
     )
 
@@ -684,6 +694,7 @@ def test_change_request(mock_datetime, application_service, mock_application_rep
     change_request_data = ApplicationCreateSchema(
         staff_id=10,
         reason="Changed reason",
+        application_hour=ApplicationHourEnum.FULLDAY,
         requested_date=date(2023, 6, 1),
         location="New Location"
     )

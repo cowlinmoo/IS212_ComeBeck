@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation';
 import { storeToken } from '@/lib/cookie';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-const URL = `${BASE_URL}/authenticate/`;
+const URL = `${BASE_URL}/authenticate`;
 
 export default function LoginPage() {
   const [username, setUsername] = useState("")
