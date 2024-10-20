@@ -66,6 +66,7 @@ class ApplicationService:
             for event in self.event_repository.get_event_by_application_id(application_id=approved_application.application_id):
                 employee_locations.append(
                     ApprovedApplicationLocationSchema(
+                        application_hour=event.application_hour,
                         employee_fname=user.staff_fname,
                         employee_lname=user.staff_lname,
                         location=event.location,

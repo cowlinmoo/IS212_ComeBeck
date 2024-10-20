@@ -119,6 +119,7 @@ class ApprovedApplicationLocationSchema(BaseModel):
     location: str = Field(examples=["New York", "London"])
     position: str = Field(examples=["Manager", "Developer"])
     date: str = Field(examples=["2023-10-01", "2023-10-02"])
+    application_hour:str = Field(examples=["FULLDAY","AM","PM"])
 
     class Config:
         from_attributes = True

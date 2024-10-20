@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Home, Briefcase } from "lucide-react"
 import { EmployeeLocation } from "@/app/schedule/api"
 import { PersonIcon } from "@radix-ui/react-icons"
+import StaffAccordion from "./StaffAccordian"
 
 // Mock data for team members and schedules
 const teamMembers = [
@@ -68,6 +69,7 @@ const StaffSchedule: React.FC<IStaffSchedule> = ({ teamMembers }) => {
       const formattedDate = formatDate(adjustedDate);
       console.log(formattedDate)
       const filteredMembers = teamMembers.filter(member => member.date === formattedDate);
+      console.log(filteredMembers)
       setCurrTeamMembers(filteredMembers);
     }
   }, [selectedDate, teamMembers])
@@ -99,7 +101,7 @@ const StaffSchedule: React.FC<IStaffSchedule> = ({ teamMembers }) => {
                   <h3 className="text-lg font-semibold mb-2">
                     {selectedDate ? selectedDate.toDateString() : 'Select a date'}
                   </h3>
-                  <ul className="space-y-2">
+                  {/* <ul className="space-y-2">
                     {currTeamMembers.map((member: EmployeeLocation) => (
                       <li key={`${member.employee_fname}-${member.employee_lname}`} className="flex items-center space-x-2">
                         <PersonIcon />
@@ -110,7 +112,8 @@ const StaffSchedule: React.FC<IStaffSchedule> = ({ teamMembers }) => {
                         </Badge>
                       </li>
                     ))}
-                  </ul>
+                  </ul> */}
+                  <StaffAccordion employeeLocations={currTeamMembers} />
                 </div>
               </div>
             </CardContent>
@@ -132,6 +135,7 @@ const StaffSchedule: React.FC<IStaffSchedule> = ({ teamMembers }) => {
                     className="rounded-md border"
                   />
                 </div>
+
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold mb-2">
                     {selectedDate ? selectedDate.toDateString() : 'Select a date'}
@@ -148,10 +152,13 @@ const StaffSchedule: React.FC<IStaffSchedule> = ({ teamMembers }) => {
                       </Badge>
                     </div>
                   )}
+
                 </div>
+
               </div>
             </CardContent>
           </Card>
+
         </TabsContent>
       </Tabs>
     </div>

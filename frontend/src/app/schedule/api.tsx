@@ -6,6 +6,7 @@ const EMPLOYEE_URL = `${BASE_URL}/employee`
 export type EmployeeLocation = {
     employee_fname: string;
     employee_lname: string;
+    application_hour: string;
     location: "wfo" | "wfh";
     position: string;
     date: string
