@@ -5,12 +5,13 @@ import StaffSchedule from "@/components/schedule/staffSchedule/StaffSchedule";
 import SideBar from "@/components/core/sidebar/SideBar";
 import { Header } from "@/components/core/header/Header";
 import { useEffect, useState } from "react";
-import { EmployeeLocation, getApprovedStaffLocation } from "./api";
+import { EmployeeLocation, getApprovedStaffLocation, getMyTeam, Team, getMyEmployee } from "./api";
 
 
 export default function Component() {
-  const { token, userId, pageLoading } = useAuth();
+  const { token, userId, pageLoading, user } = useAuth();
   const [staffLocation, setStaffLocation] = useState<EmployeeLocation[]>([])
+  const [myTeam, setMyTeam] = useState<Team>()
   useEffect(() => {
     if (token && userId) {
       const getLocation = async () => {
@@ -21,7 +22,16 @@ export default function Component() {
     }
   }, [token, userId])
 
-
+  useEffect(() => {
+    if (token && userId) {
+      const getTeam = async () => {
+        const response: Team = await getMyTeam(token as string, Number(user?.team_id))
+        setMyTeam(response)
+        console.log(response)
+      }
+      getTeam()
+    }
+  }, [token, userId])
   return (
     <div className="flex h-screen text-black bg-gray-100">
       {/* Left Navbar */}
@@ -43,3 +53,4 @@ export default function Component() {
     </div>
   )
 }
+
