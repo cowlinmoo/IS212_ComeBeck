@@ -29,6 +29,7 @@ export interface Application {
     event_id: number;
     requested_date: string;
     location: string;
+    application_hour: string;
   }
 
 export default function Component() {
