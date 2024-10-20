@@ -120,6 +120,7 @@ class ApprovedApplicationLocationSchema(BaseModel):
     position: str = Field(examples=["Manager", "Developer"])
     date: str = Field(examples=["2023-10-01", "2023-10-02"])
     application_hour:str = Field(examples=["FULLDAY","AM","PM"])
+    role:int
 
     class Config:
         from_attributes = True

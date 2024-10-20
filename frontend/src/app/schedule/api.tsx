@@ -10,6 +10,7 @@ export type EmployeeLocation = {
     location: "wfo" | "wfh";
     position: string;
     date: string
+    role: number
 };
 
 
