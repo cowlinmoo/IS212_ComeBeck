@@ -8,6 +8,7 @@ import { EmployeeLocation } from "@/app/schedule/api"
 import { PersonIcon } from "@radix-ui/react-icons"
 import StaffAccordion from "./StaffAccordian"
 import OtherStaffAccordion from "./OtherStaffAccordian"
+import { addMonths, subMonths } from "date-fns"
 
 // Mock data for team members and schedules
 const teamMembers = [
@@ -96,6 +97,8 @@ const StaffSchedule: React.FC<IStaffSchedule> = ({ teamMembers }) => {
                     selected={selectedDate}
                     onSelect={setSelectedDate}
                     className="rounded-md border"
+                    fromDate={subMonths(new Date(), 2)}
+                    toDate={addMonths(new Date(), 3)}
                   />
                 </div>
                 <div className="flex-1">
