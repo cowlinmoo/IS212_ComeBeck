@@ -1,7 +1,7 @@
 import pytest
 from fastapi import HTTPException
 from unittest.mock import MagicMock
-from backend.models import Team
+from backend.models import Team, Department, Employee
 from backend.repositories.DepartmentRepository import DepartmentRepository
 from backend.repositories.EmployeeRepository import EmployeeRepository
 from backend.repositories.TeamRepository import TeamRepository
@@ -120,3 +120,40 @@ def test_get_team_employees_by_team_id_not_found(team_service):
     assert excinfo.value.status_code == 404
     assert excinfo.value.detail == "Team not found"
 
+
+def test_team_to_schema(team_service):
+    # Arrange
+    team_id = 1
+    mock_team = Team(
+        team_id=team_id,
+        name="Development",
+        description="Development Team",
+        department_id=1,
+        manager_id=2,
+    )
+
+    # Use actual ORM model classes for mock department and manager
+    mock_department = Department(department_id=1, name="IT Department")
+    mock_manager = Employee(staff_id=2, staff_fname="Alice", staff_lname="Smith")
+
+    # Create mock members using the actual ORM model if applicable
+    mock_members = [
+        Employee(staff_id=3, staff_fname="Bob", staff_lname="Brown"),
+        Employee(staff_id=4, staff_fname="Charlie", staff_lname="White"),
+    ]
+
+    # Setup mocks for the repositories
+    team_service.departmentRepository.get_department_by_id.return_value = mock_department
+    team_service.employeeRepository.get_employee.return_value = mock_manager
+    team_service.employeeRepository.get_employees_by_team_id.return_value = mock_members
+
+    # Act
+    result = team_service.team_to_schema(mock_team)
+
+    # Assert
+    # Assert
+    assert result.team_id == mock_team.team_id  # Correctly accessing the team_id attribute
+    assert result.name == mock_team.name  # Accessing the name
+    assert result.description == mock_team.description  # Accessing the description
+    assert result.manager.staff_id == mock_manager.staff_id  # Checking manager's staff_id
+    assert len(result.members) == len(mock_members)  # Ensure the number of members matches
