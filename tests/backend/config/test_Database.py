@@ -157,3 +157,41 @@ def test_init_db(mock_get_environment_variables):
     assert second_sql == mock_sql_content
 
     print("Test passed successfully!")
+
+
+@pytest.mark.parametrize("data_exists", [True, False])
+@pytest.mark.parametrize("mock_get_environment_variables", ["mock_env"], indirect=True)
+def test_init_db(mock_get_environment_variables, data_exists):
+    mock_sql_content = "INSERT INTO departments (department_id, name) VALUES (1, 'Test Department');"
+    mock_file = mock_open(read_data=mock_sql_content)
+
+    mock_engine = MagicMock()
+    mock_connection = MagicMock()
+    mock_engine.connect.return_value.__enter__.return_value = mock_connection
+
+    mock_execute_result = MagicMock()
+    mock_execute_result.scalar.return_value = data_exists  # Simulate existing or no existing data
+    mock_connection.execute.return_value = mock_execute_result
+
+    with patch('builtins.open', mock_file), \
+            patch('os.path.join', return_value='/fake/path/to/init.sql'), \
+            patch('sqlalchemy.create_engine', return_value=mock_engine), \
+            patch('sqlalchemy.engine.Engine', mock_engine), \
+            patch('builtins.print') as mock_print:
+
+        import backend.config.Database
+        importlib.reload(backend.config.Database)
+
+        from backend.config.Database import init_db
+        init_db()
+
+    mock_engine.connect.assert_called_once()
+
+    if data_exists:
+        mock_print.assert_called_with("Data already exists in the database, skipping initialization")
+        assert mock_connection.execute.call_count == 1  # Only check for existing data
+    else:
+        mock_print.assert_called_with("Initial data inserted into the database")
+        assert mock_connection.execute.call_count == 2  # Check for existing data and insert new data
+
+    print(f"Test passed successfully for data_exists={data_exists}!")
