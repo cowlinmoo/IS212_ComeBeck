@@ -7,6 +7,7 @@ class BaseEmployeeInfo(BaseModel):
     staff_fname: str = Field(examples=["John", "Jane", "Doe"])
     staff_lname: str = Field(examples=["Doe", "Smith", "Doe"])
     position: str = Field(examples=["Manager", "Director"])
+    role: int = Field(examples=[1, 2, 3])
     team_id: int = Field(examples=[1, 2, 3])
     country: str = Field(examples=["USA", "UK", "Canada"])
     email: str = Field(examples=["test@gmail.com"])
