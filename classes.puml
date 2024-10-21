@@ -1,0 +1,175 @@
+@startuml classes
+set namespaceSeparator none
+class "ApplicationRepository" as backend.repositories.ApplicationRepository.ApplicationRepository {
+  db
+  add_event_to_application(application_id, event: Event)
+  create_application(application: dict) -> Application
+  delete_application(application_id)
+  get_all_applications() -> List[Type[Application]]
+  get_application_by_application_id(application_id: int) -> Application
+  get_application_by_staff_id(staff_id: int) -> List[Type[Application]]
+  get_application_status_by_application_id(application_id: int) -> str
+  get_applications_by_approver_id(approver_id)
+  get_applications_by_status(status: str) -> List[Type[Application]]
+  get_pending_applications() -> List[Type[Application]]
+  update_application(application_id: int, application: ApplicationCreateSchema) -> Application
+  update_application_state(application_id, new_state, outcome_reason, status)
+  update_application_status(application_id: int, new_status: str, outcome_reason: str) -> Application
+  update_original_application_id(application_id, original_application_id)
+  withdraw_application(application_id: int, application: ApplicationWithdrawSchema) -> Application
+}
+class "ApplicationService" as backend.services.ApplicationService.ApplicationService {
+  application_repository
+  email_service
+  employee_repository
+  event_repository
+  event_service
+  approve_reject_pending_applications(application: ApplicationApproveRejectSchema) -> Application
+  cancel_request(existing_application: Application, cancellation_request: ApplicationWithdrawSchema) -> Application
+  cancel_request_one(application_id, event_id, withdraw_reason) -> Event
+  change_request(existing_application: Application, change_request: ApplicationCreateSchema) -> Application
+  create_application(application: ApplicationCreateSchema, application_state: str) -> Application
+  get_all_applications() -> List[Type[Application]]
+  get_application_by_id(application_id: int) -> Application
+  get_applications_by_approver_id(approver_id: int) -> List[Type[Application]]
+  get_applications_by_staff_id(staff_id: int) -> List[Type[Application]]
+  get_applications_by_status(status: str) -> List[Type[Application]]
+  get_employee_approved_application_locations(manager_id: int, current_user_role: EmployeeRole) -> List[ApprovedApplicationLocationSchema]
+  reject_old_applications()
+  update_application(application_id: int, application: ApplicationCreateSchema) -> Application
+  update_application_status(application_id: int, new_status: str, outcome_reason: str) -> Application
+  withdraw_application(application_id: int, application: ApplicationWithdrawSchema) -> Application
+  withdraw_application_event(application_id, event_id, application: ApplicationWithdrawEventSchema) -> Event
+}
+class "DepartmentRepository" as backend.repositories.DepartmentRepository.DepartmentRepository {
+  db
+  get_all_department_ids() -> List[int]
+  get_department_by_director_id(director_id: int) -> Department
+  get_department_by_id(department_id: int) -> Department
+  get_employees_by_department_id(department_id: int) -> List[Type[Department]]
+}
+class "DepartmentService" as backend.services.DepartmentService.DepartmentService {
+  department_repository
+  employee_repository
+  team_repository
+  department_to_base_schema(department) -> BaseDepartmentInfo
+  department_to_schema(department) -> DepartmentSchema
+  employee_to_schema(employee) -> BaseEmployeeInfo
+  get_department_by_department_id(department_id: int) -> DepartmentSchema
+  team_to_base_schema(team) -> BaseTeamInfo
+  team_to_schema(team) -> TeamSchema
+}
+class "EmailService" as backend.services.EmailService.EmailService {
+  employee_repository
+  sender_email
+  sender_password
+  smtp_port
+  smtp_server
+  send_application_creation_emails(application: ApplicationCreateSchema, new_application: Application, manager: Employee, employee: Employee, staff_name: str)
+  send_cancel_one_request_emails(event: Event, employee: Employee, manager: Employee, cancellation_reason: str)
+  send_cancel_one_request_outcome_emails(event, outcome: str)
+  send_cancel_request_outcome_emails(modified_application: Application)
+  send_cancellation_request_emails(existing_application: Application, cancellation_request: ApplicationWithdrawSchema, employee: Employee, manager: Employee, current_time: datetime)
+  send_change_request_emails(existing_application: Application, new_application: Application, change_request: ApplicationCreateSchema, employee: Employee, manager: Employee, current_time: datetime)
+  send_change_request_outcome_emails(modified_application: Application)
+  send_email(recipient_email, subject, body)
+  send_email_to_employee(employee: Employee, application: Application, status: str, current_time: datetime)
+  send_email_to_manager(manager: Employee, employee: Employee, application: Application, status: str, current_time: datetime)
+  send_event_withdrawal_emails(withdrawn_event, employee, manager, is_employee, current_time)
+  send_outcome_emails(application)
+  send_rejection_emails(application: Application, req_date)
+  send_withdrawal_emails(withdrawn_application: Application, employee: Employee, editor: Employee, manager: Employee, is_employee: bool, current_time: datetime)
+}
+class "EmployeeRepository" as backend.repositories.EmployeeRepository.EmployeeRepository {
+  db
+  create_employee(employee_data: Employee) -> Employee
+  delete_employee(staff_id: int) -> Employee
+  get_all_employees() -> List[Employee]
+  get_employee(staff_id: int) -> Employee
+  get_employee_email_by_staff_id(staff_id: int) -> str
+  get_employees_by_ids(staff_ids: List[int]) -> List[Employee]
+  get_employees_by_manager_id(manager_id: int) -> List[Type[Employee]]
+  get_employees_by_team_id(team_id)
+  get_employees_under_manager(manager_id: int) -> List[Employee]
+  update_employee(staff_id: int, update_data: dict) -> Employee
+}
+class "EmployeeService" as backend.services.EmployeeService.EmployeeService {
+  departmentRepository
+  employeeRepository
+  teamRepository
+  create_employee(employee: EmployeeCreateSchema) -> EmployeeSchema
+  delete_employee_by_staff_id(staff_id: int)
+  employee_to_schema(employee: Employee) -> EmployeeSchema
+  get_all_employees() -> List[EmployeeSchema]
+  get_employee_by_staff_id(staff_id: int) -> EmployeeSchema
+  update_employee(staff_id: int, employee: EmployeeUpdateSchema) -> EmployeeSchema
+}
+class "EventRepository" as backend.repositories.EventRepository.EventRepository {
+  db
+  create_event(event: Event) -> Event
+  delete_event(event_id: int) -> Event
+  get_all_events() -> List[Type[Event]]
+  get_event_by_application_id(application_id: int) -> List[Type[Event]]
+  get_event_by_event_id(event_id: int) -> Event
+  get_events_by_application_ids(application_ids: List[int]) -> List[Type[Event]]
+  get_first_event_by_application_id(application_id: int) -> Event
+  update_application_id(event_id: int, application_id: int) -> Event
+  update_event(event_id: int, event: Event) -> Event
+  update_original_event_id(event_id: int, original_event_id: int) -> Event
+}
+class "EventService" as backend.services.EventService.EventService {
+  eventRepository
+  create_event(event) -> Event
+  create_events(application: ApplicationCreateSchema, application_id: int)
+  create_multiple_events(events: List[Event]) -> List[Event]
+  create_recurring_events(application: ApplicationCreateSchema, application_id: int)
+  create_single_event(application: ApplicationCreateSchema, application_id: int)
+  delete_event(event_id)
+  get_all_events()
+  get_event_by_application_id(application_id: int)
+  get_event_by_event_id(event_id: int)
+  update_event(event_id, event)
+}
+class "SchedulerService" as backend.services.SchedulerService.SchedulerService {
+  application_service
+  scheduler
+  setup_jobs()
+  start()
+  stop()
+}
+class "TeamRepository" as backend.repositories.TeamRepository.TeamRepository {
+  db
+  get_all_team_ids() -> List[int]
+  get_child_teams(parent_team_id: int) -> List[Team]
+  get_employees_by_team_id(team_id: int) -> List[Type[Team]]
+  get_parent_team(team_id: int) -> Optional[Team]
+  get_team(team_id: int) -> Optional[Team]
+  get_team_by_id(team_id: int) -> Team
+  get_team_by_manager_id(manager_id: int) -> Team
+  get_teams_by_department_id(department_id)
+}
+class "TeamService" as backend.services.TeamService.TeamService {
+  departmentRepository
+  employeeRepository
+  teamRepository
+  get_team_employees_by_team_id(team_id: int) -> TeamSchema
+  team_to_schema(team: Team) -> TeamSchema
+}
+backend.repositories.DepartmentRepository.DepartmentRepository --* backend.services.EmployeeService.EmployeeService : departmentRepository
+backend.repositories.EmployeeRepository.EmployeeRepository --* backend.services.EmployeeService.EmployeeService : employeeRepository
+backend.repositories.EventRepository.EventRepository --* backend.services.EventService.EventService : eventRepository
+backend.repositories.TeamRepository.TeamRepository --* backend.services.EmployeeService.EmployeeService : teamRepository
+backend.repositories.ApplicationRepository.ApplicationRepository --o backend.services.ApplicationService.ApplicationService : application_repository
+backend.repositories.DepartmentRepository.DepartmentRepository --o backend.services.DepartmentService.DepartmentService : department_repository
+backend.repositories.DepartmentRepository.DepartmentRepository --o backend.services.TeamService.TeamService : departmentRepository
+backend.repositories.EmployeeRepository.EmployeeRepository --o backend.services.ApplicationService.ApplicationService : employee_repository
+backend.repositories.EmployeeRepository.EmployeeRepository --o backend.services.DepartmentService.DepartmentService : employee_repository
+backend.repositories.EmployeeRepository.EmployeeRepository --o backend.services.EmailService.EmailService : employee_repository
+backend.repositories.EmployeeRepository.EmployeeRepository --o backend.services.TeamService.TeamService : employeeRepository
+backend.repositories.EventRepository.EventRepository --o backend.services.ApplicationService.ApplicationService : event_repository
+backend.repositories.TeamRepository.TeamRepository --o backend.services.DepartmentService.DepartmentService : team_repository
+backend.repositories.TeamRepository.TeamRepository --o backend.services.TeamService.TeamService : teamRepository
+backend.services.ApplicationService.ApplicationService --o backend.services.SchedulerService.SchedulerService : application_service
+backend.services.EmailService.EmailService --o backend.services.ApplicationService.ApplicationService : email_service
+backend.services.EventService.EventService --o backend.services.ApplicationService.ApplicationService : event_service
+@enduml
