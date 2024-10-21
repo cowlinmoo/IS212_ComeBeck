@@ -12,6 +12,7 @@ export type EmployeeLocation = {
     date: string
     role: number
     team_id: number
+    employee_id: number
 };
 
 

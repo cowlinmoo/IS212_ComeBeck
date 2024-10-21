@@ -114,6 +114,7 @@ class ApplicationApproveRejectSchema(BaseModel):
 
 
 class ApprovedApplicationLocationSchema(BaseModel):
+    employee_id:int
     employee_fname: str = Field(examples=["John", "Jane"])
     employee_lname: str = Field(examples=["Doe", "Smith"])
     location: str = Field(examples=["New York", "London"])

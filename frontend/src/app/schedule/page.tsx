@@ -22,14 +22,14 @@ export default function Component() {
     }
   }, [token, userId])
 
-  
+
   return (
-    <div className="flex h-screen text-black bg-gray-100">
+    <div className="flex h-screen text-black bg-gray-100 ">
       {/* Left Navbar */}
       <SideBar />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-y-scroll">
         {/* Header */}
         <Header />
 
