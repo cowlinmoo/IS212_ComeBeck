@@ -15,8 +15,10 @@ export default function Component() {
   useEffect(() => {
     if (token && userId) {
       const getLocation = async () => {
+
         const response: EmployeeLocation[] = await getApprovedStaffLocation(token as string, Number(userId))
         setStaffLocation(response)
+
       }
       getLocation()
     }

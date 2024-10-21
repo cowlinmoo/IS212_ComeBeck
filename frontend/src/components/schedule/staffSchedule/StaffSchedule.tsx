@@ -69,7 +69,7 @@ const StaffSchedule: React.FC<IStaffSchedule> = ({ teamMembers }) => {
       adjustedDate.setDate(adjustedDate.getDate() + 1);
       const formattedDate = formatDate(adjustedDate);
       console.log(formattedDate)
-      const filteredMembers = teamMembers.filter(member => member.date === formattedDate);
+      const filteredMembers = teamMembers?.filter(member => member.date === formattedDate);
       console.log(filteredMembers)
       setCurrTeamMembers(filteredMembers);
     }

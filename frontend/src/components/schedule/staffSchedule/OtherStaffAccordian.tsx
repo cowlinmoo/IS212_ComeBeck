@@ -44,11 +44,13 @@ const OtherStaffAccordion: React.FC<OtherStaffAccordionProps> = ({ employeeLocat
                                             team.members.map((member) => {
                                                 return (<div className='flex flex-row gap-4'>
                                                     <PersonIcon />
-                                                    {member.staff_fname} {member.staff_lname}
+                                                    {member.staff_fname} {member.staff_lname} ({member.position})
 
                                                     {
                                                         employeeLocations.map((item) => item.employee_id).includes(member.staff_id) ? (
-                                                            <Badge variant='secondary'><HomeIcon className="h-4 w-4 mr-1" />HOME</Badge>
+                                                            <Badge variant='secondary'><HomeIcon className="h-4 w-4 mr-1" />HOME
+                                                                ({employeeLocations.filter((location) => location.employee_id === member.staff_id)[0].application_hour.toUpperCase()})
+                                                            </Badge>
                                                         ) : (
                                                             <Badge variant="default"><Briefcase className="h-4 w-4 mr-1" />OFFICE</Badge>
                                                         )

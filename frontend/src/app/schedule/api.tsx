@@ -59,6 +59,7 @@ export interface Team {
         staff_id: number;
         staff_fname: string;
         staff_lname: string;
+        position: string;
     }>;
 }
 

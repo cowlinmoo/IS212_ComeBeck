@@ -48,7 +48,6 @@ const StaffAccordion: React.FC<IStaffSchedule> = ({ employeeLocations }) => {
                 let defNames: defName[] = [];
                 for (const item of filteredTeam) {
                     const response = await getMyEmployee(token as string, item.staff_id);
-                    console.log(response);
                     defNames.push({ ...item, role: response.role });
                 }
                 setMyTeam(response)
@@ -65,17 +64,20 @@ const StaffAccordion: React.FC<IStaffSchedule> = ({ employeeLocations }) => {
                 <AccordionContent>
                     <ul className="space-y-2">
                         {employeeLocations?.map((member: EmployeeLocation) => {
-                            if (member.team_id === user?.team_id) {
-                                return (
-                                    <li key={`${member.employee_fname}-${member.employee_lname}`} className="flex items-center space-x-2">
-                                        <PersonIcon />
-                                        <span>{`${member.employee_fname} ${member.employee_lname} (${role[member.role]})`}</span>
-                                        <Badge variant={member.location === 'wfo' ? 'default' : 'secondary'}>
-                                            {member.location === 'wfo' ? <Briefcase className="h-4 w-4 mr-1" /> : <Home className="h-4 w-4 mr-1" />}
-                                            {member.location === 'wfo' ? 'Office' : `Home (${member.application_hour.toUpperCase()})`}
-                                        </Badge>
-                                    </li>
-                                )
+                            if ((user?.role === 3 || user?.role === 1) || (user?.role === 2 && member.role !== 3)) {
+                                if (member.employee_id !== myTeam?.manager.staff_id) {
+                                    return (
+                                        <li key={`${member.employee_fname}-${member.employee_lname}`} className="flex items-center space-x-2">
+                                            <PersonIcon />
+                                            <span>{`${member.employee_fname} ${member.employee_lname} (${role[member.role]})`}</span>
+                                            <Badge variant={member.location === 'wfo' ? 'default' : 'secondary'}>
+                                                {member.location === 'wfo' ? <Briefcase className="h-4 w-4 mr-1" /> : <Home className="h-4 w-4 mr-1" />}
+                                                {member.location === 'wfo' ? 'Office' : `Home (${member.application_hour.toUpperCase()})`}
+                                            </Badge>
+                                        </li>
+                                    )
+                                }
+
                             }
                         })}
                     </ul>
@@ -83,16 +85,18 @@ const StaffAccordion: React.FC<IStaffSchedule> = ({ employeeLocations }) => {
                     <ul className="space-y-2">
                         {
                             defWio.map((member: any) => {
-                                return (
-                                    <li key={`${member.staff_fname}-${member.staff_lname}`} className="flex items-center space-x-2">
-                                        <PersonIcon />
-                                        <span>{`${member.staff_fname} ${member.staff_lname} (${role[member.role]})`}</span>
-                                        <Badge>
-                                            <Briefcase className="h-4 w-4 mr-1" />
-                                            Office
-                                        </Badge>
-                                    </li>
-                                )
+                                if ((user?.role === 3 || user?.role === 1) || (user?.role === 2 && member.role !== 3)) {
+                                    return (
+                                        <li key={`${member.staff_fname}-${member.staff_lname}`} className="flex items-center space-x-2">
+                                            <PersonIcon />
+                                            <span>{`${member.staff_fname} ${member.staff_lname} (${role[member.role]})`}</span>
+                                            <Badge>
+                                                <Briefcase className="h-4 w-4 mr-1" />
+                                                Office
+                                            </Badge>
+                                        </li>
+                                    )
+                                }
                             })
                         }
                     </ul>
