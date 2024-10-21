@@ -11,6 +11,7 @@ export type EmployeeLocation = {
     position: string;
     date: string
     role: number
+    team_id: number
 };
 
 
@@ -52,11 +53,7 @@ export interface Team {
         name: string;
         description: string;
     };
-    child_teams: Array<{
-        team_id: number;
-        name: string;
-        description: string;
-    }>;
+    child_teams: Array<ChildTeam>;
     members: Array<{
         staff_id: number;
         staff_fname: string;
@@ -64,6 +61,11 @@ export interface Team {
     }>;
 }
 
+export interface ChildTeam {
+    team_id: number;
+    name: string;
+    description: string;
+}
 
 
 export const getMyTeam = async (token: string, teamId: number): Promise<Team> => {
@@ -77,6 +79,29 @@ export const getMyTeam = async (token: string, teamId: number): Promise<Team> =>
         });
         const data = await response.json();
         return data as Team
+    } catch (error) {
+
+        if (error instanceof Error) {
+            throw new Error(error.message);
+        } else {
+            throw new Error('An unknown error occurred');
+        }
+    }
+}
+
+export const getTeamsUnderMe = async (token: string, teamId: number): Promise<Team[]> => {
+    try {
+        const teamsBelow: Team[] = []
+        const data: Team = await getMyTeam(token, teamId);
+        const child_teams: ChildTeam[] | undefined = data.child_teams
+        if (child_teams) {
+            for (let childTeam of child_teams) {
+                const teamData: Team = await getMyTeam(token, childTeam.team_id);
+                teamsBelow.push(teamData)
+            }
+        }
+        return teamsBelow
+
     } catch (error) {
 
         if (error instanceof Error) {

@@ -71,7 +71,8 @@ class ApplicationService:
                         employee_lname=user.staff_lname,
                         location=event.location,
                         position=user.position,
-                        date=event.requested_date.isoformat()
+                        date=event.requested_date.isoformat(),
+                        team_id=user.team_id
                     )
                 )
         return employee_locations

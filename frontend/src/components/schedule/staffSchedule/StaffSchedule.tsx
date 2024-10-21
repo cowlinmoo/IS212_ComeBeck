@@ -7,6 +7,7 @@ import { Home, Briefcase } from "lucide-react"
 import { EmployeeLocation } from "@/app/schedule/api"
 import { PersonIcon } from "@radix-ui/react-icons"
 import StaffAccordion from "./StaffAccordian"
+import OtherStaffAccordion from "./OtherStaffAccordian"
 
 // Mock data for team members and schedules
 const teamMembers = [
@@ -114,6 +115,8 @@ const StaffSchedule: React.FC<IStaffSchedule> = ({ teamMembers }) => {
                     ))}
                   </ul> */}
                   <StaffAccordion employeeLocations={currTeamMembers} />
+                  <OtherStaffAccordion employeeLocations={currTeamMembers} />
+
                 </div>
               </div>
             </CardContent>

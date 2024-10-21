@@ -19,7 +19,7 @@ interface IStaffSchedule {
 
 }
 
-interface flName {
+export interface flName {
     staff_id: number,
     staff_fname: string,
     staff_lname: string,
@@ -30,7 +30,7 @@ interface defName extends flName {
     role: number
 }
 
-const role: string[] = ["HR", "STAFF", "MANAGER", "SUPERUSER"]
+const role: string[] = ["", "HR", "STAFF", "MANAGER"]
 
 const StaffAccordion: React.FC<IStaffSchedule> = ({ employeeLocations }) => {
     const { token, userId, user } = useAuth()
@@ -64,16 +64,20 @@ const StaffAccordion: React.FC<IStaffSchedule> = ({ employeeLocations }) => {
                 <AccordionTrigger>My Team</AccordionTrigger>
                 <AccordionContent>
                     <ul className="space-y-2">
-                        {employeeLocations?.map((member: EmployeeLocation) => (
-                            <li key={`${member.employee_fname}-${member.employee_lname}`} className="flex items-center space-x-2">
-                                <PersonIcon />
-                                <span>{`${member.employee_fname} ${member.employee_lname} (${role[member.role]})`}</span>
-                                <Badge variant={member.location === 'wfo' ? 'default' : 'secondary'}>
-                                    {member.location === 'wfo' ? <Briefcase className="h-4 w-4 mr-1" /> : <Home className="h-4 w-4 mr-1" />}
-                                    {member.location === 'wfo' ? 'Office' : `Home (${member.application_hour.toUpperCase()})`}
-                                </Badge>
-                            </li>
-                        ))}
+                        {employeeLocations?.map((member: EmployeeLocation) => {
+                            if (member.team_id === user?.team_id) {
+                                return (
+                                    <li key={`${member.employee_fname}-${member.employee_lname}`} className="flex items-center space-x-2">
+                                        <PersonIcon />
+                                        <span>{`${member.employee_fname} ${member.employee_lname} (${role[member.role]})`}</span>
+                                        <Badge variant={member.location === 'wfo' ? 'default' : 'secondary'}>
+                                            {member.location === 'wfo' ? <Briefcase className="h-4 w-4 mr-1" /> : <Home className="h-4 w-4 mr-1" />}
+                                            {member.location === 'wfo' ? 'Office' : `Home (${member.application_hour.toUpperCase()})`}
+                                        </Badge>
+                                    </li>
+                                )
+                            }
+                        })}
                     </ul>
                     <hr className='my-2' />
                     <ul className="space-y-2">
