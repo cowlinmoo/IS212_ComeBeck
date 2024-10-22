@@ -61,7 +61,8 @@ class ApplicationRepository:
             raise HTTPException(
                 status_code=404, detail="Application not found")
 
-        update_data = application.model_dump(exclude_unset=True)
+        update_data = application.model_dump(exclude={"location","application_hour","requested_date","events"})
+        print("this is the updated data {}", update_data)
         for key, value in update_data.items():
             setattr(db_application, key, value)
 
