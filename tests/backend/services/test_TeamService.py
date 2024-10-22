@@ -40,11 +40,16 @@ def test_get_team_employees_by_team_id_found(team_service):
     mock_manager.staff_id = 2  # Required field
     mock_manager.staff_fname = "Alice"  # Required field
     mock_manager.staff_lname = "Smith"  # Required field
+    mock_manager.position = "Manager"  # Required field
+    mock_manager.role = 1  # Required field
+    mock_manager.team_id = 1  # Required field
+    mock_manager.country = "USA"  # Required field
+    mock_manager.email = "alice.smith@example.com"  # Required field
 
     # Create mock members with required fields
     mock_members = [
-        MagicMock(staff_id=3, staff_fname="Bob", staff_lname="Brown"),
-        MagicMock(staff_id=4, staff_fname="Charlie", staff_lname="White"),
+        MagicMock(staff_id=3, staff_fname="Bob", staff_lname="Brown", team_id=1, role=2, country="USA", email="bob.brown@example.com", position="Developer"),
+        MagicMock(staff_id=4, staff_fname="Charlie", staff_lname="White", team_id=1, role=2, country="USA", email="charlie.white@example.com", position="Developer"),
     ]
 
     # Setup mocks
@@ -63,6 +68,11 @@ def test_get_team_employees_by_team_id_found(team_service):
             "staff_id": getattr(obj, "staff_id", None),
             "staff_fname": getattr(obj, "staff_fname", None),
             "staff_lname": getattr(obj, "staff_lname", None),
+            "position": getattr(obj, "position", None),
+            "role": getattr(obj, "role", None),
+            "team_id": getattr(obj, "team_id", None),
+            "country": getattr(obj, "country", None),
+            "email": getattr(obj, "email", None)
         }
 
     # Patch the function in TeamService for testing
@@ -134,12 +144,12 @@ def test_team_to_schema(team_service):
 
     # Use actual ORM model classes for mock department and manager
     mock_department = Department(department_id=1, name="IT Department")
-    mock_manager = Employee(staff_id=2, staff_fname="Alice", staff_lname="Smith")
+    mock_manager = Employee(staff_id=2, staff_fname="Alice", staff_lname="Smith", position="Manager", role=1, team_id=1, country="USA", email="alice.smith@example.com",department_id=1)
 
     # Create mock members using the actual ORM model if applicable
     mock_members = [
-        Employee(staff_id=3, staff_fname="Bob", staff_lname="Brown"),
-        Employee(staff_id=4, staff_fname="Charlie", staff_lname="White"),
+        Employee(staff_id=3, staff_fname="Bob", staff_lname="Brown", team_id=1, role=2, country="USA", email="bob.brown@example.com", position="Developer", department_id=1),
+        Employee(staff_id=4, staff_fname="Charlie", staff_lname="White", team_id=1, role=2, country="USA", email="charlie.white@example.com", position="Developer", department_id=1),
     ]
 
     # Setup mocks for the repositories
@@ -151,9 +161,13 @@ def test_team_to_schema(team_service):
     result = team_service.team_to_schema(mock_team)
 
     # Assert
-    # Assert
-    assert result.team_id == mock_team.team_id  # Correctly accessing the team_id attribute
-    assert result.name == mock_team.name  # Accessing the name
-    assert result.description == mock_team.description  # Accessing the description
-    assert result.manager.staff_id == mock_manager.staff_id  # Checking manager's staff_id
-    assert len(result.members) == len(mock_members)  # Ensure the number of members matches
+    assert result.team_id == mock_team.team_id
+    assert result.name == mock_team.name
+    assert result.description == mock_team.description
+
+    # Validate the members
+    assert len(result.members) == 2
+    assert result.members[0].staff_id == 3
+    assert result.members[0].staff_fname == "Bob"
+    assert result.members[1].staff_id == 4
+    assert result.members[1].staff_fname == "Charlie"

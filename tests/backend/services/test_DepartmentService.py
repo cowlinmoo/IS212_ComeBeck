@@ -38,6 +38,11 @@ class TestDepartmentService:
         mock_director.staff_id = 100
         mock_director.staff_fname = "John"
         mock_director.staff_lname = "Doe"
+        mock_director.position = "Software Engineer"
+        mock_director.role = 1
+        mock_director.team_id = 1
+        mock_director.country = "USA"
+        mock_director.email = "john.doe@example.com"
 
         mock_team = Mock()
         mock_team.team_id = 1
@@ -121,11 +126,22 @@ class TestDepartmentService:
         mock_manager.staff_id = 200
         mock_manager.staff_fname = "Jane"
         mock_manager.staff_lname = "Smith"
+        mock_manager.position = "Team Lead"
+        mock_manager.role = 1
+        mock_manager.team_id = 1
+        mock_manager.country = "USA"
+        mock_manager.email = "jane.smith@example.com"
+
 
         mock_member = Mock()
         mock_member.staff_id = 300
         mock_member.staff_fname = "Bob"
         mock_member.staff_lname = "Johnson"
+        mock_member.position = "Software Engineer"
+        mock_member.role = 1
+        mock_member.team_id = 1
+        mock_member.country = "USA"
+        mock_member.email = "bob.johnson@example.com"
 
         mock_repositories['employee_repository'].get_employee.return_value = mock_manager
         mock_repositories['team_repository'].get_team.return_value = mock_parent_team
@@ -152,10 +168,16 @@ class TestDepartmentService:
         mock_team.name = "Frontend Team"
         mock_team.description = "Frontend Development"
 
+        # Arrange
         mock_employee = Mock()
         mock_employee.staff_id = 100
         mock_employee.staff_fname = "John"
         mock_employee.staff_lname = "Doe"
+        mock_employee.position = "Software Engineer"
+        mock_employee.role = 1
+        mock_employee.team_id = 1
+        mock_employee.country = "USA"
+        mock_employee.email = "john.doe@example.com"
 
         mock_department = Mock()
         mock_department.department_id = 1
