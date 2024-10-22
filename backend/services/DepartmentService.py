@@ -72,7 +72,12 @@ class DepartmentService:
         return BaseEmployeeInfo(
             staff_id=employee.staff_id,
             staff_fname=employee.staff_fname,
-            staff_lname=employee.staff_lname
+            staff_lname=employee.staff_lname,
+            position=employee.position,
+            role=employee.role,
+            team_id=employee.team_id,
+            country=employee.country,
+            email=employee.email
         )
 
     def department_to_base_schema(self, department) -> BaseDepartmentInfo:

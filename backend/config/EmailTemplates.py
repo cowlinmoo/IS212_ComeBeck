@@ -606,7 +606,7 @@ def format_application_details(application):
     return "\n".join(details)
 
 def get_change_request_outcome_employee_email_subject(application_id: int, status: str) -> str:
-    return f"Change Request {status.capitalize()} for Application #{application_id}"
+    return f"Change Request {status.capitalize()} - ID: {application_id}"
 
 def get_change_request_outcome_employee_email_template(
     employee_name: str,
