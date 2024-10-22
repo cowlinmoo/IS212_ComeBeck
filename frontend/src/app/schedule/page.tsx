@@ -5,13 +5,12 @@ import StaffSchedule from "@/components/schedule/staffSchedule/StaffSchedule";
 import SideBar from "@/components/core/sidebar/SideBar";
 import { Header } from "@/components/core/header/Header";
 import { useEffect, useState } from "react";
-import { EmployeeLocation, getApprovedStaffLocation, getMyTeam, Team, getMyEmployee } from "./api";
+import { EmployeeLocation, getApprovedStaffLocation } from "./api";
 
 
 export default function Component() {
-  const { token, userId, pageLoading, user } = useAuth();
+  const { token, userId, pageLoading, } = useAuth();
   const [staffLocation, setStaffLocation] = useState<EmployeeLocation[]>([])
-  const [myTeam, setMyTeam] = useState<Team>()
   useEffect(() => {
     if (token && userId) {
       const getLocation = async () => {

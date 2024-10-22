@@ -9,7 +9,7 @@ import {
 import useAuth from '@/lib/auth';
 import { PersonIcon } from '@radix-ui/react-icons';
 import { Badge } from '@/components/ui/badge';
-import { Briefcase, Building2Icon, HomeIcon } from 'lucide-react';
+import { Briefcase, HomeIcon } from 'lucide-react';
 
 interface OtherStaffAccordionProps {
     employeeLocations: EmployeeLocation[];
@@ -34,7 +34,7 @@ const OtherStaffAccordion: React.FC<OtherStaffAccordionProps> = ({ employeeLocat
                 <AccordionContent>
                     {otherTeams.map((team) => {
                         return (
-                            <Accordion type="single" collapsible className={`${user?.role === 3 ? "block" : "none"}`}>
+                            <Accordion type="single" collapsible className={`${user?.role === 3 ? "block" : "none"}`} key={`${team.name}-key`}>
                                 <AccordionItem value='item-1' >
                                     <AccordionTrigger>
                                         {team.name}
@@ -42,7 +42,7 @@ const OtherStaffAccordion: React.FC<OtherStaffAccordionProps> = ({ employeeLocat
                                     <AccordionContent className='overflow-y-scroll h-64 flex flex-col gap-2'>
                                         {
                                             team.members.map((member) => {
-                                                return (<div className='flex flex-row gap-4'>
+                                                return (<div className='flex flex-row gap-4' key={`${member.staff_id}-key`}>
                                                     <PersonIcon />
                                                     {member.staff_fname} {member.staff_lname} ({member.position})
 

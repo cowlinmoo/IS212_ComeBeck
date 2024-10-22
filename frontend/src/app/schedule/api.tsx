@@ -97,7 +97,7 @@ export const getTeamsUnderMe = async (token: string, teamId: number): Promise<Te
         const data: Team = await getMyTeam(token, teamId);
         const child_teams: ChildTeam[] | undefined = data.child_teams
         if (child_teams) {
-            for (let childTeam of child_teams) {
+            for (const childTeam of child_teams) {
                 const teamData: Team = await getMyTeam(token, childTeam.team_id);
                 teamsBelow.push(teamData)
             }

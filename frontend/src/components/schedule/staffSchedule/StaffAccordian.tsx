@@ -41,11 +41,11 @@ const StaffAccordion: React.FC<IStaffSchedule> = ({ employeeLocations }) => {
             const getTeam = async () => {
                 const response: Team = await getMyTeam(token as string, Number(user?.team_id))
 
-                let filteredTeam: flName[] = response.members.filter((team) => {
+                const filteredTeam: flName[] = response.members.filter((team) => {
                     const names = employeeLocations.map((item) => `${item.employee_fname}:${item.employee_lname}`)
                     return !names.includes(`${team.staff_fname}:${team.staff_lname}`)
                 })
-                let defNames: defName[] = [];
+                const defNames: defName[] = [];
                 for (const item of filteredTeam) {
                     const response = await getMyEmployee(token as string, item.staff_id);
                     defNames.push({ ...item, role: response.role });
@@ -84,7 +84,7 @@ const StaffAccordion: React.FC<IStaffSchedule> = ({ employeeLocations }) => {
                     <hr className='my-2' />
                     <ul className="space-y-2">
                         {
-                            defWio.map((member: any) => {
+                            defWio.map((member: defName) => {
                                 if ((user?.role === 3 || user?.role === 1) || (user?.role === 2 && member.role !== 3)) {
                                     return (
                                         <li key={`${member.staff_fname}-${member.staff_lname}`} className="flex items-center space-x-2">

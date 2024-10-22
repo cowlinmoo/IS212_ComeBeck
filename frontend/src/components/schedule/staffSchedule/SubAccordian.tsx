@@ -1,4 +1,4 @@
-import { Employee, EmployeeLocation } from "@/app/schedule/api"
+import { EmployeeLocation } from "@/app/schedule/api"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@radix-ui/react-accordion"
 import { flName } from "./StaffAccordian"
 
@@ -9,7 +9,7 @@ interface ISubAccordian {
 
 
 
-const SubAccordian: React.FC<ISubAccordian> = ({ employees, employeeLocations }) => {
+const SubAccordian: React.FC<ISubAccordian> = () => {
     return (
         <Accordion type="single" collapsible>
             <AccordionItem value='item-1' >
