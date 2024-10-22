@@ -11,11 +11,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { clearToken } from '@/lib/cookie';
+import useAuth from '@/lib/auth';
 
 
 export const Header = () => {
   const router = useRouter();
-
+  const { user } = useAuth()
   const handleProfileClick = () => {
     // Navigate to the profile page or perform any profile-related actions
     clearToken();
@@ -37,11 +38,11 @@ export const Header = () => {
       <div className='flex-grow'>
         <input type="text" placeholder="Search..." className='w-full p-3 rounded bg-gray-100' />
       </div>
-      
+
       {/* Notification Bell */}
       <div>
         <button>
-          <Bell size={18}/>
+          <Bell size={18} />
         </button>
       </div>
 
@@ -61,36 +62,36 @@ export const Header = () => {
           ]}
         /> */}
         <Avatar>
-              <DropdownMenu>
-                <DropdownMenuTrigger><AvatarImage src="https://github.com/shadcn.png" /></DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  {/* {label && (
+          <DropdownMenu>
+            <DropdownMenuTrigger><AvatarImage src="https://github.com/shadcn.png" /></DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {/* {label && (
                     <>
                       <DropdownMenuLabel>{label}</DropdownMenuLabel>
                       <DropdownMenuSeparator />
                     </>
                   )} */}
-                  {/* {tabs.map((tab, index) => (
+              {/* {tabs.map((tab, index) => (
                     <DropdownMenuItem key={index} onClick={handlers[index]}>
                       {tab}
                     </DropdownMenuItem>
                   ))} */}
-                  <DropdownMenuItem onClick={handleProfileClick}>
-                      Profile
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleLogoutClick}>
-                      Logout
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <AvatarFallback>CN</AvatarFallback>
+              <DropdownMenuItem onClick={handleProfileClick}>
+                Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogoutClick}>
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <AvatarFallback>CN</AvatarFallback>
         </Avatar>
         <div className='flex flex-col gap-0.5'>
           <div className='font-medium'>
-            Daryl Yoon Kaile
+            {user?.staff_fname} {user?.staff_lname}
           </div>
           <div className='text-sm text-gray-500 text-xs'>
-            Employee
+            {user?.position}
           </div>
         </div>
       </div>

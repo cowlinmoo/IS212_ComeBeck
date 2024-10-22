@@ -53,7 +53,6 @@ class ApplicationService:
         approved_applications: List[Application] = self.application_repository.get_applications_by_status(
             status="approved")
         if current_user_role == EmployeeRole.MANAGER:
-            print("testing manager")
             employees = self.employee_repository.get_employees_under_manager(
                 manager_id=manager_id)
             approved_applications = [application for application in approved_applications if application.staff_id in [
@@ -66,11 +65,15 @@ class ApplicationService:
             for event in self.event_repository.get_event_by_application_id(application_id=approved_application.application_id):
                 employee_locations.append(
                     ApprovedApplicationLocationSchema(
+                        employee_id=user.staff_id,
+                        role=user.role,
+                        application_hour=event.application_hour,
                         employee_fname=user.staff_fname,
                         employee_lname=user.staff_lname,
                         location=event.location,
                         position=user.position,
-                        date=event.requested_date.isoformat()
+                        date=event.requested_date.isoformat(),
+                        team_id=user.team_id
                     )
                 )
         return employee_locations
