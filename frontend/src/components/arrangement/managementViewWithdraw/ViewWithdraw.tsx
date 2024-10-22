@@ -12,6 +12,7 @@ export interface ApprovedApplication {
         staff_id: number;
         staff_fname: string;
         staff_lname: string;
+        email: string; // Email is part of staff
     };
     application_id: number;
     application_state: string;
@@ -30,6 +31,7 @@ export interface Event {
     event_id: number;
     requested_date: string;
     location: string;
+    application_hour: number; // Application hours are part of each event
 }
 
 interface ViewWithdrawProps {
@@ -74,6 +76,10 @@ export default function ViewWithdraw({ data, onWithdraw }: ViewWithdrawProps) {
                                     <TableHead>Event ID</TableHead>
                                     <TableHead>Date</TableHead>
                                     <TableHead>Location</TableHead>
+                                    <TableHead>Staff Full Name</TableHead>
+                                    <TableHead>Email</TableHead>
+                                    <TableHead>Application ID</TableHead>
+                                    <TableHead>Application Hours</TableHead> {/* Updated to reflect event-specific application hours */}
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -89,6 +95,10 @@ export default function ViewWithdraw({ data, onWithdraw }: ViewWithdrawProps) {
                                             <TableCell>{event.event_id}</TableCell>
                                             <TableCell>{event.requested_date}</TableCell>
                                             <TableCell>{event.location}</TableCell>
+                                            <TableCell>{`${application.staff.staff_fname} ${application.staff.staff_lname}`}</TableCell>
+                                            <TableCell>{application.staff.email}</TableCell>
+                                            <TableCell>{application.application_id}</TableCell>
+                                            <TableCell>{event.application_hour}</TableCell> {/* Updated to reflect event's application hours */}
                                         </TableRow>
                                     ))
                                 )}
