@@ -114,11 +114,15 @@ class ApplicationApproveRejectSchema(BaseModel):
 
 
 class ApprovedApplicationLocationSchema(BaseModel):
+    employee_id:int
     employee_fname: str = Field(examples=["John", "Jane"])
     employee_lname: str = Field(examples=["Doe", "Smith"])
     location: str = Field(examples=["New York", "London"])
     position: str = Field(examples=["Manager", "Developer"])
     date: str = Field(examples=["2023-10-01", "2023-10-02"])
+    application_hour:str = Field(examples=["FULLDAY","AM","PM"])
+    role:int
+    team_id:int
 
     class Config:
         from_attributes = True
