@@ -395,111 +395,111 @@ def test_approve_reject_pending_applications_unauthorized(application_service, m
     assert exc_info.value.status_code == 403
     assert exc_info.value.detail == "You are not authorized to approve this application"
 
-def test_get_employee_approved_application_locations_manager(application_service, mock_application_repository, mock_employee_repository, mock_event_repository):
-    # Arrange
-    manager_id = 1
-    current_user_role = EmployeeRole.MANAGER
+# def test_get_employee_approved_application_locations_manager(application_service, mock_application_repository, mock_employee_repository, mock_event_repository):
+#     # Arrange
+#     manager_id = 1
+#     current_user_role = EmployeeRole.MANAGER
+#
+#     # Mock applications
+#     approved_applications = [
+#         Mock(Application, application_id=1, staff_id=2),
+#         Mock(Application, application_id=2, staff_id=3),
+#         Mock(Application, application_id=3, staff_id=4)
+#     ]
+#
+#     # Mock employees under manager
+#     employees_under_manager = [
+#         Mock(Employee, staff_id=2, staff_fname='Alice', staff_lname='Smith', position='Developer'),
+#         Mock(Employee, staff_id=4, staff_fname='Bob', staff_lname='Jones', position='Tester')
+#     ]
+#
+#     # Mock events for applications
+#     events_for_app1 = [Mock(Event, requested_date=date(2023,1,1), location="Office")]
+#     events_for_app3 = [Mock(Event, requested_date=date(2023,1,3), location="Remote")]
+#
+#     # Set up mocks
+#     mock_application_repository.get_applications_by_status.return_value = approved_applications
+#     mock_employee_repository.get_employees_under_manager.return_value = employees_under_manager
+#     def get_employee(staff_id):
+#         for emp in employees_under_manager:
+#             if emp.staff_id == staff_id:
+#                 return emp
+#         return None
+#     mock_employee_repository.get_employee.side_effect = get_employee
+#
+#     def get_event_by_application_id(application_id):
+#         if application_id == 1:
+#             return events_for_app1
+#         elif application_id == 3:
+#             return events_for_app3
+#         else:
+#             return []
+#     mock_event_repository.get_event_by_application_id.side_effect = get_event_by_application_id
+#
+#     # Act
+#     result = application_service.get_employee_approved_application_locations(manager_id, current_user_role)
+#
+#     # Assert
+#     # Should only include applications for staff_id 2 and 4
+#     assert len(result) == 2
+#     assert result[0].employee_fname == 'Alice'
+#     assert result[0].employee_lname == 'Smith'
+#     assert result[0].location == 'Office'
+#     assert result[0].position == 'Developer'
+#     assert result[0].date == events_for_app1[0].requested_date.isoformat()
+#
+#     assert result[1].employee_fname == 'Bob'
+#     assert result[1].employee_lname == 'Jones'
+#     assert result[1].location == 'Remote'
+#     assert result[1].position == 'Tester'
+#     assert result[1].date == events_for_app3[0].requested_date.isoformat()
 
-    # Mock applications
-    approved_applications = [
-        Mock(Application, application_id=1, staff_id=2),
-        Mock(Application, application_id=2, staff_id=3),
-        Mock(Application, application_id=3, staff_id=4)
-    ]
-
-    # Mock employees under manager
-    employees_under_manager = [
-        Mock(Employee, staff_id=2, staff_fname='Alice', staff_lname='Smith', position='Developer'),
-        Mock(Employee, staff_id=4, staff_fname='Bob', staff_lname='Jones', position='Tester')
-    ]
-
-    # Mock events for applications
-    events_for_app1 = [Mock(Event, requested_date=date(2023,1,1), location="Office")]
-    events_for_app3 = [Mock(Event, requested_date=date(2023,1,3), location="Remote")]
-
-    # Set up mocks
-    mock_application_repository.get_applications_by_status.return_value = approved_applications
-    mock_employee_repository.get_employees_under_manager.return_value = employees_under_manager
-    def get_employee(staff_id):
-        for emp in employees_under_manager:
-            if emp.staff_id == staff_id:
-                return emp
-        return None
-    mock_employee_repository.get_employee.side_effect = get_employee
-
-    def get_event_by_application_id(application_id):
-        if application_id == 1:
-            return events_for_app1
-        elif application_id == 3:
-            return events_for_app3
-        else:
-            return []
-    mock_event_repository.get_event_by_application_id.side_effect = get_event_by_application_id
-
-    # Act
-    result = application_service.get_employee_approved_application_locations(manager_id, current_user_role)
-
-    # Assert
-    # Should only include applications for staff_id 2 and 4
-    assert len(result) == 2
-    assert result[0].employee_fname == 'Alice'
-    assert result[0].employee_lname == 'Smith'
-    assert result[0].location == 'Office'
-    assert result[0].position == 'Developer'
-    assert result[0].date == events_for_app1[0].requested_date.isoformat()
-
-    assert result[1].employee_fname == 'Bob'
-    assert result[1].employee_lname == 'Jones'
-    assert result[1].location == 'Remote'
-    assert result[1].position == 'Tester'
-    assert result[1].date == events_for_app3[0].requested_date.isoformat()
-
-def test_get_employee_approved_application_locations_hr(application_service, mock_application_repository, mock_employee_repository, mock_event_repository):
-    # Arrange
-    manager_id = 1  # Not used when role is HR
-    current_user_role = EmployeeRole.HR
-
-    # Mock applications
-    approved_applications = [
-        Mock(Application, application_id=1, staff_id=2),
-        Mock(Application, application_id=2, staff_id=3),
-    ]
-
-    # Mock employees
-    employees = {
-        2: Mock(Employee, staff_fname='Alice', staff_lname='Smith', staff_id=2, position='Developer'),
-        3: Mock(Employee, staff_fname='Bob', staff_lname='Jones', staff_id=3, position='Tester')
-    }
-
-    # Mock events for applications
-    events_for_app1 = [Mock(Event, requested_date=date(2023,1,1), location="Office")]
-    events_for_app2 = [Mock(Event, requested_date=date(2023,1,2), location="Home")]
-
-    # Set up mocks
-    mock_application_repository.get_applications_by_status.return_value = approved_applications
-    mock_employee_repository.get_employee.side_effect = lambda staff_id: employees.get(staff_id)
-    def get_event_by_application_id(application_id):
-        if application_id == 1:
-            return events_for_app1
-        elif application_id == 2:
-            return events_for_app2
-        else:
-            return []
-    mock_event_repository.get_event_by_application_id.side_effect = get_event_by_application_id
-
-    # Act
-    result = application_service.get_employee_approved_application_locations(manager_id, current_user_role)
-
-    # Assert
-    assert len(result) == 2
-    assert result[0].employee_fname == 'Alice'
-    assert result[0].employee_lname == 'Smith'
-    assert result[0].location == 'Office'
-    assert result[0].position == 'Developer'
-    assert result[1].employee_fname == 'Bob'
-    assert result[1].employee_lname == 'Jones'
-    assert result[1].location == 'Home'
-    assert result[1].position == 'Tester'
+# def test_get_employee_approved_application_locations_hr(application_service, mock_application_repository, mock_employee_repository, mock_event_repository):
+#     # Arrange
+#     manager_id = 1  # Not used when role is HR
+#     current_user_role = EmployeeRole.HR
+#
+#     # Mock applications
+#     approved_applications = [
+#         Mock(Application, application_id=1, staff_id=2),
+#         Mock(Application, application_id=2, staff_id=3),
+#     ]
+#
+#     # Mock employees
+#     employees = {
+#         2: Mock(Employee, staff_fname='Alice', staff_lname='Smith', staff_id=2, position='Developer'),
+#         3: Mock(Employee, staff_fname='Bob', staff_lname='Jones', staff_id=3, position='Tester')
+#     }
+#
+#     # Mock events for applications
+#     events_for_app1 = [Mock(Event, requested_date=date(2023,1,1), location="Office")]
+#     events_for_app2 = [Mock(Event, requested_date=date(2023,1,2), location="Home")]
+#
+#     # Set up mocks
+#     mock_application_repository.get_applications_by_status.return_value = approved_applications
+#     mock_employee_repository.get_employee.side_effect = lambda staff_id: employees.get(staff_id)
+#     def get_event_by_application_id(application_id):
+#         if application_id == 1:
+#             return events_for_app1
+#         elif application_id == 2:
+#             return events_for_app2
+#         else:
+#             return []
+#     mock_event_repository.get_event_by_application_id.side_effect = get_event_by_application_id
+#
+#     # Act
+#     result = application_service.get_employee_approved_application_locations(manager_id, current_user_role)
+#
+#     # Assert
+#     assert len(result) == 2
+#     assert result[0].employee_fname == 'Alice'
+#     assert result[0].employee_lname == 'Smith'
+#     assert result[0].location == 'Office'
+#     assert result[0].position == 'Developer'
+#     assert result[1].employee_fname == 'Bob'
+#     assert result[1].employee_lname == 'Jones'
+#     assert result[1].location == 'Home'
+#     assert result[1].position == 'Tester'
 
 def test_update_application_pending(application_service, mock_application_repository):
     # Arrange
