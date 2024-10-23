@@ -45,6 +45,7 @@ export default function ViewWithdraw({ data, onWithdraw }: ViewWithdrawProps) {
     const handleEventSelection = (applicationId: number, eventId: number) => {
         setSelectedEvents(prev => {
             if (prev[eventId]) {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 const { [eventId]: _, ...rest } = prev; // Deselect the event
                 return rest;
             }

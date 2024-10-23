@@ -26,20 +26,20 @@ export default function Component() {
       };
       fetchApplications();
     }
-  }, [token]);
+  }, [token, userId]);
 
   const handleWithdraw = async (selectedEvents: { applicationId: number; eventId: number }[]) => {
     try {
         // Create an array of promises
         const promises = selectedEvents.map(({ applicationId, eventId }) => 
-            WithdrawApplicationEvent(token, applicationId, eventId, userId)
+            WithdrawApplicationEvent(token || '', applicationId, eventId, Number(userId))
         );
         
         // Use Promise.all to run all requests concurrently
         setWithdrawing(true);
         await Promise.all(promises);
         setWithdrawing(false);
-
+  
         console.log('All selected events have been withdrawn successfully');
         // reload the page
         window.location.reload(); 
@@ -47,7 +47,7 @@ export default function Component() {
         console.error('Error withdrawing events:', error);
         
     }
-};
+  };
 
 
   if (pageLoading || (!pageLoading && token === undefined)) {
