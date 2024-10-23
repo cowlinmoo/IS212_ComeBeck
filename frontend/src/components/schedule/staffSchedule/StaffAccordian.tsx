@@ -56,7 +56,7 @@ const StaffAccordion: React.FC<IStaffSchedule> = ({ employeeLocations }) => {
             }
             getTeam()
         }
-    }, [token, userId, employeeLocations])
+    }, [employeeLocations, token, user?.team_id, userId])
     return (
         <Accordion type="single" collapsible>
             <AccordionItem value="item-1">
