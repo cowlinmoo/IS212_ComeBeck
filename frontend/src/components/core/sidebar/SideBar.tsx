@@ -12,6 +12,7 @@ const tabs = [
   { name: "Arrangement Approvals", icon: Settings, path: "/approvals" },
   { name: "Overview Schedule", icon: Users, path: "/overview" },
   { name: "Pending Arrangements", icon: Users, path: "/managementViewPending" },
+  { name: "Withdraw Arrangements (Manager)", icon: Users, path: "/managementViewWithdraw" },
 ];
 
 export default function SideBar() {
