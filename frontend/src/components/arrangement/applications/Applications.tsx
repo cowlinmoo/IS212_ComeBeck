@@ -12,7 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { TabsContent} from "@/components/ui/tabs";
+import { TabsContent } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 
@@ -27,11 +27,12 @@ import { CalendarIcon } from "lucide-react";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
 } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -49,29 +50,33 @@ const applyFormSchema = z.object({
     required_error: "Please specify if this is for multiple dates.",
   }),
   singleDate: z
-    .date({
-      required_error: "Please select a date.",
+    .object({
+      date: z.date(),
+      hour: z.enum(["fullday", "am", "pm"]),
     })
     .refine((date) => !isWeekend(date), { message: "Weekends are not allowed" })
     .optional(),
   multipleDate: z
     .array(
-      z.date({
-        required_error: "Please select dates (at least 2), excluding weekends.",
+      z.object({
+        date: z.date(),
+        hour: z.enum(["fullday", "am", "pm"]),
       })
     )
+    .min(2, "Please select at least 2 dates.")
     .refine(
       (dates) => dates.length > 1 && dates.every((date) => !isWeekend(date)),
       { message: "Please select dates (at least 2), excluding weekends." }
     )
     .optional(),
-  isRecurring: z.enum(["Yes","No"]).optional(),
-  recurringType: z.enum(["Weekly","Monthly"]).optional(),
-  endDate: z.date({
-    required_error: "Please select a date.",
-  })
-  .refine((date) => !isWeekend(date), { message: "Weekends are not allowed" })
-  .optional(),
+  isRecurring: z.enum(["Yes", "No"]).optional(),
+  recurringType: z.enum(["Weekly", "Monthly"]).optional(),
+  endDate: z
+    .date({
+      required_error: "Please select a date.",
+    })
+    .refine((date) => !isWeekend(date), { message: "Weekends are not allowed" })
+    .optional(),
   reason: z.string(),
 });
 
@@ -86,34 +91,40 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
     async function fetchData() {
       const headers = { Authorization: `Bearer ${token}` };
       try {
-        const response = await fetch(
-          `${URL}/staff/` + staffId,
-          { headers }
-        );
+        const response = await fetch(`${URL}/staff/` + staffId, { headers });
         if (!response.ok) {
           throw new Error(`GET Application API validation ERROR`);
         } else {
           const data = await response.json();
-          let applications = []
+          let applications = [];
           if (data.length < 1) {
-            applications = []
+            applications = [];
           } else {
             for (const application of data) {
               console.log(application);
               for (const event of application["events"]) {
-                const dateSplit = event["requested_date"].split("-")
-                applications.push(new Date(Number(dateSplit[0]), Number(dateSplit[1])-1, Number(dateSplit[2])));
-                  }
+                const dateSplit = event["requested_date"].split("-");
+                const date = new Date(
+                  Number(dateSplit[0]),
+                  Number(dateSplit[1]) - 1,
+                  Number(dateSplit[2])
+                );
+                applications.push({
+                  date: date,
+                  hour: event["application_hour"],
+                });
+              }
             }
-            setwfhApplications(applications)
+            setwfhApplications(applications);
           }
         }
-      } catch (error:any) {
+      } catch (error: any) {
         console.log("GET API fetching error.", error.message);
       }
     }
     fetchData();
-  },[staffId, token]);
+  }, [staffId, token]);
+  console.log(wfhApplications)
 
   // restricted calendar
   const [fromDate, setFromDate] = useState<Date>(new Date());
@@ -123,7 +134,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
     const currentDate = new Date();
     setFromDate(subMonths(currentDate, 2));
     setToDate(addMonths(currentDate, 3));
-  },[]);
+  }, []);
 
   //end date variables and restriction
   const [fromEndDate, setFromEndDate] = useState<Date>(new Date());
@@ -131,39 +142,82 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
   useEffect(() => {
     const currentDate = fromEndDate;
     setToEndDate(addMonths(currentDate, 3));
-  },[fromEndDate]);
+  }, [fromEndDate]);
 
-  // disable weekends and all dates with existing wfh arrangements or pending wfh applications
+  // // disable weekends and all dates with existing wfh arrangements or pending wfh applications
   const isDateDisabled = (date: Date) => {
-    let hasApplication = false
+    let hasApplication = false;
     for (const d of wfhApplications) {
-      if ((d as Date).toDateString() === date.toDateString()) {
-        hasApplication = true;
-        break;
+      if ((d.date as Date).toDateString() === date.toDateString()) {
+        if (d.hour === "fullday"){
+          hasApplication = true;
+          break;
+        }
       }
     }
-    return isWeekend(date) || date < fromDate || date > toDate || hasApplication ;
+    return (
+      isWeekend(date) || date < fromDate || date > toDate || hasApplication
+    );
   };
   const onlyDisableWeekend = (date: Date) => {
-    return isWeekend(date) || date < fromDate || date > toDate ;
+    return isWeekend(date) || date < fromDate || date > toDate;
   };
+  const isAMButtonDisabled = (date:Date) =>{
+    let hasApplication = false;
+    for (const d of wfhApplications) {
+      if ((d.date as Date).toDateString() === date.toDateString()) {
+        if (d.hour === "am"){
+          hasApplication = true;
+          break;
+        }
+      }
+    }
+    return hasApplication
+  }
+  const isPMButtonDisabled = (date:Date) =>{
+    let hasApplication = false;
+    for (const d of wfhApplications) {
+      if ((d.date as Date).toDateString() === date.toDateString()) {
+        if (d.hour === "pm"){
+          hasApplication = true;
+          break;
+        }
+      }
+    }
+    return hasApplication
+
+  }
+  const isFULLDAYButtonDisabled = (date:Date) =>{
+    let hasApplication = false;
+    for (const d of wfhApplications) {
+      if ((d.date as Date).toDateString() === date.toDateString()) {
+        if (d.hour === "pm" || d.hour==="am"){
+          hasApplication = true;
+          break;
+        }
+      }
+    }
+    return hasApplication
+
+  }
 
   //variable to check if user selected more than 1 date for multiple dates calendar
   const [showMultipleDateAlert, setShowMultipleDateAlert] = useState(false);
   //Alert variable if no date selected when form is submitted
   const [showEmptyDateAlert, setShowEmptyDateAlert] = useState(false);
-  const checkMultipleDate=(date:Date | Date[] | undefined)=>{
-    if (Array.isArray(date)){
-      setShowMultipleDateAlert(date.length<2)
+  const checkMultipleDate = (date: Date | Date[] | undefined) => {
+    if (Array.isArray(date)) {
+      setShowMultipleDateAlert(date.length < 2);
+    } else if (date) {
+      setShowMultipleDateAlert(false);
     }
-    else if (date){
-      setShowMultipleDateAlert(false)
-    }
-  }
+  };
   //Alert variable if reason text area is not filled
   const [showEmptyReasonAlert, setShowEmptyReasonAlert] = useState(false);
   //Apply form
-  const applyForm = useForm<z.infer<typeof applyFormSchema> & { arrangementType: string }>({
+  const applyForm = useForm<
+    z.infer<typeof applyFormSchema> & { arrangementType: string }
+  >({
     resolver: zodResolver(applyFormSchema),
     defaultValues: {
       arrangementType: "WFH",
@@ -172,6 +226,28 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
       reason: "",
     },
   });
+  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
+  const { fields, append, remove } = useFieldArray({
+    name: "multipleDate",
+    control: applyForm.control,
+  });
+  const handleDateSelect = (dates: Date[] | undefined) => {
+    if (!dates) return
+
+    // Remove dates that are no longer selected
+    remove(fields.map((_, index) => index).filter(
+      index => !dates.some(d => d.toDateString() === fields[index].date.toDateString())
+    ))
+
+    // Add newly selected dates
+    dates.forEach(date => {
+      if (!fields.some(field => field.date.toDateString() === date.toDateString())) {
+        append({ date, hourPreference: 'fullday' })
+      }
+    })
+
+    setSelectedDates(dates)
+  }
 
   //Success alert if form has been successfully submitted
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
@@ -184,20 +260,25 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
       setShowEmptyReasonAlert(false);
     }
     setShowEmptyDateAlert(
-      (values.isMultiple === "No" && !values.singleDate && values.isRecurring==="No") ||
+      (values.isMultiple === "No" &&
+        !values.singleDate &&
+        values.isRecurring === "No") ||
         (values.isMultiple === "Yes" &&
-          (!values.multipleDate || values.multipleDate.length === 0)) || 
-          (values.isMultiple === "No" && values.isRecurring==="Yes" && (!values.endDate))
+          (!values.multipleDate || values.multipleDate.length === 0)) ||
+        (values.isMultiple === "No" &&
+          values.isRecurring === "Yes" &&
+          !values.endDate)
     );
-    if (
-      showEmptyReasonAlert === false &&
-      showMultipleDateAlert === false 
-    ) {
-      const headers = { "Authorization": `Bearer ${token}`, "Content-Type": "application/json", "accept": "application/json"};
-      //singleDate selected/ recurring date 
+    if (showEmptyReasonAlert === false && showMultipleDateAlert === false) {
+      const headers = {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        accept: "application/json",
+      };
+      //singleDate selected/ recurring date
       if (values.singleDate) {
-        let content = {}
-        if (values.isRecurring==="No"){
+        let content = {};
+        if (values.isRecurring === "No") {
           content = {
             location: "Home",
             reason: values.reason,
@@ -206,9 +287,8 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
             staff_id: staffId,
             recurring: false,
           };
-        }
-        else if (values.isRecurring==="Yes" && !values.endDate===false){
-          if (values.recurringType==="Weekly"){
+        } else if (values.isRecurring === "Yes" && !values.endDate === false) {
+          if (values.recurringType === "Weekly") {
             content = {
               location: "Home",
               reason: values.reason,
@@ -217,10 +297,12 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
               staff_id: staffId,
               recurring: true,
               recurrence_type: "weekly",
-              end_date: format(values.endDate,"yyyy-MM-dd")
+              end_date: format(values.endDate, "yyyy-MM-dd"),
             };
-          }
-          else if (values.recurringType==="Monthly" && !values.endDate===false){
+          } else if (
+            values.recurringType === "Monthly" &&
+            !values.endDate === false
+          ) {
             content = {
               location: "Home",
               reason: values.reason,
@@ -229,16 +311,17 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
               staff_id: staffId,
               recurring: true,
               recurrence_type: "monthly",
-              end_date: format(values.endDate,"yyyy-MM-dd")
+              end_date: format(values.endDate, "yyyy-MM-dd"),
             };
           }
         }
         console.log(content);
         try {
-          const response = await fetch(
-            URL,
-            { headers: headers, method: "POST", body: JSON.stringify(content) }
-          );
+          const response = await fetch(URL, {
+            headers: headers,
+            method: "POST",
+            body: JSON.stringify(content),
+          });
           if (!response.ok) {
             console.log(await response.json());
             throw new Error(`POST Application API validation ERROR`);
@@ -253,15 +336,15 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
         } catch (error: any) {
           console.log("POST API fetching error.", error.message);
         }
-      } 
+      }
       //multiple dates selected
       else if (values.multipleDate) {
         const events = [];
         for (const d of values.multipleDate) {
-          events.push({"requested_date":format(d, "yyyy-MM-dd")});
-          }
-        console.log(values.multipleDate[0])
-        console.log(events)
+          events.push({ requested_date: format(d, "yyyy-MM-dd") });
+        }
+        console.log(values.multipleDate[0]);
+        console.log(events);
         const multiContent = {
           location: "Home",
           reason: values.reason,
@@ -272,14 +355,11 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
           events: events,
         };
         try {
-          const response = await fetch(
-            URL,
-            {
-              headers: headers,
-              method: "POST",
-              body: JSON.stringify(multiContent),
-            }
-          );
+          const response = await fetch(URL, {
+            headers: headers,
+            method: "POST",
+            body: JSON.stringify(multiContent),
+          });
           if (!response.ok) {
             console.log(await response.json());
             throw new Error(`POST Application API validation ERROR`);
@@ -299,76 +379,160 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
   }
 
   return (
-        <TabsContent value="apply">
-          <Card>
-            <CardHeader>
-              <CardTitle>Apply for Arrangement</CardTitle>
-              <CardDescription>
-                Submit a new arrangement request.
-              </CardDescription>
-            </CardHeader>
-            <Form {...applyForm}>
-              <form onSubmit={applyForm.handleSubmit(applySubmit)}>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Arrangement Type:</Label> <br></br>
-                    <Label className="font-bold">WFH</Label>
-                  </div>
-                  {showMultipleDateAlert && (
-                    <Alert variant="destructive">
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertTitle>Warning</AlertTitle>
-                      <AlertDescription>
-                        Please select at least 2 dates for the multiple dates
-                        calendar option.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  {showEmptyReasonAlert && (
-                    <Alert variant="destructive">
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertTitle>Warning</AlertTitle>
-                      <AlertDescription>
-                        Please indicate the reason for your application.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  {showEmptyDateAlert && (
-                    <Alert variant="destructive">
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertTitle>Warning</AlertTitle>
-                      <AlertDescription>
-                        No date has been selected.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  {showSuccessAlert && (
-                    <Alert
-                      variant="default"
-                      className="bg-green-100 border-green-500"
-                    >
-                      <CheckCircle2 className="h-4 w-4 text-green-600" />
-                      <AlertTitle className="text-green-800">
-                        Success
-                      </AlertTitle>
-                      <AlertDescription className="text-green-700">
-                        Your WFH request has been successfully submitted.
-                      </AlertDescription>
-                    </Alert>
-                  )}
+    <TabsContent value="apply">
+      <Card>
+        <CardHeader>
+          <CardTitle>Apply for Arrangement</CardTitle>
+          <CardDescription>Submit a new arrangement request.</CardDescription>
+        </CardHeader>
+        <Form {...applyForm}>
+          <form onSubmit={applyForm.handleSubmit(applySubmit)}>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Arrangement Type:</Label> <br></br>
+                <Label className="font-bold">WFH</Label>
+              </div>
+              {showMultipleDateAlert && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Warning</AlertTitle>
+                  <AlertDescription>
+                    Please select at least 2 dates for the multiple dates
+                    calendar option.
+                  </AlertDescription>
+                </Alert>
+              )}
+              {showEmptyReasonAlert && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Warning</AlertTitle>
+                  <AlertDescription>
+                    Please indicate the reason for your application.
+                  </AlertDescription>
+                </Alert>
+              )}
+              {showEmptyDateAlert && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Warning</AlertTitle>
+                  <AlertDescription>
+                    No date has been selected.
+                  </AlertDescription>
+                </Alert>
+              )}
+              {showSuccessAlert && (
+                <Alert
+                  variant="default"
+                  className="bg-green-100 border-green-500"
+                >
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  <AlertTitle className="text-green-800">Success</AlertTitle>
+                  <AlertDescription className="text-green-700">
+                    Your WFH request has been successfully submitted.
+                  </AlertDescription>
+                </Alert>
+              )}
+              <FormField
+                control={applyForm.control}
+                name="isMultiple"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel>Is this for multiple dates?</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          if (value === "No") {
+                            applyForm.setValue("multipleDate", undefined);
+                          } else {
+                            applyForm.setValue("singleDate", undefined);
+                          }
+                        }}
+                        defaultValue={field.value}
+                        className="flex flex-col space-y-1"
+                      >
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="Yes" />
+                          </FormControl>
+                          <FormLabel className="font-normal">Yes</FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="No" />
+                          </FormControl>
+                          <FormLabel className="font-normal">No</FormLabel>
+                        </FormItem>
+                      </RadioGroup>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              {applyForm.watch("isMultiple") === "No" && (
+                <>
                   <FormField
                     control={applyForm.control}
-                    name="isMultiple"
+                    name="singleDate"
                     render={({ field }) => (
-                      <FormItem className="space-y-3">
-                        <FormLabel>Is this for multiple dates?</FormLabel>
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Date:</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "w-[240px] justify-start text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP")
+                                ) : (
+                                  <span>Pick a date</span>
+                                )}
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent>
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={(date) => {
+                                field.onChange(date);
+                                if (date) {
+                                  setFromEndDate(date);
+                                }
+                              }}
+                              fromDate={fromDate}
+                              toDate={toDate}
+                              disabled={isDateDisabled}
+                              initialFocus
+                            />
+                            <div className="p-3 border-t">
+                              <p className="text-s text-muted-foreground">
+                                Selectable range:{" "}
+                                {format(fromDate, "MMM d, yyyy")} -{" "}
+                                {format(toDate, "MMM d, yyyy")}
+                              </p>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={applyForm.control}
+                    name="isRecurring"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Is a recurring arrangement?</FormLabel>
                         <FormControl>
                           <RadioGroup
                             onValueChange={(value) => {
                               field.onChange(value);
                               if (value === "No") {
-                                applyForm.setValue("multipleDate", undefined);
-                              } else {
                                 applyForm.setValue("singleDate", undefined);
                               }
                             }}
@@ -392,265 +556,212 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                       </FormItem>
                     )}
                   />
-                  {applyForm.watch("isMultiple") === "No" && (
+
+                  {applyForm.watch("isRecurring") === "Yes" && (
                     <>
-                    <FormField
-                      control={applyForm.control}
-                      name="singleDate"
-                      render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Date:</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
+                      <FormField
+                        control={applyForm.control}
+                        name="recurringType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>What is the recurring type?</FormLabel>
                             <FormControl>
-                              <Button
-                                variant={"outline"}
-                                className={cn(
-                                  "w-[240px] justify-start text-left font-normal",
-                                  !field.value && "text-muted-foreground"
-                                )}
+                              <RadioGroup
+                                onValueChange={(value) => {
+                                  field.onChange(value);
+                                }}
+                                defaultValue={field.value}
+                                className="flex flex-col space-y-1"
                               >
-                                {field.value ? (
-                                  format(field.value, "PPP")
-                                ) : (
-                                  <span>Pick a date</span>
-                                )}
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent>
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={(date) => {
-                                  field.onChange(date);
-                                  if (date) {
-                                    setFromEndDate(date);
-                                  }
-                                  
-                                }}
-                                fromDate={fromDate}
-                                toDate={toDate}
-                                disabled={isDateDisabled}
-                                initialFocus
-                              />
-                              <div className="p-3 border-t">
-                                <p className="text-s text-muted-foreground">
-                                  Selectable range:{" "}
-                                  {format(fromDate, "MMM d, yyyy")} -{" "}
-                                  {format(toDate, "MMM d, yyyy")}
-                                </p>
-                              </div>
-                            </PopoverContent>
-                          </Popover>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                    control={applyForm.control}
-                    name="isRecurring"
-                    render= {({field})=> (
-                      <FormItem>
-                        <FormLabel>Is a recurring arrangement?</FormLabel>
-                        <FormControl>
-                            <RadioGroup
-                            onValueChange={(value)=>{
-                              field.onChange(value)
-                              if (value === "No"){
-                                applyForm.setValue("singleDate", undefined)
-                              }
-                            }}
-                            defaultValue= {field.value}
-                            className="flex flex-col space-y-1"
-                            >
-                              <FormItem className="flex items-center space-x-3 space-y-0">
-                                <FormControl>
-                                  <RadioGroupItem value = "Yes"/>
-                                </FormControl>
-                                <FormLabel className="font-normal">
-                                  Yes
-                                </FormLabel>
-                              </FormItem>
-                              <FormItem className="flex items-center space-x-3 space-y-0">
-                              <FormControl>
-                                  <RadioGroupItem value = "No"/>
-                                </FormControl>
-                                <FormLabel className="font-normal">
-                                  No
-                                </FormLabel>
-                              </FormItem>
-                            </RadioGroup>
-                          </FormControl>
-                      </FormItem>
-                    )}/>
-                    
-                    {applyForm.watch("isRecurring") === "Yes" && (
-                      <>
+                                <FormItem className="flex items-center space-x-3 space-y-0">
+                                  <FormControl>
+                                    <RadioGroupItem value="Weekly" />
+                                  </FormControl>
+                                  <FormLabel className="font-normal">
+                                    Weekly
+                                  </FormLabel>
+                                </FormItem>
+                                <FormItem className="flex items-center space-x-3 space-y-0">
+                                  <FormControl>
+                                    <RadioGroupItem value="Monthly" />
+                                  </FormControl>
+                                  <FormLabel className="font-normal">
+                                    Monthly
+                                  </FormLabel>
+                                </FormItem>
+                              </RadioGroup>
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
                       <FormField
-                      control={applyForm.control}
-                      name="recurringType"
-                      render= {({field})=> (
-                        <FormItem>
-                          <FormLabel>What is the recurring type?</FormLabel>
-                          <FormControl>
-                            <RadioGroup
-                            onValueChange={(value)=>{
-                              field.onChange(value)
-                            }}
-                            defaultValue= {field.value}
-                            className="flex flex-col space-y-1"
-                            >
-                              <FormItem className="flex items-center space-x-3 space-y-0">
+                        control={applyForm.control}
+                        name="endDate"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <FormLabel>
+                              End date for recurring arrangement:
+                            </FormLabel>
+                            <Popover>
+                              <PopoverTrigger asChild>
                                 <FormControl>
-                                  <RadioGroupItem value = "Weekly"/>
+                                  <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                      "w-[240px] justify-start text-left font-normal",
+                                      !field.value && "text-muted-foreground"
+                                    )}
+                                  >
+                                    {field.value ? (
+                                      format(field.value, "PPP")
+                                    ) : (
+                                      <span>Pick a date</span>
+                                    )}
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                  </Button>
                                 </FormControl>
-                                <FormLabel className="font-normal">
-                                  Weekly
-                                </FormLabel>
-                              </FormItem>
-                              <FormItem className="flex items-center space-x-3 space-y-0">
-                              <FormControl>
-                                  <RadioGroupItem value = "Monthly"/>
-                                </FormControl>
-                                <FormLabel className="font-normal">
-                                  Monthly
-                                </FormLabel>
-                              </FormItem>
-                            </RadioGroup>
-                          </FormControl>
-                        </FormItem>
-                      )}/>
-                      <FormField
-                      control={applyForm.control}
-                      name="endDate"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>End date for recurring arrangement:</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant={"outline"}
-                                  className={cn(
-                                    "w-[240px] justify-start text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                  )}
-                                >
-                                  {field.value ? (
-                                    format(field.value, "PPP")
-                                  ) : (
-                                    <span>Pick a date</span>
-                                  )}
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent>
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={(date) => {
-                                  field.onChange(date);
-                                  
-                                }}
-                                fromDate={fromEndDate}
-                                toDate={toEndDate}
-                                disabled={onlyDisableWeekend}
-                                initialFocus
-                              />
-                              <div className="p-3 border-t">
-                                <p className="text-s text-muted-foreground">
-                                  Selectable range:{" "}
-                                  {format(fromEndDate, "MMM d, yyyy")} -{" "}
-                                  {format(toEndDate, "MMM d, yyyy")}
-                                </p>
-                              </div>
-                            </PopoverContent>
-                          </Popover>
-                        </FormItem>
-                      )}
-                    />
-                      </>
-                    )
-                    }
+                              </PopoverTrigger>
+                              <PopoverContent>
+                                <Calendar
+                                  mode="single"
+                                  selected={field.value}
+                                  onSelect={(date) => {
+                                    field.onChange(date);
+                                  }}
+                                  fromDate={fromEndDate}
+                                  toDate={toEndDate}
+                                  disabled={onlyDisableWeekend}
+                                  initialFocus
+                                />
+                                <div className="p-3 border-t">
+                                  <p className="text-s text-muted-foreground">
+                                    Selectable range:{" "}
+                                    {format(fromEndDate, "MMM d, yyyy")} -{" "}
+                                    {format(toEndDate, "MMM d, yyyy")}
+                                  </p>
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          </FormItem>
+                        )}
+                      />
                     </>
                   )}
-                  {applyForm.watch("isMultiple") === "Yes" && (
-                    <FormField
-                      control={applyForm.control}
-                      name="multipleDate"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>Dates:</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant={"outline"}
-                                  className={cn(
-                                    "w-[240px] justify-start text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                  )}
-                                >
-                                  {field.value && field.value.length > 0 ? (
-                                    `${field.value.length} date(s) selected`
-                                  ) : (
-                                    <span>Pick at least 2 dates</span>
-                                  )}
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent>
-                              <Calendar
-                                mode="multiple"
-                                selected={field.value}
-                                onSelect={(dates) => {
-                                  field.onChange(dates);
-                                  checkMultipleDate(dates);
-                                }}
-                                fromDate={fromDate}
-                                toDate={toDate}
-                                disabled={isDateDisabled}
-                                initialFocus
-                              />
-                              <div className="p-3 border-t">
-                                <p className="text-s text-muted-foreground">
-                                  Selectable range:{" "}
-                                  {format(fromDate, "MMM d, yyyy")} -{" "}
-                                  {format(toDate, "MMM d, yyyy")}
-                                </p>
-                              </div>
-                            </PopoverContent>
-                          </Popover>
-                        </FormItem>
-                      )}
-                    />
-                  )}
-                  <FormField
-                    control={applyForm.control}
-                    name="reason"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Reason for arrangement:</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Please provide a reason for your arrangement request."
-                            {...field}
+                </>
+              )}
+              {applyForm.watch("isMultiple") === "Yes" && (
+                <FormField
+                  control={applyForm.control}
+                  name="multipleDate"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Dates:</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "w-[240px] justify-start text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value && field.value.length > 0 ? (
+                                `${field.value.length} date(s) selected`
+                              ) : (
+                                <span>Pick at least 2 dates</span>
+                              )}
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent>
+                          <Calendar
+                            mode="multiple"
+                            selected={selectedDates}
+                            onSelect={handleDateSelect}
+                            fromDate={fromDate}
+                            toDate={toDate}
+                            disabled={isDateDisabled}
+                            initialFocus
                           />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-                <CardFooter>
-                  <Button type="submit">Submit Application</Button>
-                </CardFooter>
-              </form>
-            </Form>
-          </Card>
-        </TabsContent>
+                          <div className="p-3 border-t">
+                            <p className="text-s text-muted-foreground">
+                              Selectable range:{" "}
+                              {format(fromDate, "MMM d, yyyy")} -{" "}
+                              {format(toDate, "MMM d, yyyy")}
+                            </p>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    </FormItem>
+                  )}
+                />
+              )}
+              {fields.map((field, index) => (
+                <FormField
+                  key={field.id}
+                  control={applyForm.control}
+                  name={`dates.${index}.hour`}
+                  render={({ field: hourField }) => (
+                    <FormItem className="space-y-3">
+                      <FormLabel>{format(field.date, "PPP")}</FormLabel>
+                      <FormDescription  hidden={!isAMButtonDisabled(field.date)} >There is an existing AM wfh arrangement for this day</FormDescription>
+                      <FormDescription hidden={!isPMButtonDisabled(field.date)}>There is an existing PM wfh arrangement for this day</FormDescription>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={hourField.onChange}
+                          defaultValue={hourField.value}
+                          className="flex space-x-4"
+                        >
+                          <FormItem className="flex items-center space-x-2 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="fullday" id="r1" hidden={isFULLDAYButtonDisabled(field.date)}/>
+                            </FormControl>
+                            <FormLabel className="font-normal" hidden={isFULLDAYButtonDisabled(field.date)}>Full Day</FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-2 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="am" hidden={isAMButtonDisabled(field.date)}/>
+                            </FormControl>
+                            <FormLabel className="font-normal" hidden={isAMButtonDisabled(field.date)}>AM</FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-2 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="pm" hidden={isPMButtonDisabled(field.date)} />
+                            </FormControl>
+                            <FormLabel className="font-normal" hidden={isPMButtonDisabled(field.date)}>PM</FormLabel>
+                          </FormItem>
+                        </RadioGroup>
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              ))}
+
+              <FormField
+                control={applyForm.control}
+                name="reason"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Reason for arrangement:</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Please provide a reason for your arrangement request."
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+            <CardFooter>
+              <Button type="submit">Submit Application</Button>
+            </CardFooter>
+          </form>
+        </Form>
+      </Card>
+    </TabsContent>
   );
 };
 export default Applications;
