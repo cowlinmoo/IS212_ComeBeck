@@ -1,4 +1,4 @@
-import { EmployeeLocation, getTeamsUnderMe, Team } from '@/app/schedule/api';
+import { EmployeeLocation, getAllTeamsUnderMe, getTeamsUnderMe, Team } from '@/app/schedule/api';
 import React, { useEffect, useState } from 'react';
 import {
     Accordion,
@@ -25,7 +25,8 @@ const OtherStaffAccordion: React.FC<OtherStaffAccordionProps> = ({ employeeLocat
         const getOtherTeams = async () => {
             try {
                 setLoading(true)
-                const response = await getTeamsUnderMe(token as string, user?.team_id as number)
+                let response = await getAllTeamsUnderMe(token as string, user?.team_id as number)
+                response = response.filter((team) => team.team_id !== user?.team_id)
                 setOtherTeams(response)
                 setLoading(false)
             }
