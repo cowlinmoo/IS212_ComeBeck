@@ -45,6 +45,22 @@ def test_get_all_department_ids(department_repository):
     assert len(result) == 3
     assert result == [1, 2, 3]
 
+def test_get_all_department(department_repository):
+    # Arrange
+    mock_departments = [
+        Department(department_id=1),
+        Department(department_id=2),
+        Department(department_id=3)
+    ]
+    department_repository.db.departments = mock_departments
+
+    # Act
+    result = department_repository.get_all_departments()
+
+    # Assert
+    assert len(result) == 3
+    assert result == mock_departments
+
 def test_get_department_by_id(department_repository):
     # Arrange
     mock_department = Department(department_id=1)
