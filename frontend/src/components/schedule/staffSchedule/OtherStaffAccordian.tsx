@@ -1,4 +1,4 @@
-import { EmployeeLocation, getAllTeamsUnderMe, getTeamsUnderMe, Team } from '@/app/schedule/api';
+import { EmployeeLocation, getAllTeamsUnderMe, Team } from '@/app/schedule/api';
 import React, { useEffect, useState } from 'react';
 import {
     Accordion,
