@@ -8,6 +8,7 @@ import { EmployeeLocation } from "@/app/schedule/api"
 import StaffAccordion from "./StaffAccordian"
 import OtherStaffAccordion from "./OtherStaffAccordian"
 import { addMonths, subMonths } from "date-fns"
+import useAuth from "@/lib/auth"
 
 // Mock data for team members and schedules
 const teamMembers = [
@@ -51,7 +52,7 @@ interface IStaffSchedule {
 // }
 
 const StaffSchedule: React.FC<IStaffSchedule> = ({ teamMembers }) => {
-
+  const { userId } = useAuth()
   const [activeTab, setActiveTab] = useState("team")
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(today)
   const [currTeamMembers, setCurrTeamMembers] = useState<EmployeeLocation[]>(teamMembers)
@@ -63,18 +64,18 @@ const StaffSchedule: React.FC<IStaffSchedule> = ({ teamMembers }) => {
   const getScheduleForDate = (date: Date) => {
     return teamSchedule[formatDate(date)] || []
   }
+
   useEffect(() => {
     if (selectedDate) {
       const adjustedDate = new Date(selectedDate);
       adjustedDate.setDate(adjustedDate.getDate() + 1);
       const formattedDate = formatDate(adjustedDate);
-      console.log(formattedDate)
       const filteredMembers = teamMembers?.filter(member => member.date === formattedDate);
-      console.log(filteredMembers)
       setCurrTeamMembers(filteredMembers);
     }
   }, [selectedDate, teamMembers])
-
+  const arrangement = currTeamMembers.map((member) => member.employee_id).includes(Number(userId))
+  const userCurrArrangement = currTeamMembers.filter((member) => member.employee_id === Number(userId))[0]
   return (
     <div className="container mx-auto p-4">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -148,11 +149,13 @@ const StaffSchedule: React.FC<IStaffSchedule> = ({ teamMembers }) => {
                   {selectedDate && (
                     <div className="space-y-2">
                       <p>Your schedule for this date:</p>
-                      <Badge variant={getScheduleForDate(selectedDate)[0]?.location === 'office' ? 'default' : 'secondary'}>
-                        {getScheduleForDate(selectedDate)[0]?.location === 'office' ? (
-                          <><Briefcase className="h-4 w-4 mr-1" /> Working from Office</>
+                      <Badge variant={arrangement ? 'secondary' : 'default'}>
+                        {arrangement ? (
+                          <><Home className="h-4 w-4 mr-1" />HOME ({
+                            userCurrArrangement.application_hour.toUpperCase()
+                          })</>
                         ) : (
-                          <><Home className="h-4 w-4 mr-1" /> Working from Home</>
+                          <><Briefcase className="h-4 w-4 mr-1" /> Working from Office</>
                         )}
                       </Badge>
                     </div>

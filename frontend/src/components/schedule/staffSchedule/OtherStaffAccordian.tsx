@@ -1,4 +1,4 @@
-import { EmployeeLocation, getAllTeamsUnderMe, Team } from '@/app/schedule/api';
+import { EmployeeLocation, getAllTeamsUnderMe, getApprovedStaffLocation, Team } from '@/app/schedule/api';
 import React, { useEffect, useState } from 'react';
 import {
     Accordion,
@@ -20,7 +20,8 @@ const OtherStaffAccordion: React.FC<OtherStaffAccordionProps> = ({ employeeLocat
     const { token, user } = useAuth()
     const [otherTeams, setOtherTeams] = useState<Team[]>([])
     const [loading, setLoading] = useState<boolean>(false)
-
+    const [staffLocation, setStaffLocation] = useState<EmployeeLocation[]>([])
+    
     useEffect(() => {
         const getOtherTeams = async () => {
             try {

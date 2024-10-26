@@ -81,7 +81,7 @@ const StaffAccordion: React.FC<IStaffSchedule> = ({ employeeLocations }) => {
                                     return (
                                         <li key={`${member.employee_fname}-${member.employee_lname}`} className="flex items-center space-x-2">
                                             <PersonIcon />
-                                            <span>{`${member.employee_fname} ${member.employee_lname} (${role[member.role]})`}</span>
+                                            <span>{`${member.employee_fname} ${member.employee_lname} (${member.position})`}</span>
                                             <Badge variant={member.location === 'wfo' ? 'default' : 'secondary'}>
                                                 {member.location === 'wfo' ? <Briefcase className="h-4 w-4 mr-1" /> : <Home className="h-4 w-4 mr-1" />}
                                                 {member.location === 'wfo' ? 'Office' : `Home (${member.application_hour.toUpperCase()})`}
