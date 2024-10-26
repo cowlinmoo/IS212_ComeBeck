@@ -114,6 +114,40 @@ export const getTeamsUnderMe = async (token: string, teamId: number): Promise<Te
     }
 }
 
+export const getAllTeamsUnderMe = async (token: string, teamId: number): Promise<Team[]> => {
+    try {
+        const stack: Team[] = [];
+        const visited: Set<number> = new Set();
+        const allTeams: Team[] = [];
+
+        stack.push(await getMyTeam(token, teamId));
+
+        while (stack.length > 0) {
+            const currentTeam = stack.pop();
+            if (currentTeam?.team_id && currentTeam && !visited.has(currentTeam.team_id)) {
+                visited.add(currentTeam.team_id);
+                allTeams.push(currentTeam);
+
+                const childTeams = currentTeam.child_teams || [];
+                for (const childTeam of childTeams) {
+                    if (childTeam.team_id && !visited.has(childTeam.team_id)) {
+                        const teamData = await getMyTeam(token, childTeam.team_id);
+                        stack.push(teamData);
+                    }
+                }
+            }
+        }
+
+        return allTeams;
+    } catch (error) {
+        if (error instanceof Error) {
+            throw new Error(error.message);
+        } else {
+            throw new Error('An unknown error occurred');
+        }
+    }
+}
+
 export type Employee = {
     staff_id: number;
     staff_fname: string;
