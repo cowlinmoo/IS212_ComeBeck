@@ -1,4 +1,4 @@
-import { EmployeeLocation, getTeamsUnderMe, Team } from '@/app/schedule/api';
+import { EmployeeLocation, getAllTeamsUnderMe, Team } from '@/app/schedule/api';
 import React, { useEffect, useState } from 'react';
 import {
     Accordion,
@@ -10,6 +10,7 @@ import useAuth from '@/lib/auth';
 import { PersonIcon } from '@radix-ui/react-icons';
 import { Badge } from '@/components/ui/badge';
 import { Briefcase, HomeIcon } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface OtherStaffAccordionProps {
     employeeLocations: EmployeeLocation[];
@@ -18,10 +19,21 @@ interface OtherStaffAccordionProps {
 const OtherStaffAccordion: React.FC<OtherStaffAccordionProps> = ({ employeeLocations }) => {
     const { token, user } = useAuth()
     const [otherTeams, setOtherTeams] = useState<Team[]>([])
+    const [loading, setLoading] = useState<boolean>(false)
+
     useEffect(() => {
         const getOtherTeams = async () => {
-            const response = await getTeamsUnderMe(token as string, user?.team_id as number)
-            setOtherTeams(response)
+            try {
+                setLoading(true)
+                let response = await getAllTeamsUnderMe(token as string, user?.team_id as number)
+                response = response.filter((team) => team.team_id !== user?.team_id)
+                setOtherTeams(response)
+                setLoading(false)
+            }
+            catch (error) {
+                console.error(error)
+                setLoading(false)
+            }
         }
         getOtherTeams()
     }, [token, user])
@@ -29,7 +41,7 @@ const OtherStaffAccordion: React.FC<OtherStaffAccordionProps> = ({ employeeLocat
         <Accordion type="single" collapsible className={`${user?.role === 3 ? "block" : "none"}`}>
             <AccordionItem value='item-1' >
                 <AccordionTrigger>
-                    Other Teams Under Me
+                    Other Teams
                 </AccordionTrigger>
                 <AccordionContent>
                     {otherTeams.map((team) => {
@@ -40,7 +52,9 @@ const OtherStaffAccordion: React.FC<OtherStaffAccordionProps> = ({ employeeLocat
                                         {team.name}
                                     </AccordionTrigger>
                                     <AccordionContent className='overflow-y-scroll h-64 flex flex-col gap-2'>
-                                        {
+                                        {loading ? (<>
+                                            <Skeleton className="w-full h-[50px] rounded-md" />
+                                        </>) : (<> {
                                             team.members.map((member) => {
                                                 return (<div className='flex flex-row gap-4' key={`${member.staff_id}-key`}>
                                                     <PersonIcon />
@@ -58,7 +72,7 @@ const OtherStaffAccordion: React.FC<OtherStaffAccordionProps> = ({ employeeLocat
 
                                                 </div>)
                                             })
-                                        }
+                                        }</>)}
                                     </AccordionContent>
                                 </AccordionItem>
                             </Accordion>

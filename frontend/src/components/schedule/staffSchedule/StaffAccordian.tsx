@@ -11,6 +11,7 @@ import useAuth from '@/lib/auth';
 import { PersonIcon } from '@radix-ui/react-icons';
 import { Briefcase, Home } from 'lucide-react';
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 interface IStaffSchedule {
@@ -36,23 +37,32 @@ const StaffAccordion: React.FC<IStaffSchedule> = ({ employeeLocations }) => {
     const { token, userId, user } = useAuth()
     const [myTeam, setMyTeam] = useState<Team | undefined>(undefined)
     const [defWio, setDefWio] = useState<defName[]>([])
+    const [loading, setLoading] = useState<boolean>(false)
+
     useEffect(() => {
         if (token && userId) {
             const getTeam = async () => {
-                const response: Team = await getMyTeam(token as string, Number(user?.team_id))
+                try {
+                    setLoading(true)
+                    const response: Team = await getMyTeam(token as string, Number(user?.team_id))
 
-                const filteredTeam: flName[] = response.members.filter((team) => {
-                    const names = employeeLocations.map((item) => `${item.employee_fname}:${item.employee_lname}`)
-                    return !names.includes(`${team.staff_fname}:${team.staff_lname}`)
-                })
-                const defNames: defName[] = [];
-                for (const item of filteredTeam) {
-                    const response = await getMyEmployee(token as string, item.staff_id);
-                    defNames.push({ ...item, role: response.role });
+                    const filteredTeam: flName[] = response.members.filter((team) => {
+                        const names = employeeLocations.map((item) => `${item.employee_fname}:${item.employee_lname}`)
+                        return !names.includes(`${team.staff_fname}:${team.staff_lname}`)
+                    })
+                    const defNames: defName[] = [];
+                    for (const item of filteredTeam) {
+                        const response = await getMyEmployee(token as string, item.staff_id);
+                        defNames.push({ ...item, role: response.role });
+                    }
+                    setMyTeam(response)
+                    setDefWio(defNames)
+                    setLoading(false)
                 }
-                setMyTeam(response)
-                setDefWio(defNames)
-
+                catch (error) {
+                    console.error(error)
+                    setLoading(false)
+                }
             }
             getTeam()
         }
@@ -61,11 +71,13 @@ const StaffAccordion: React.FC<IStaffSchedule> = ({ employeeLocations }) => {
         <Accordion type="single" collapsible>
             <AccordionItem value="item-1">
                 <AccordionTrigger>My Team</AccordionTrigger>
-                <AccordionContent>
-                    <ul className="space-y-2">
+                <AccordionContent className='overflow-y-scroll h-64 flex flex-col gap-2'>
+                    {loading ? (<>
+                        <Skeleton className="w-full h-[50px] rounded-md" />
+                    </>) : (<> <ul className="space-y-2">
                         {employeeLocations?.map((member: EmployeeLocation) => {
                             if ((user?.role === 3 || user?.role === 1) || (user?.role === 2 && member.role !== 3)) {
-                                if (member.employee_id !== myTeam?.manager.staff_id) {
+                                if (member.employee_id !== myTeam?.manager.staff_id && member.team_id === user?.team_id) {
                                     return (
                                         <li key={`${member.employee_fname}-${member.employee_lname}`} className="flex items-center space-x-2">
                                             <PersonIcon />
@@ -81,25 +93,25 @@ const StaffAccordion: React.FC<IStaffSchedule> = ({ employeeLocations }) => {
                             }
                         })}
                     </ul>
-                    <hr className='my-2' />
-                    <ul className="space-y-2">
-                        {
-                            defWio.map((member: defName) => {
-                                if ((user?.role === 3 || user?.role === 1) || (user?.role === 2 && member.role !== 3)) {
-                                    return (
-                                        <li key={`${member.staff_fname}-${member.staff_lname}`} className="flex items-center space-x-2">
-                                            <PersonIcon />
-                                            <span>{`${member.staff_fname} ${member.staff_lname} (${role[member.role]})`}</span>
-                                            <Badge>
-                                                <Briefcase className="h-4 w-4 mr-1" />
-                                                Office
-                                            </Badge>
-                                        </li>
-                                    )
-                                }
-                            })
-                        }
-                    </ul>
+                        <hr className='my-2' />
+                        <ul className="space-y-2">
+                            {
+                                defWio.map((member: defName) => {
+                                    if ((user?.role === 3 || user?.role === 1) || (user?.role === 2 && member.role !== 3)) {
+                                        return (
+                                            <li key={`${member.staff_fname}-${member.staff_lname}`} className="flex items-center space-x-2">
+                                                <PersonIcon />
+                                                <span>{`${member.staff_fname} ${member.staff_lname} (${role[member.role]})`}</span>
+                                                <Badge>
+                                                    <Briefcase className="h-4 w-4 mr-1" />
+                                                    Office
+                                                </Badge>
+                                            </li>
+                                        )
+                                    }
+                                })
+                            }
+                        </ul></>)}
                 </AccordionContent>
             </AccordionItem>
         </Accordion>
