@@ -104,7 +104,7 @@ export default function ViewPending({ data, token, userId }: { data: Application
                                             {request.events.map((event) => (
                                                 <div key={event.event_id} className="flex items-center space-x-2">
                                                     <CalendarIcon className="h-4 w-4" />
-                                                    <span> {new Date(event.requested_date).toDateString()} - {event.application_hour[0].toUpperCase()+event.application_hour.slice(1)}</span>
+                                                    <span> {new Date(event.requested_date).toDateString()} ({event.application_hour[0].toUpperCase()+event.application_hour.slice(1)})</span>
                                                 </div>
                                             ))}
                                             <div className="flex justify-end mt-4">
@@ -172,7 +172,7 @@ export default function ViewPending({ data, token, userId }: { data: Application
                                             {request.events.map((event) => (
                                                 <div key={event.event_id} className="flex items-center space-x-2">
                                                     <CalendarIcon className="h-4 w-4" />
-                                                    <span> {new Date(event.requested_date).toDateString()} - {event.application_hour[0].toUpperCase()+event.application_hour.slice(1)}</span>
+                                                    <span> {new Date(event.requested_date).toDateString()} ({event.application_hour[0].toUpperCase()+event.application_hour.slice(1)})</span>
                                                 </div>
                                             ))}
                                             <div className="flex justify-end mt-4">
@@ -240,7 +240,7 @@ export default function ViewPending({ data, token, userId }: { data: Application
                                             {request.events.map((event) => (
                                                 <div key={event.event_id} className="flex items-center space-x-2">
                                                     <CalendarIcon className="h-4 w-4" />
-                                                    <span> {new Date(event.requested_date).toDateString()} - {event.application_hour[0].toUpperCase()+event.application_hour.slice(1)}</span>
+                                                    <span> {new Date(event.requested_date).toDateString()} ({event.application_hour[0].toUpperCase()+event.application_hour.slice(1)})</span>
                                                 </div>
                                             ))}
                                             <div className="flex justify-end mt-4">
