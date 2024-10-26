@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -12,6 +12,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts'
 import { Home, Briefcase, CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Team } from "@/app/overview/page";
 
 // Mock data for departments and staff
 const departments = [
@@ -37,12 +38,27 @@ const generateStaffSchedule = (date: Date) => {
   ]
 }
 
-export default function ScheduleOverview() {
+type TeamMember = {
+  staff_id: number
+  staff_fname: string
+  staff_lname: string
+}
+
+export default function ScheduleOverview({teamData}: {teamData: Team | undefined}) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
   const [selectedDepartment, setSelectedDepartment] = useState<string | undefined>(undefined)
-
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const staffMembers = generateStaffSchedule(selectedDate || new Date())
 
+  useEffect(() => {
+    if (teamData) {
+      setTeamMembers(teamData.members)
+    }
+  }, [teamData])
+  console.log(teamMembers.length)
+
+  let atOffice = teamMembers.length
+  let atHome = 0
   const filteredStaff = selectedDepartment
     ? staffMembers.filter(staff => staff.department.toString() === selectedDepartment)
     : staffMembers
