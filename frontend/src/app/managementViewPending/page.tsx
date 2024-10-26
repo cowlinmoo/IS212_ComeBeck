@@ -14,16 +14,22 @@ export interface Application {
     created_on: string;
     last_updated_on: string;
     status: string;
-    staff_id: number;
+    application_state: string;
     approver_id: number;
     recurring: boolean;
     events: Event[];
+    staff: {
+      staff_id: number;
+      staff_fname: string;
+      staff_lname: string;
+    }
   }
-  
+
   export interface Event {
     event_id: number;
     requested_date: string;
     location: string;
+    application_hour: string;
   }
 
 export default function Component() {
