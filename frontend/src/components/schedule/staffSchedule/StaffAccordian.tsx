@@ -61,7 +61,7 @@ const StaffAccordion: React.FC<IStaffSchedule> = ({ employeeLocations }) => {
         <Accordion type="single" collapsible>
             <AccordionItem value="item-1">
                 <AccordionTrigger>My Team</AccordionTrigger>
-                <AccordionContent>
+                <AccordionContent className='overflow-y-scroll h-64 flex flex-col gap-2'>
                     <ul className="space-y-2">
                         {employeeLocations?.map((member: EmployeeLocation) => {
                             if ((user?.role === 3 || user?.role === 1) || (user?.role === 2 && member.role !== 3)) {
