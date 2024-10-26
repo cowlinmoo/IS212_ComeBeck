@@ -11,7 +11,7 @@ import useAuth from '@/lib/auth';
 import { PersonIcon } from '@radix-ui/react-icons';
 import { Briefcase, Home, AlertTriangle } from 'lucide-react';
 import { Badge } from "@/components/ui/badge"
-import { Skeleton } from '@/components/ui/skeleton';
+
 
 
 interface IStaffSchedule {
