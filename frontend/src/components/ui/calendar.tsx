@@ -17,6 +17,7 @@ function Calendar({
 }: CalendarProps) {
   return (
     <DayPicker
+      disabled={{ dayOfWeek: [0, 6] }}
       showOutsideDays={showOutsideDays}
       className={cn("p-3", className)}
       classNames={{

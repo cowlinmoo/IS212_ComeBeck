@@ -9,13 +9,15 @@ import { EmployeeLocation, getApprovedStaffLocation } from "./api";
 
 
 export default function Component() {
-  const { token, userId, pageLoading } = useAuth();
+  const { token, userId, pageLoading, } = useAuth();
   const [staffLocation, setStaffLocation] = useState<EmployeeLocation[]>([])
   useEffect(() => {
     if (token && userId) {
       const getLocation = async () => {
+
         const response: EmployeeLocation[] = await getApprovedStaffLocation(token as string, Number(userId))
         setStaffLocation(response)
+
       }
       getLocation()
     }
@@ -23,12 +25,12 @@ export default function Component() {
 
 
   return (
-    <div className="flex h-screen text-black bg-gray-100">
+    <div className="flex h-screen text-black bg-gray-100 ">
       {/* Left Navbar */}
       <SideBar />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-y-scroll">
         {/* Header */}
         <Header />
 
@@ -43,3 +45,4 @@ export default function Component() {
     </div>
   )
 }
+

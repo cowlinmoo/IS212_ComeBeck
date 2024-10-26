@@ -120,7 +120,7 @@ def get_all_employee_locations_by_manager_id(
         manager_id: int,
         service: ApplicationService = Depends(),
         current_user: dict = Depends(role_required(
-            EmployeeRole.HR, EmployeeRole.MANAGER))
+            EmployeeRole.HR, EmployeeRole.MANAGER, EmployeeRole.STAFF))
 ):
     return service.get_employee_approved_application_locations(manager_id=manager_id, current_user_role=current_user["role"])
 # @ApplicationRouter.put("/{application_id}/status", response_model=ApplicationResponse)
