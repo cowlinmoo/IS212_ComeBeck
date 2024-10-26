@@ -377,7 +377,7 @@ class ApplicationService:
         application_to_be_cancelled = ApplicationCreateSchema(
             location=existing_event.location,
             application_hour=existing_event.application_hour,
-            reason=withdraw_reason,
+            reason=existing_application.reason,
             requested_date=existing_date,
             description=existing_application.description,
             staff_id=existing_application.staff_id
