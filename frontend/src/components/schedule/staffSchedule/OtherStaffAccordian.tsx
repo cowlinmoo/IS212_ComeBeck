@@ -29,7 +29,7 @@ const OtherStaffAccordion: React.FC<OtherStaffAccordionProps> = ({ employeeLocat
         <Accordion type="single" collapsible className={`${user?.role === 3 ? "block" : "none"}`}>
             <AccordionItem value='item-1' >
                 <AccordionTrigger>
-                    Other Teams Under Me
+                    Other Teams
                 </AccordionTrigger>
                 <AccordionContent>
                     {otherTeams.map((team) => {
