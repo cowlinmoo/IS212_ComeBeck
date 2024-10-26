@@ -2,6 +2,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const URL = `${BASE_URL}/application`;
 const TEAM_URL = `${BASE_URL}/team`
 const EMPLOYEE_URL = `${BASE_URL}/employee`
+const DEPARTMENT_URL = `${BASE_URL}/department`
 
 export type EmployeeLocation = {
     employee_fname: string;
@@ -146,6 +147,104 @@ export const getAllTeamsUnderMe = async (token: string, teamId: number): Promise
             throw new Error('An unknown error occurred');
         }
     }
+}
+export const getTeamByManagerId = async (token: string, managerId: number): Promise<Team | null> => {
+    try {
+        const response = await fetch(`${TEAM_URL}/manager/${managerId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.status === 404) {
+            return null; // Return null if no team is found
+        }
+
+        const data = await response.json();
+        return data as Team;
+    } catch (error) {
+        if (error instanceof Error) {
+            throw new Error(error.message);
+        } else {
+            throw new Error('An unknown error occurred');
+        }
+    }
+};
+
+export const getAllDepartments = async (token: string): Promise<DepartmentSchema[]> => {
+    try {
+        console.log("Token:", token);  // Log to confirm token presence
+        const response = await fetch(`${DEPARTMENT_URL}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+        });
+
+        if (response.status === 401) {
+            throw new Error("Unauthorized: Check if token is valid or if user needs to re-authenticate");
+        }
+
+        return await response.json() as DepartmentSchema[];
+    } catch (error) {
+        throw new Error(error instanceof Error ? error.message : 'An unknown error occurred');
+    }
+};
+
+
+export interface DepartmentSchema {
+    department_id: number;
+    name: string;
+    description: string;
+    director_id: number;
+    director: {
+        staff_id: number;
+        staff_fname: string;
+        staff_lname: string;
+        position: string;
+        role: number;
+        team_id: number;
+        country: string;
+        email: string;
+    };
+    teams: Array<{
+        team_id: number;
+        name: string;
+        description: string;
+        department: {
+            department_id: number;
+            name: string;
+        };
+        manager: {
+            staff_id: number;
+            staff_fname: string;
+            staff_lname: string;
+            position: string;
+            role: number;
+            team_id: number;
+            country: string;
+            email: string;
+        };
+        parent_team: {
+            team_id: number;
+            name: string;
+            description: string;
+        } | null;
+        child_teams: Array<ChildTeam> | null;
+        members: Array<{
+            staff_id: number;
+            staff_fname: string;
+            staff_lname: string;
+            position: string;
+            role: number;
+            team_id: number;
+            country: string;
+            email: string;
+        }>;
+    }>;
 }
 
 export type Employee = {

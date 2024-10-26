@@ -69,7 +69,7 @@ export default function LoginPage() {
                 <Input 
                   id="username" 
                   type="username" 
-                  placeholder="m@example.com" 
+                  placeholder="jack.sim@allinone.com.sg"
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}

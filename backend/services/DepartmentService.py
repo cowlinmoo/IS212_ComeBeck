@@ -85,3 +85,7 @@ class DepartmentService:
             department_id=department.department_id,
             name=department.name
         )
+
+    def get_all_departments(self):
+        departments = self.department_repository.get_all_departments()
+        return [self.department_to_schema(department) for department in departments]
