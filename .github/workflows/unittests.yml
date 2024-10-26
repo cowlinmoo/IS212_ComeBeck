@@ -20,7 +20,7 @@ jobs:
 
     - name: Run tests
       env:
-        CURRENT_ENV: PROD
+        CURRENT_ENV: DEV
         PRODUCTION_DB_USER: ${{ secrets.PRODUCTION_DB_USER }}
         PRODUCTION_DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
         PRODUCTION_DB_HOSTNAME: ${{ secrets.PRODUCTION_DB_HOSTNAME }}
