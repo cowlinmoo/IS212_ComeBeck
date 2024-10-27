@@ -8,7 +8,7 @@ const useAuth = () => {
   const [userId, setUserId] = useState<string | undefined>(undefined);
   const [user, setUser] = useState<Employee | undefined>(undefined);
   const [pageLoading, setPageLoading] = useState<boolean>(true);
-
+  const [role, setRole] = useState<number | undefined>(undefined);
   const router = useRouter();
 
   useEffect(() => {
@@ -20,6 +20,7 @@ const useAuth = () => {
       setToken(token);
       setUserId(userId);
       setPageLoading(false);
+      setRole(currUser.role)
     };
 
     fetchToken();
@@ -31,7 +32,7 @@ const useAuth = () => {
     }
   }, [token, router, pageLoading]);
 
-  return { token, userId, pageLoading, user };
+  return { token, userId, pageLoading, user, role };
 };
 
 export default useAuth;

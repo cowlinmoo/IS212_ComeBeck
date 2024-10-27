@@ -1,16 +1,24 @@
-"use client";
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Home, FileText, Settings, Users } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
+import useAuth from "@/lib/auth";
 
-const tabs = [
+// Define the type for each tab
+interface Tab {
+  name: string;
+  icon: React.ComponentType<{ className?: string }>;
+  path: string;
+  requiresRole?: number;
+}
+
+// Define the tabs array with explicit typing
+const tabs: Tab[] = [
   { name: "Home", icon: Home, path: "/profile" },
+  { name: "Department Schedule", icon: Users, path: "/overview", requiresRole: 1 },
   { name: "Schedule", icon: FileText, path: "/schedule" },
-  { name: "Arrangement Management", icon: Settings, path: "/arrangement" }, 
+  { name: "Arrangement Management", icon: Settings, path: "/arrangement" },
   { name: "Arrangement Approvals", icon: Settings, path: "/approvals" },
-  { name: "Overview Schedule", icon: Users, path: "/overview" },
   { name: "Pending Arrangements", icon: Users, path: "/managementViewPending" },
   { name: "Withdraw Arrangements (Manager)", icon: Users, path: "/managementViewWithdraw" },
 ];
@@ -18,19 +26,27 @@ const tabs = [
 export default function SideBar() {
   const router = useRouter();
   const pathname = usePathname();
-  const [activeTab, setActiveTab] = useState("");
+  const { role } = useAuth(); // Access role directly from useAuth
+  const [activeTab, setActiveTab] = useState<string>("");
+
+  // Memoize filtered tabs based on role
+  const filteredTabs = useMemo(
+    () => tabs.filter((tab) => !tab.requiresRole || tab.requiresRole === role),
+    [role]
+  );
 
   // Set activeTab based on the current pathname
   useEffect(() => {
-    const currentTab = tabs.find((tab) => tab.path === pathname);
+    const currentTab = filteredTabs.find((tab) => tab.path === pathname);
     if (currentTab) {
       setActiveTab(currentTab.name);
     }
-  }, [pathname]);
+  }, [pathname, filteredTabs]);
 
-  const handleTabClick = (tab: { name: string; path: string }) => {
+  // Define the type for the tab parameter in handleTabClick
+  const handleTabClick = (tab: Tab) => {
     setActiveTab(tab.name);
-    router.push(tab.path); // Navigate to the selected tab's path
+    router.push(tab.path);
   };
 
   return (
@@ -40,7 +56,7 @@ export default function SideBar() {
           <h2 className="text-xl font-bold">ComeBeck</h2>
         </div>
         <div className="flex-1 overflow-y-auto">
-          {tabs.map((tab) => (
+          {filteredTabs.map((tab) => (
             <Button
               key={tab.name}
               variant={activeTab === tab.name ? "default" : "ghost"}

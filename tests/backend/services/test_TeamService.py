@@ -171,3 +171,60 @@ def test_team_to_schema(team_service):
     assert result.members[0].staff_fname == "Bob"
     assert result.members[1].staff_id == 4
     assert result.members[1].staff_fname == "Charlie"
+
+def test_get_team_employees_by_manager_id_found(team_service):
+    # Arrange
+    manager_id = 2
+    mock_manager = MagicMock()
+    mock_manager.staff_id = manager_id
+    mock_team = Team(
+        team_id=1,
+        name="Development",
+        description="Development Team",
+        department_id=1,
+        manager_id=manager_id
+    )
+
+    # Set up the return values for the mocks
+    team_service.employeeRepository.get_employee.return_value = mock_manager
+    team_service.teamRepository.get_team_by_manager_id.return_value = mock_team
+
+    # Patch the `team_to_schema` method to simplify the test
+    team_service.team_to_schema = MagicMock(return_value={"team_id": mock_team.team_id, "name": mock_team.name})
+
+    # Act
+    result = team_service.get_team_employees_by_manager_id(manager_id)
+
+    # Assert
+    assert result["team_id"] == mock_team.team_id
+    assert result["name"] == mock_team.name
+    team_service.team_to_schema.assert_called_once_with(mock_team)
+
+def test_get_team_employees_by_manager_id_manager_not_found(team_service):
+    # Arrange
+    manager_id = 999  # Non-existing manager ID
+    team_service.employeeRepository.get_employee.return_value = None
+
+    # Act & Assert
+    with pytest.raises(HTTPException) as excinfo:
+        team_service.get_team_employees_by_manager_id(manager_id)
+
+    assert excinfo.value.status_code == 404
+    assert excinfo.value.detail == "Manager not found"
+
+def test_get_team_employees_by_manager_id_team_not_found(team_service):
+    # Arrange
+    manager_id = 2
+    mock_manager = MagicMock()
+    mock_manager.staff_id = manager_id
+
+    # Mock employee retrieval for manager
+    team_service.employeeRepository.get_employee.return_value = mock_manager
+    team_service.teamRepository.get_team_by_manager_id.return_value = None
+
+    # Act & Assert
+    with pytest.raises(HTTPException) as excinfo:
+        team_service.get_team_employees_by_manager_id(manager_id)
+
+    assert excinfo.value.status_code == 404
+    assert excinfo.value.detail == "Team not found"
