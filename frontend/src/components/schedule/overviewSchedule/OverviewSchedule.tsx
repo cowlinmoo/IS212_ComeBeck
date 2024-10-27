@@ -56,7 +56,7 @@ export default function OverviewSchedule({ token, userId }: OverviewScheduleProp
             team_id: employee.team_id,
             position: employee.position,
             location: isHome ? "wfh" : "wfo",
-            application_hour: isHome ? "FULLDAY" : "N/A",
+            application_hour: isHome ? homeStaff.find(home => home.employee_id === employee.staff_id)?.application_hour || "N/A" : "N/A",
             date: formattedDate,
             role: employee.role || 1,
           };
