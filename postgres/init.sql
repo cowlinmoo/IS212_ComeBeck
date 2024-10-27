@@ -595,7 +595,7 @@ VALUES
 (210044,'Chandara','Tithe','IT Team',8,11,'Singapore','tithe.chandra@allinone.com.sg',210001,2,'$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
 (300000, 'Colin','Mok','Developer',9,19,'Singapore', 'colinmok1000@gmail.com', 130002, 3, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
 (400000, 'Fatti','Bom Bom','Developer',9,19,'Singapore', 'colinmok3@gmail.com', 300000, 2, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
-(500000, 'Molin','Cok','Developer',9,19,'Singapore', 'colinmok3@gmail.com', 300000, 1, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO');
+(500000, 'Molin','Cok','Developer',9,19,'Singapore', 'colinmokhengyee@gmail.com', 300000, 1, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO');
 
 
 UPDATE "departments" SET director_id = 130002 WHERE department_id = 1;
