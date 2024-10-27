@@ -123,6 +123,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                   pendingApplications.push({
                     application_type: type,
                     date: date,
+                    hour: application["events"][0]["application_hour"],
                     application_id: application["application_id"].toString(),
                     event_id: application["events"][0]["event_id"].toString(),
                   });
@@ -139,6 +140,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                       pendingApplications.push({
                         application_type: type,
                         date: date,
+                        hour: event["application_hour"],
                         application_id: application["application_id"].toString(),
                         event_id: event["event_id"].toString(),
                       });
@@ -155,6 +157,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                       pendingApplications.push({
                         application_type: type,
                         date: date,
+                        hour: event["application_hour"],
                         application_id: application["application_id"].toString(),
                         event_id: event["event_id"].toString(),
                       });
@@ -176,6 +179,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                     approvedApplications.push({
                       application_type: type,
                       date: date,
+                      hour: application["events"][0]["application_hour"],
                       application_id: application["application_id"].toString(),
                       event_id: application["events"][0]["event_id"].toString(),
                     });
@@ -185,6 +189,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                       approvedApplications.push({
                         application_type: type,
                         date: date,
+                        hour: application["events"][0]["application_hour"],
                         application_id: application["application_id"].toString(),
                         event_id: application["events"][0]["event_id"].toString(),
                       });
@@ -195,6 +200,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                       approvedApplications.push({
                         application_type: type,
                         date: date,
+                        hour: application["events"][0]["application_hour"],
                         application_id: application["application_id"].toString(),
                         event_id: application["events"][0]["event_id"].toString(),
                       });
@@ -217,6 +223,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                         approvedApplications.push({
                           application_type: type,
                           date: date,
+                          hour: event["application_hour"],
                           application_id: application["application_id"].toString(),
                           event_id: event["event_id"].toString(),
                         });
@@ -225,6 +232,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                           approvedApplications.push({
                             application_type: type,
                             date: date,
+                            hour: event["application_hour"],
                             application_id: application["application_id"].toString(),
                             event_id: event["event_id"].toString(),
                           });
@@ -234,6 +242,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                           approvedApplications.push({
                             application_type: type,
                             date: date,
+                            hour: event["application_hour"],
                             application_id: application["application_id"].toString(),
                             event_id: event["event_id"].toString(),
                           });
@@ -256,6 +265,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                         approvedApplications.push({
                           application_type: type,
                           date: date,
+                          hour: event["application_hour"],
                           application_id: application["application_id"].toString(),
                           event_id: event["event_id"].toString(),
                         });
@@ -264,6 +274,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                           approvedApplications.push({
                             application_type: type,
                             date: date,
+                            hour: event["application_hour"],
                             application_id: application["application_id"].toString(),
                             event_id: event["event_id"].toString(),
                           });
@@ -273,6 +284,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                           approvedApplications.push({
                             application_type: type,
                             date: date,
+                            hour: event["application_hour"],
                             application_id: application["application_id"].toString(),
                             event_id: event["event_id"].toString(),
                           });
@@ -559,6 +571,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                                 <TableHead>Application ID</TableHead>
                                 <TableHead>Date</TableHead>
                                 <TableHead>Type</TableHead>
+                                <TableHead>Time</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -600,6 +613,9 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                                     <TableCell>
                                       {arrangement.application_type}
                                     </TableCell>
+                                    <TableCell>
+                                      {arrangement.hour}
+                                    </TableCell>
                                   </TableRow>
                                 )
                               )}
@@ -630,6 +646,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                               <TableHead>Application ID</TableHead>
                               <TableHead>Date</TableHead>
                               <TableHead>Type</TableHead>
+                              <TableHead>Time</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -669,6 +686,9 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                                 </TableCell>
                                 <TableCell>
                                   {arrangement.application_type}
+                                </TableCell>
+                                <TableCell>
+                                  {arrangement.hour}
                                 </TableCell>
                               </TableRow>
                             ))}

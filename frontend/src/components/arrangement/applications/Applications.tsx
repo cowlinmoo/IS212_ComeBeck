@@ -233,21 +233,19 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
   });
   const handleDateSelect = (dates: Date[] | undefined) => {
     if (!dates) return
-
     // Remove dates that are no longer selected
     remove(fields.map((_, index) => index).filter(
       index => !dates.some(d => d.toDateString() === fields[index].date.toDateString())
     ))
-
     // Add newly selected dates
     dates.forEach(date => {
       if (!fields.some(field => field.date.toDateString() === date.toDateString())) {
-        append({ date, hourPreference: 'fullday' })
+        append({ date, hour: 'fullday' })
       }
     })
-
     setSelectedDates(dates)
   }
+
 
   //Success alert if form has been successfully submitted
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
@@ -283,9 +281,11 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
             location: "Home",
             reason: values.reason,
             description: "",
-            requested_date: format(values.singleDate, "yyyy-MM-dd"),
+            requested_date: format(values.singleDate.date, "yyyy-MM-dd"),
+            application_hour: values.singleDate.hour,
             staff_id: staffId,
             recurring: false,
+
           };
         } else if (values.isRecurring === "Yes" && !values.endDate === false) {
           if (values.recurringType === "Weekly") {
@@ -293,7 +293,8 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
               location: "Home",
               reason: values.reason,
               description: "",
-              requested_date: format(values.singleDate, "yyyy-MM-dd"),
+              requested_date: format(values.singleDate.date, "yyyy-MM-dd"),
+              application_hour: values.singleDate.hour,
               staff_id: staffId,
               recurring: true,
               recurrence_type: "weekly",
@@ -307,7 +308,8 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
               location: "Home",
               reason: values.reason,
               description: "",
-              requested_date: format(values.singleDate, "yyyy-MM-dd"),
+              requested_date: format(values.singleDate.date, "yyyy-MM-dd"),
+              application_hour: values.singleDate.hour,
               staff_id: staffId,
               recurring: true,
               recurrence_type: "monthly",
@@ -341,14 +343,15 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
       else if (values.multipleDate) {
         const events = [];
         for (const d of values.multipleDate) {
-          events.push({ requested_date: format(d, "yyyy-MM-dd") });
+          events.push({ requested_date: format(d.date, "yyyy-MM-dd"), application_hour: d.hour });
         }
         console.log(values.multipleDate[0]);
         console.log(events);
         const multiContent = {
           location: "Home",
           reason: values.reason,
-          requested_date: format(values.multipleDate[0], "yyyy-MM-dd"),
+          requested_date: format(values.multipleDate[0].date, "yyyy-MM-dd"),
+          application_hour: values.multipleDate[0].hour,
           description: "",
           staff_id: staffId,
           recurring: false,
@@ -509,6 +512,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                               toDate={toDate}
                               disabled={isDateDisabled}
                               initialFocus
+                              
                             />
                             <div className="p-3 border-t">
                               <p className="text-s text-muted-foreground">
@@ -522,6 +526,47 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                       </FormItem>
                     )}
                   />
+                  {applyForm.watch("singleDate") && (
+                  <FormField
+                  control={applyForm.control}
+                  name={`singleDate.hour`}
+                  render={({ field }) => (
+                    <FormItem className="space-y-3">
+                      <FormLabel>{format(fromEndDate, "PPP")}</FormLabel>
+                      <FormDescription  hidden={!isAMButtonDisabled(fromEndDate)} >There is an existing AM wfh arrangement for this day</FormDescription>
+                      <FormDescription hidden={!isPMButtonDisabled(fromEndDate)}>There is an existing PM wfh arrangement for this day</FormDescription>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          className="flex space-x-4"
+                        >
+                          <FormItem className="flex items-center space-x-2 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="fullday" id="r1" hidden={isFULLDAYButtonDisabled(fromEndDate)}/>
+                            </FormControl>
+                            <FormLabel className="font-normal" hidden={isFULLDAYButtonDisabled(fromEndDate)}>Full Day</FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-2 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="am" hidden={isAMButtonDisabled(fromEndDate)}/>
+                            </FormControl>
+                            <FormLabel className="font-normal" hidden={isAMButtonDisabled(fromEndDate)}>AM</FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-2 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="pm" hidden={isPMButtonDisabled(fromEndDate)} />
+                            </FormControl>
+                            <FormLabel className="font-normal" hidden={isPMButtonDisabled(fromEndDate)}>PM</FormLabel>
+                          </FormItem>
+                        </RadioGroup>
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                  
+                  )}
+
                   <FormField
                     control={applyForm.control}
                     name="isRecurring"
@@ -679,7 +724,10 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                           <Calendar
                             mode="multiple"
                             selected={selectedDates}
-                            onSelect={handleDateSelect}
+                            onSelect={(dates) => {
+                              handleDateSelect(dates);
+                              checkMultipleDate(dates);
+                            }}
                             fromDate={fromDate}
                             toDate={toDate}
                             disabled={isDateDisabled}
@@ -702,7 +750,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                 <FormField
                   key={field.id}
                   control={applyForm.control}
-                  name={`dates.${index}.hour`}
+                  name={`multipleDate.${index}.hour`}
                   render={({ field: hourField }) => (
                     <FormItem className="space-y-3">
                       <FormLabel>{format(field.date, "PPP")}</FormLabel>
