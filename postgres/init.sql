@@ -595,7 +595,7 @@ VALUES
 (210044,'Chandara','Tithe','IT Team',8,11,'Singapore','tithe.chandra@allinone.com.sg',210001,2,'$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
 (300000, 'Colin','Mok','Developer',9,19,'Singapore', 'colinmok1000@gmail.com', 130002, 3, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
 (400000, 'Fatti','Bom Bom','Developer',9,19,'Singapore', 'colinmok3@gmail.com', 300000, 2, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO'),
-(500000, 'Molin','Cok','Developer',9,19,'Singapore', 'colinmok3@gmail.com', 300000, 1, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO');
+(500000, 'Molin','Cok','Developer',9,19,'Singapore', 'colinmokhengyee@gmail.com', 300000, 1, '$2b$12$agWjFGi0AaStERzrWIncZe7B7Rc3DaBmSNo7QZ7/wa6HAyxyymMyO');
 
 
 UPDATE "departments" SET director_id = 130002 WHERE department_id = 1;
@@ -630,29 +630,29 @@ UPDATE "teams" SET manager_id = 300000 WHERE team_id = 19;  -- Update the Develo
 
 
 -- Insert mock data for Application table
-INSERT INTO application (application_id, reason, description, created_on, last_updated_on, status, application_state, staff_id, approver_id, outcome_reason, original_application_id, recurring, recurrence_type, end_date)
+INSERT INTO application (reason, description, created_on, last_updated_on, status, application_state, staff_id, approver_id, outcome_reason, original_application_id, recurring, recurrence_type, end_date)
 VALUES
-(1, 'Work From Home', 'I want to work from home', '2024-10-18 09:00:00', '2024-10-18 09:00:00', 'approved', 'new_application', 400000, 300000, NULL, NULL, false, NULL, NULL),
-(2, 'Work From Home', 'I want to work from home', '2024-10-19 10:30:00', '2024-10-19 11:00:00', 'approved', 'new_application', 400000, 300000, NULL, NULL, false, NULL, NULL),
-(3, 'Work From Home', 'I want to work from home', '2024-10-20 08:00:00', '2024-10-20 08:00:00', 'approved', 'new_application', 400000, 300000, NULL, NULL, true, 'WEEKLY', '2024-12-31'),
-(4, 'Work From Home', 'I want to work from home', '2024-10-21 14:00:00', '2024-10-21 15:30:00', 'pending', 'new_application', 500000, 300000, NULL, NULL, false, NULL, NULL),
-(5, 'Work From Home', 'I want to work from home', '2024-10-22 07:00:00', '2024-10-22 08:00:00', 'approved', 'new_application', 500000, 300000, NULL, NULL, false, NULL, NULL),
-(6, 'Work From Home', 'I want to work from home', '2024-10-23 11:00:00', '2024-10-23 11:30:00', 'pending', 'new_application', 500000, 300000, NULL, NULL, false, NULL, NULL);
+('Work From Home', 'I want to work from home', '2024-10-18 09:00:00', '2024-10-18 09:00:00', 'approved', 'new_application', 400000, 300000, NULL, NULL, false, NULL, NULL),
+( 'Work From Home', 'I want to work from home', '2024-10-19 10:30:00', '2024-10-19 11:00:00', 'approved', 'new_application', 400000, 300000, NULL, NULL, false, NULL, NULL),
+( 'Work From Home', 'I want to work from home', '2024-10-20 08:00:00', '2024-10-20 08:00:00', 'approved', 'new_application', 400000, 300000, NULL, NULL, true, 'WEEKLY', '2024-12-31'),
+( 'Work From Home', 'I want to work from home', '2024-10-21 14:00:00', '2024-10-21 15:30:00', 'pending', 'new_application', 500000, 300000, NULL, NULL, false, NULL, NULL),
+( 'Work From Home', 'I want to work from home', '2024-10-22 07:00:00', '2024-10-22 08:00:00', 'approved', 'new_application', 500000, 300000, NULL, NULL, false, NULL, NULL),
+( 'Work From Home', 'I want to work from home', '2024-10-23 11:00:00', '2024-10-23 11:30:00', 'pending', 'new_application', 500000, 300000, NULL, NULL, false, NULL, NULL);
 
 -- Insert mock data for Event table
-INSERT INTO event (event_id, requested_date, application_hour, location, application_id, original_event_id)
+INSERT INTO event (requested_date, application_hour, location, application_id, original_event_id)
 VALUES
-(1, '2024-11-01', 'FULLDAY', 'Home', 1, NULL),
-(2, '2024-11-02', 'FULLDAY', 'Home', 1, NULL),
-(3, '2024-11-03', 'FULLDAY', 'Home', 1, NULL),
-(4, '2024-10-20', 'FULLDAY', 'Home', 2, NULL),
-(5, '2024-10-21', 'AM', 'Home', 3, NULL),
-(6, '2024-10-28', 'AM', 'Home', 3, NULL),
-(7, '2024-11-04', 'AM', 'Home', 3, NULL),
-(8, '2024-11-15', 'FULLDAY', 'Home', 4, NULL),
-(9, '2024-11-16', 'FULLDAY', 'Home', 4, NULL),
-(10, '2024-10-23', 'FULLDAY', 'Home', 5, NULL),
-(11, '2024-10-24', 'FULLDAY', 'Home', 5, NULL),
-(12, '2024-11-01', 'FULLDAY', 'Home', 6, NULL),
-(13, '2024-11-02', 'FULLDAY', 'Home', 6, NULL),
-(14, '2024-11-03', 'FULLDAY', 'Home', 6, NULL);
+('2024-11-01', 'FULLDAY', 'Home', 1, NULL),
+( '2024-11-02', 'FULLDAY', 'Home', 1, NULL),
+( '2024-11-03', 'FULLDAY', 'Home', 1, NULL),
+( '2024-10-20', 'FULLDAY', 'Home', 2, NULL),
+( '2024-10-21', 'AM', 'Home', 3, NULL),
+( '2024-10-28', 'AM', 'Home', 3, NULL),
+('2024-11-04', 'AM', 'Home', 3, NULL),
+('2024-11-15', 'FULLDAY', 'Home', 4, NULL),
+('2024-11-16', 'FULLDAY', 'Home', 4, NULL),
+( '2024-10-23', 'FULLDAY', 'Home', 5, NULL),
+( '2024-10-24', 'FULLDAY', 'Home', 5, NULL),
+( '2024-11-01', 'FULLDAY', 'Home', 6, NULL),
+( '2024-11-02', 'FULLDAY', 'Home', 6, NULL),
+( '2024-11-03', 'FULLDAY', 'Home', 6, NULL);

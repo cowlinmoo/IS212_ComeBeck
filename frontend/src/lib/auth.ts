@@ -1,20 +1,26 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getToken, getUserId } from './cookie';
+import { Employee, getMyEmployee } from '@/app/schedule/api';
 
 const useAuth = () => {
   const [token, setToken] = useState<string | undefined>(undefined);
   const [userId, setUserId] = useState<string | undefined>(undefined);
+  const [user, setUser] = useState<Employee | undefined>(undefined);
   const [pageLoading, setPageLoading] = useState<boolean>(true);
+  const [role, setRole] = useState<number | undefined>(undefined);
   const router = useRouter();
 
   useEffect(() => {
     const fetchToken = async () => {
       const token = await getToken();
       const userId = await getUserId();
+      const currUser = await getMyEmployee(token as string, Number(userId))
+      setUser(currUser)
       setToken(token);
       setUserId(userId);
       setPageLoading(false);
+      setRole(currUser.role)
     };
 
     fetchToken();
@@ -26,7 +32,7 @@ const useAuth = () => {
     }
   }, [token, router, pageLoading]);
 
-  return { token, userId, pageLoading };
+  return { token, userId, pageLoading, user, role };
 };
 
 export default useAuth;

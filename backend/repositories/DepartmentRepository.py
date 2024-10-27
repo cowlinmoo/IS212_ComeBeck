@@ -31,3 +31,6 @@ class DepartmentRepository:
     def get_employees_by_department_id(self, department_id: int) -> List[Type[Department]]:
         department = self.get_department_by_id(department_id)
         return department.employees
+
+    def get_all_departments(self):
+        return self.db.query(Department).all()

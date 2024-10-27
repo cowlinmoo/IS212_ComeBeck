@@ -8,7 +8,7 @@ from backend.models import Team
 from backend.repositories.DepartmentRepository import DepartmentRepository
 from backend.repositories.EmployeeRepository import EmployeeRepository
 from backend.repositories.TeamRepository import TeamRepository
-from backend.schemas.BaseSchema import BaseEmployeeInfo, BaseDepartmentInfo, BaseTeamInfo
+from backend.schemas.BaseSchema import BaseEmployeeInfo, BaseDepartmentInfo, BaseEmployeeSchema, BaseTeamInfo
 from backend.schemas.TeamSchema import TeamSchema
 
 
@@ -34,7 +34,6 @@ class TeamService:
         department = self.departmentRepository.get_department_by_id(team.department_id)
         manager = self.employeeRepository.get_employee(team.manager_id) if team.manager_id else None
         members = self.employeeRepository.get_employees_by_team_id(team.team_id)
-
         def orm_to_dict(obj):
             return {c.key: getattr(obj, c.key)
                     for c in inspect(obj).mapper.column_attrs}
@@ -48,8 +47,19 @@ class TeamService:
             "parent_team": BaseTeamInfo.model_validate(orm_to_dict(team.parent_team)) if team.parent_team else None,
             "child_teams": [BaseTeamInfo.model_validate(orm_to_dict(child_team)) for child_team in
                             team.child_teams] if team.child_teams else None,
-            "members": [BaseEmployeeInfo.model_validate(orm_to_dict(member)) for member in
+            "members": [BaseEmployeeSchema.model_validate(orm_to_dict(member)) for member in
                         members] if members else None
         }
 
         return TeamSchema.model_validate(team_dict)
+
+    def get_team_employees_by_manager_id(self, manager_id):
+        manager = self.employeeRepository.get_employee(manager_id)
+        if not manager:
+            raise HTTPException(status_code=404, detail="Manager not found")
+
+        team = self.teamRepository.get_team_by_manager_id(manager_id)
+        if not team:
+            raise HTTPException(status_code=404, detail="Team not found")
+
+        return self.team_to_schema(team)
