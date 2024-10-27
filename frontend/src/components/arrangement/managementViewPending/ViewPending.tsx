@@ -84,7 +84,7 @@ export default function ViewPending({ data, token, userId }: { data: Application
                             <TabsTrigger value="change">Change Applications</TabsTrigger>
                             <TabsTrigger value="withdraw">Withdraw Applications</TabsTrigger>
                         </TabsList>
-                        
+
                         <TabsContent value="new">
                             <ScrollArea className="h-[600px] w-full rounded-md border p-4">
                                 {pendingRequests.filter((request) => request.application_state === 'new_application').length === 0 ? (
@@ -99,7 +99,7 @@ export default function ViewPending({ data, token, userId }: { data: Application
                                             <CardDescription>Request Type: {requestType}</CardDescription>
                                         </CardHeader>
                                         <CardContent>
-                                            <p>Reason: {request.reason}</p>                                  
+                                            <p>Reason: {request.reason}</p>
                                             <p>Date of WFH arrangement:</p>
                                             {request.events.map((event) => (
                                                 <div key={event.event_id} className="flex items-center space-x-2">
@@ -141,7 +141,7 @@ export default function ViewPending({ data, token, userId }: { data: Application
                                                             </Button>
                                                             <Button onClick={() => handleStatusUpdate('rejected')} variant="destructive" disabled={!isReasonValid}>
                                                                 Reject
-                                                            </Button>   
+                                                            </Button>
                                                         </DialogFooter>
                                                     </DialogContent>
                                                 </Dialog>
@@ -167,7 +167,7 @@ export default function ViewPending({ data, token, userId }: { data: Application
                                             <CardDescription>Request Type: {requestType}</CardDescription>
                                         </CardHeader>
                                         <CardContent>
-                                            <p>Reason: {request.reason}</p>                                  
+                                            <p>Reason: {request.reason}</p>
                                             <p>Date of WFH arrangement:</p>
                                             {request.events.map((event) => (
                                                 <div key={event.event_id} className="flex items-center space-x-2">
@@ -209,7 +209,7 @@ export default function ViewPending({ data, token, userId }: { data: Application
                                                             </Button>
                                                             <Button onClick={() => handleStatusUpdate('rejected')} variant="destructive" disabled={!isReasonValid}>
                                                                 Reject
-                                                            </Button>   
+                                                            </Button>
                                                         </DialogFooter>
                                                     </DialogContent>
                                                 </Dialog>
@@ -235,7 +235,7 @@ export default function ViewPending({ data, token, userId }: { data: Application
                                             <CardDescription>Request Type: {requestType}</CardDescription>
                                         </CardHeader>
                                         <CardContent>
-                                            <p>Reason: {request.reason}</p>                                  
+                                            <p>Reason: {request.reason}</p>
                                             <p>Date of WFH arrangement:</p>
                                             {request.events.map((event) => (
                                                 <div key={event.event_id} className="flex items-center space-x-2">
@@ -277,7 +277,7 @@ export default function ViewPending({ data, token, userId }: { data: Application
                                                             </Button>
                                                             <Button onClick={() => handleStatusUpdate('rejected')} variant="destructive" disabled={!isReasonValid}>
                                                                 Reject
-                                                            </Button>   
+                                                            </Button>
                                                         </DialogFooter>
                                                     </DialogContent>
                                                 </Dialog>

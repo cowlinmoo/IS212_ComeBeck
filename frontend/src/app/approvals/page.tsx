@@ -27,32 +27,23 @@ export interface Event {
 }
 
 export default function Component() {
-
   const { token, userId, pageLoading } = useAuth();
-
   const [applications, setApplications] = useState<Application[]>([]);
 
   useEffect(() => {
     if (userId) {
-      try {
-        console.log("Fetching staff application...");
-        const fetchData = async () => {
+      const fetchData = async () => {
+        try {
+          console.log("Fetching staff application...");
           const data = await GetApplicationOfStaff(Number(userId), String(token));
           setApplications(data);
-        };
-        fetchData();
-      } catch (error) {
-        console.error("Failed to fetch staff application:", error);
-      }
+        } catch (error) {
+          console.error("Failed to fetch staff application:", error);
+        }
+      };
+      fetchData();
     }
   }, [userId, token]);
-
-  if (pageLoading || (!pageLoading && token === undefined)) {
-    return <div className='flex items-center justify-center h-screen w-screen'>Loading...</div>;
-  }
-
-  console.log(applications);
-
 
   return (
     <div className="flex h-screen text-black bg-gray-100">
@@ -62,10 +53,19 @@ export default function Component() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <Header/>
+        <Header />
+
         {/* Page Content */}
-        <Approvals data={applications} />
+        {pageLoading || (!pageLoading && token === undefined) ? (
+          <div className='flex flex-col items-center justify-center h-full w-full'>
+            {/* Spinner */}
+            <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+            <p className="text-gray-600">Loading approvals page...</p>
+          </div>
+        ) : (
+          <Approvals data={applications} />
+        )}
       </div>
     </div>
-  )
+  );
 }

@@ -1,34 +1,36 @@
-"use client"
+'use client';
 
 import { Header } from "@/components/core/header/Header";
 import useAuth from "@/lib/auth";
 import OverviewSchedule from "@/components/schedule/overviewSchedule/OverviewSchedule";
 import SideBar from "@/components/core/sidebar/SideBar";
 
-export default function Component() {
-
+export default function Page() {
   const { token, userId, pageLoading } = useAuth();
 
-  if (pageLoading || (!pageLoading && token === undefined)) {
-    return <div className='flex items-center justify-center h-screen w-screen'>Loading...</div>;
-  }
-
-  console.log('Token:', token);
-  console.log('User ID:', userId);
-
   return (
-    <div className="flex h-screen text-black bg-gray-100">
-      {/* Left Navbar */}
+    <div className="flex h-screen text-black bg-gray-100 animate-fadeIn">
+      {/* Sidebar always visible */}
       <SideBar />
-
+      
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <Header/>
+        {/* Header always visible */}
+        <Header />
         
-        {/* Page Content */}
-        <OverviewSchedule />
+        {/* Conditionally render Page Content based on loading state */}
+        <div className="flex-1 overflow-y-auto">
+          {pageLoading || !token || userId === undefined ? (
+            <div className="flex flex-col items-center justify-center h-full w-full">
+              {/* Spinner */}
+              <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+              <p className="text-gray-600">Loading department schedule page...</p>
+            </div>
+          ) : (
+            <OverviewSchedule token={token} userId={Number(userId)} />
+          )}
+        </div>
       </div>
     </div>
-  )
+  );
 }

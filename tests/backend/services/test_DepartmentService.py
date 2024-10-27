@@ -26,6 +26,7 @@ def department_service(mock_repositories):
 
 
 class TestDepartmentService:
+
     def test_get_department_by_department_id_success(self, department_service, mock_repositories):
         # Arrange
         mock_department = Mock()
@@ -200,3 +201,41 @@ class TestDepartmentService:
         assert isinstance(department_result, BaseDepartmentInfo)
         assert department_result.department_id == 1
         assert department_result.name == "Engineering"
+
+    def test_get_all_departments(self, department_service, mock_repositories):
+        # Arrange
+        mock_departments = [
+            Mock(department_id=1, name="Engineering", description="Engineering Department", director_id=None),
+            Mock(department_id=2, name="Sales", description="Sales Department", director_id=None),
+            Mock(department_id=3, name="HR", description="Human Resources Department", director_id=None)
+        ]
+
+        # Mock the `get_all_departments` return value
+        mock_repositories['department_repository'].get_all_departments.return_value = mock_departments
+
+        # Mock the `department_to_schema` method for converting mock departments to schema
+        department_service.department_to_schema = Mock(side_effect=[
+            DepartmentSchema(department_id=1, name="Engineering", description="Engineering Department",
+                             director_id=None),
+            DepartmentSchema(department_id=2, name="Sales", description="Sales Department", director_id=None),
+            DepartmentSchema(department_id=3, name="HR", description="Human Resources Department", director_id=None)
+        ])
+
+        # Act
+        result = department_service.get_all_departments()
+
+        # Assert
+        assert len(result) == 3
+        assert isinstance(result[0], DepartmentSchema)
+        assert result[0].department_id == 1
+        assert result[0].name == "Engineering"
+        assert result[1].department_id == 2
+        assert result[1].name == "Sales"
+        assert result[2].department_id == 3
+        assert result[2].name == "HR"
+
+        # Verify `department_to_schema` was called on each department
+        department_service.department_to_schema.assert_any_call(mock_departments[0])
+        department_service.department_to_schema.assert_any_call(mock_departments[1])
+        department_service.department_to_schema.assert_any_call(mock_departments[2])
+        assert department_service.department_to_schema.call_count == 3

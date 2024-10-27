@@ -105,10 +105,10 @@ export default function ViewWithdraw({ data, onWithdraw }: ViewWithdrawProps) {
                                 )}
                             </TableBody>
                         </Table>
-                        <Button className="mt-4" onClick={handleWithdraw}>
-                            Withdraw Selected Events
-                        </Button>
                     </ScrollArea>
+                    <Button className="mt-4" onClick={handleWithdraw}>
+                        Withdraw Selected Events
+                    </Button>
                 </CardContent>
             </Card>
         </div>

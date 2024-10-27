@@ -52,3 +52,14 @@ class TeamService:
         }
 
         return TeamSchema.model_validate(team_dict)
+
+    def get_team_employees_by_manager_id(self, manager_id):
+        manager = self.employeeRepository.get_employee(manager_id)
+        if not manager:
+            raise HTTPException(status_code=404, detail="Manager not found")
+
+        team = self.teamRepository.get_team_by_manager_id(manager_id)
+        if not team:
+            raise HTTPException(status_code=404, detail="Team not found")
+
+        return self.team_to_schema(team)

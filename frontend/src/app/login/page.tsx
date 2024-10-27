@@ -39,7 +39,7 @@ export default function LoginPage() {
         const jwtToken = data.access_token;
         const userId = data.staff_id;
         await storeToken({ token: jwtToken, id: userId });
-        router.push('/overview'); 
+        router.push('/schedule');
       } else {
         const errorData = await response.json();
         setError(errorData.message || 'Login failed');
@@ -69,7 +69,7 @@ export default function LoginPage() {
                 <Input 
                   id="username" 
                   type="username" 
-                  placeholder="m@example.com" 
+                  placeholder="jack.sim@allinone.com.sg"
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
