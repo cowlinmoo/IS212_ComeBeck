@@ -9,8 +9,10 @@ import { EmployeeLocation, getMyEmployee, getMyTeam } from '@/app/schedule/api';
 import { Team } from '@/app/schedule/api';
 import useAuth from '@/lib/auth';
 import { PersonIcon } from '@radix-ui/react-icons';
-import { Briefcase, Home } from 'lucide-react';
-import { Badge } from "@/components/ui/badge";
+import { Briefcase, Home, AlertTriangle } from 'lucide-react';
+import { Badge } from "@/components/ui/badge"
+
+
 
 interface IStaffSchedule {
     employeeLocations: EmployeeLocation[];
@@ -33,6 +35,7 @@ const StaffAccordion: React.FC<IStaffSchedule> = ({ employeeLocations }) => {
     const [defWio, setDefWio] = useState<defName[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
 
+    const [WIOPercent, setWIOPercent] = useState<number>(0)
     useEffect(() => {
         if (token && userId) {
             const getTeam = async () => {
@@ -53,20 +56,50 @@ const StaffAccordion: React.FC<IStaffSchedule> = ({ employeeLocations }) => {
                         const response = await getMyEmployee(token as string, item.staff_id);
                         defNames.push({ ...item, role: response.role });
                     }
-                    setDefWio(defNames);
-                    setLoading(false);
-                } catch (error) {
-                    console.error(error);
-                    setLoading(false);
-                }
-            };
-            getTeam();
-        }
-    }, [employeeLocations, token, user?.team_id, userId]);
+                    setMyTeam(response)
+                    setDefWio(defNames)
+                    setLoading(false)
 
+                    if (response.members.length > 0) {
+                        const percent = (100 - ((defNames.length / response.members.length) * 100))
+                        setWIOPercent(percent)
+                    }
+                }
+                catch (error) {
+                    console.error(error)
+                    setLoading(false)
+                }
+
+                
+            }
+            getTeam()
+        }
+    }, [employeeLocations, token, user?.team_id, userId])
+
+    const getPercentageColor = (percent: number) => {
+        if (myTeam?.members.length == 3) {
+            if (percent >= 33) return 'text-yellow-500'
+            if (percent >= 50) return 'text-red-500'
+        } else {
+            if (percent >= 40) return 'text-yellow-500'
+            if (percent >= 50) return 'text-red-500'
+        }
+        return 'text-green-500'
+    }
     return (
         <Accordion type="single" collapsible>
             <AccordionItem value="item-1">
+            <div className="flex items-center space-x-2">
+                <span className={`font-bold ${getPercentageColor(WIOPercent)}`}>
+                        ({WIOPercent.toFixed(2)}% Working from Home)
+                    </span>
+                    {WIOPercent >= 40 && WIOPercent <= 50 && (
+                        <span className="text-yellow-500 flex items-center">
+                            <AlertTriangle className="h-4 w-4 mr-1" />
+                            Warning: Close to 50%
+                        </span>
+                    )}
+                </div>
                 <AccordionTrigger>My Team</AccordionTrigger>
                 <AccordionContent className='overflow-y-scroll h-64 flex flex-col gap-2'>
                     {loading ? (
