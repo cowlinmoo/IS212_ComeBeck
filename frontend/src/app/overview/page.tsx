@@ -4,39 +4,6 @@ import { Header } from "@/components/core/header/Header";
 import useAuth from "@/lib/auth";
 import OverviewSchedule from "@/components/schedule/overviewSchedule/OverviewSchedule";
 import SideBar from "@/components/core/sidebar/SideBar";
-import { useEffect, useState } from "react";
-import { GetTeam, GetTeamID } from "./api";
-
-export interface Team {
-  team_id: number;
-  name: string;
-  description: string;
-  department: {
-      department_id: number;
-      name: string;
-  };
-  manager: {
-      staff_id: number;
-      staff_fname: string;
-      staff_lname: string;
-  };
-  parent_team: {
-      team_id: number;
-      name: string;
-      description: string;
-  };
-  child_teams: Array<ChildTeam>;
-  members: Array<{
-      staff_id: number;
-      staff_fname: string;
-      staff_lname: string;
-  }>;
-}
-export interface ChildTeam {
-  team_id: number;
-  name: string;
-  description: string;
-}
 
 export default function Page() {
   const { token, userId, pageLoading } = useAuth();
