@@ -9,6 +9,19 @@ on:
       - '*'
 
 jobs:
+  Lint-Code:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Build Docker image for linting
+      run: docker build -t my-app-lint .
+
+    - name: Run Flake8 Linter
+      run: |
+        docker run --rm my-app-lint poetry run flake8 backend/
+
   Run-Unit-Tests:
     runs-on: ubuntu-latest
 

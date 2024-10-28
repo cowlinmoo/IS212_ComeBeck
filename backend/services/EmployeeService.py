@@ -9,7 +9,8 @@ from backend.repositories.DepartmentRepository import DepartmentRepository
 from backend.repositories.EmployeeRepository import EmployeeRepository
 from backend.repositories.TeamRepository import TeamRepository
 from backend.schemas.BaseSchema import BaseEmployeeSchema
-from backend.schemas.EmployeeSchema import EmployeeSchema, EmployeeCreateSchema, EmployeeUpdateSchema
+from backend.schemas.EmployeeSchema import (EmployeeSchema, EmployeeCreateSchema,
+                                            EmployeeUpdateSchema)
 
 
 class EmployeeService:
@@ -18,7 +19,8 @@ class EmployeeService:
     departmentRepository: DepartmentRepository
 
     def __init__(
-        self, employeeRepository: EmployeeRepository = Depends(), teamRepository: TeamRepository = Depends(),
+        self, employeeRepository: EmployeeRepository = Depends(), teamRepository:
+            TeamRepository = Depends(),
             departmentRepository: DepartmentRepository = Depends()
     ) -> None:
         self.employeeRepository = employeeRepository
@@ -57,7 +59,8 @@ class EmployeeService:
         return self.employee_to_schema(new_employee)
 
     def employee_to_schema(self, employee: Employee) -> EmployeeSchema:
-        department = self.departmentRepository.get_department_by_id(employee.department_id)
+        department = self.departmentRepository.get_department_by_id(employee
+                                                                    .department_id)
         team = self.teamRepository.get_team_by_id(employee.team_id)
         managed_team = None
         try:
@@ -65,10 +68,12 @@ class EmployeeService:
         except HTTPException:
             pass
 
-        direct_reports = self.employeeRepository.get_employees_by_manager_id(employee.staff_id)
+        direct_reports = self.employeeRepository.get_employees_by_manager_id(employee
+                                                                             .staff_id)
         directed_department = None
         try:
-            directed_department = self.departmentRepository.get_department_by_director_id(employee.staff_id)
+            directed_department = (self.departmentRepository
+                                   .get_department_by_director_id(employee.staff_id))
         except HTTPException:
             pass
 
@@ -90,14 +95,17 @@ class EmployeeService:
             "department": orm_to_dict(department) if department else None,
             "team": orm_to_dict(team) if team else None,
             "managed_team": orm_to_dict(managed_team) if managed_team else None,
-            "direct_reports": [BaseEmployeeSchema.model_validate(orm_to_dict(report)) for report in
+            "direct_reports": [BaseEmployeeSchema.model_validate(orm_to_dict(report))
+                               for report in
                                direct_reports] if direct_reports else None,
-            "directed_department": orm_to_dict(directed_department) if directed_department else None
+            "directed_department": orm_to_dict(directed_department)
+            if directed_department else None
         }
 
         return EmployeeSchema.model_validate(employee_dict)
 
-    def update_employee(self, staff_id: int, employee: EmployeeUpdateSchema) -> EmployeeSchema:
+    def update_employee(self, staff_id: int,
+                        employee: EmployeeUpdateSchema) -> EmployeeSchema:
         update_data = employee.model_dump(exclude_unset=True)
 
         if 'team_id' in update_data:
@@ -113,9 +121,11 @@ class EmployeeService:
             if team.manager_id:
                 update_data['reporting_manager'] = team.manager_id
             else:
-                raise HTTPException(status_code=400, detail="Team has no manager assigned")
+                raise HTTPException(status_code=400,
+                                    detail="Team has no manager assigned")
 
-        updated_employee = self.employeeRepository.update_employee(staff_id, update_data)
+        updated_employee = self.employeeRepository.update_employee(staff_id,
+                                                                   update_data)
         return self.employee_to_schema(updated_employee)
 
     def delete_employee_by_staff_id(self, staff_id: int):

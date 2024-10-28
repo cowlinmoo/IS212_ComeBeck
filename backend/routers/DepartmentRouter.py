@@ -12,15 +12,21 @@ DepartmentRouter = APIRouter(
     tags=["Department Endpoints"],
 )
 
+
 @DepartmentRouter.get("/{department_id}", response_model=DepartmentSchema)
 def get_department_by_department_id(department_id: int,
-                                  service: DepartmentService = Depends(),
-                                  current_user: dict =
-                                  Depends(role_required(EmployeeRole.HR,
-                                                        EmployeeRole.MANAGER, EmployeeRole.STAFF))):
+                                    service: DepartmentService = Depends(),
+                                    current_user: dict =
+                                    Depends(role_required(EmployeeRole.HR,
+                                                          EmployeeRole.MANAGER,
+                                                          EmployeeRole.STAFF))):
     return service.get_department_by_department_id(department_id)
+
 
 @DepartmentRouter.get("", response_model=List[DepartmentSchema])
 def get_all_departments(service: DepartmentService = Depends(),
-                        current_user: dict = Depends(role_required(EmployeeRole.HR, EmployeeRole.MANAGER, EmployeeRole.STAFF))):
+                        current_user: dict =
+                        Depends(role_required(EmployeeRole.HR,
+                                              EmployeeRole.MANAGER,
+                                              EmployeeRole.STAFF))):
     return service.get_all_departments()

@@ -16,6 +16,7 @@ from backend.services.SchedulerService import SchedulerService
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/authenticate")
 
+
 def get_current_user(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -31,6 +32,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         return {"email": email, "role": EmployeeRole(role)}
     except JWTError:
         raise credentials_exception
+
 
 def role_required(*allowed_roles: EmployeeRole):
     def wrapper(current_user: dict = Depends(get_current_user)):
@@ -59,12 +61,14 @@ def get_event_repository(db: Session = Depends(get_db_connection)):
     return EventRepository(db)
 
 
-def get_event_service(event_repository: EventRepository = Depends(get_event_repository)):
+def get_event_service(event_repository: EventRepository =
+                      Depends(get_event_repository)):
     return EventService(event_repository)
 
 
 def get_application_service(
-        application_repository: ApplicationRepository = Depends(get_application_repository),
+        application_repository: ApplicationRepository =
+        Depends(get_application_repository),
         employee_repository: EmployeeRepository = Depends(get_employee_repository),
         email_service: EmailService = Depends(get_email_service),
         event_repository: EventRepository = Depends(get_event_repository),

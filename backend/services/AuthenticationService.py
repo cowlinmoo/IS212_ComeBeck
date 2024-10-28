@@ -17,13 +17,15 @@ ALGORITHM = "HS256"
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
+
 class AuthenticationService:
     db: Session
 
     def __init__(self, db: Session = Depends(get_db_connection)):
         self.db = db
 
-    def create_access_token(self, data: dict, expires_delta: Optional[timedelta] = None):
+    def create_access_token(self, data: dict,
+                            expires_delta: Optional[timedelta] = None):
         to_encode = data.copy()
         if expires_delta:
             expire = datetime.now(timezone.utc) + expires_delta
@@ -33,12 +35,15 @@ class AuthenticationService:
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
         return encoded_jwt
 
-    def authenticate_employee(self, email: str, password: str) -> tuple[Any, EmployeeRole] | None:
+    def authenticate_employee(self,
+                              email: str,
+                              password: str) -> tuple[Any, EmployeeRole] | None:
         try:
             employee = self.db.query(Employee).filter(Employee.email == email).first()
             if employee and bcrypt_context.verify(password, employee.password):
                 employee_role = EmployeeRole(employee.role)
-                print(f"Employee authenticated: {employee.email}, Role: {employee_role.name}")
+                print(f"Employee authenticated: {employee.email}, "
+                      f"Role: {employee_role.name}")
                 return employee, employee_role
         except Exception as e:
             print(f"Authentication error: {str(e)}")

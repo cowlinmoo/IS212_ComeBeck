@@ -14,6 +14,7 @@ def get_env_filename():
     print(f"Trying to load environment variables from: {env_file_path}")
     return env_file_path
 
+
 class EnvironmentSettings(BaseSettings):
     CURRENT_ENV: str = 'DEV' # Default to 'DEV' if not provided
     PRODUCTION_DB_USER: str = "" # Optional

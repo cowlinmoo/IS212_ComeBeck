@@ -1,5 +1,6 @@
 __pycache__
 /postgres/data/
+/postgres/test_data/
 .idea/
 *.env
 /pgadmin-data
