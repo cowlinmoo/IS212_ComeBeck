@@ -9,7 +9,7 @@ on:
       - '*'
 
 jobs:
-  Lint-Code:
+  Lint-Backend-Code:
     runs-on: ubuntu-latest
 
     steps:
@@ -22,7 +22,29 @@ jobs:
       run: |
         docker run --rm my-app-lint poetry run flake8 backend/
 
-  Run-Unit-Tests:
+  Lint-Frontend-Code:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '18.17.0'
+
+    - name: Install dependencies
+      run: |
+        cd frontend
+        npm install
+
+    - name: Run Frontend Linter and Build
+      run: |
+        cd frontend
+        npm run lint
+        npm run build
+
+  Run-Backend-Unit-Tests:
     runs-on: ubuntu-latest
 
     steps:
