@@ -1,6 +1,6 @@
 import os
 
-from sqlalchemy import create_engine, text, Enum
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import scoped_session, sessionmaker
 from .Environment import get_environment_variables
 
