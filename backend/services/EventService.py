@@ -41,6 +41,7 @@ class EventService:
             created_event = self.eventRepository.create_event(event)
             created_events.append(created_event)
         return created_events
+
     def create_events(self, application: ApplicationCreateSchema, application_id: int):
         if application.events:
             for event in application.events:
@@ -56,7 +57,8 @@ class EventService:
         else:
             self.create_single_event(application, application_id)
 
-    def create_single_event(self, application: ApplicationCreateSchema, application_id: int):
+    def create_single_event(self, application: ApplicationCreateSchema,
+                            application_id: int):
         event = Event(
             requested_date=application.requested_date,
             location=application.location,
@@ -65,10 +67,12 @@ class EventService:
         )
         self.create_event(event)
 
-    def create_recurring_events(self, application: ApplicationCreateSchema, application_id: int):
+    def create_recurring_events(self, application: ApplicationCreateSchema,
+                                application_id: int):
         current_date = application.requested_date
         end_date = application.end_date or (
-                    current_date + timedelta(days=365))  # Default to one year if no end_date
+            current_date + timedelta(days=365))
+        # Default to one year if no end_date
 
         while current_date <= end_date:
             event = Event(
@@ -86,6 +90,7 @@ class EventService:
             elif application.recurrence_type == RecurrenceType.MONTHLY:
                 # Move to the same day next month
                 if current_date.month == 12:
-                    current_date = current_date.replace(year=current_date.year + 1, month=1)
+                    current_date = current_date.replace(year=current_date.year + 1,
+                                                        month=1)
                 else:
                     current_date = current_date.replace(month=current_date.month + 1)

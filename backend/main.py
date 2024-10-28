@@ -16,6 +16,8 @@ from backend.services.dependencies import get_scheduler_service
 
 create_database()
 init_db()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup

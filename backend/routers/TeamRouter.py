@@ -10,17 +10,21 @@ TeamRouter = APIRouter(
     tags=["Team Endpoints"],
 )
 
+
 @TeamRouter.get("/{team_id}", response_model=TeamSchema)
 def get_team_by_team_id(team_id: int,
                                   service: TeamService = Depends(),
                                   current_user: dict =
                                   Depends(role_required(EmployeeRole.HR,
-                                                        EmployeeRole.MANAGER, EmployeeRole.STAFF))):
+                                                        EmployeeRole.MANAGER,
+                                                        EmployeeRole.STAFF))):
     return service.get_team_employees_by_team_id(team_id)
+
 
 @TeamRouter.get("/manager/{manager_id}", response_model=TeamSchema)
 def get_team_by_manager_id(manager_id: int,
                                   service: TeamService = Depends(),
                                   current_user: dict =
-                                  Depends(role_required(EmployeeRole.HR, EmployeeRole.MANAGER))):
+                                  Depends(role_required(EmployeeRole.HR,
+                                                        EmployeeRole.MANAGER))):
     return service.get_team_employees_by_manager_id(manager_id)

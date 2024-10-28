@@ -1,6 +1,7 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from backend.services.ApplicationService import ApplicationService
 
+
 class SchedulerService:
     def __init__(self, application_service: ApplicationService):
         self.scheduler = BackgroundScheduler()

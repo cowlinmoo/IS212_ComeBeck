@@ -20,7 +20,7 @@ ENV PATH="${PATH}:/root/.local/bin"
 RUN poetry config virtualenvs.create false
 
 # Copy the project files
-COPY poetry.lock pyproject.toml ./
+COPY poetry.lock pyproject.toml .flake8 ./
 
 COPY backend backend
 COPY tests tests

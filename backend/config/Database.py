@@ -11,14 +11,21 @@ DATABASE_HOSTNAME = env.DATABASE_HOSTNAME or 'localhost'
 
 # Construct the DATABASE_URL
 if env.CURRENT_ENV == 'PROD':
-    # Use credentials from env if available, otherwise fall back to environment variables
+    # Use credentials from env if available,
+    # otherwise fall back to environment variables
     production_username = env.PRODUCTION_DB_USER
     production_password = env.PRODUCTION_DB_PASSWORD
     production_hostname = env.PRODUCTION_DB_HOSTNAME
     production_port = env.PRODUCTION_DB_PORT
     production_db = env.PRODUCTION_DB_NAME
 
-    DATABASE_URL = f"postgresql://{production_username}:{production_password}@{production_hostname}:{production_port}/{production_db}"
+    DATABASE_URL = (f"postgresql://{production_username}:{production_password}"
+                    f"@{production_hostname}:{production_port}/{production_db}")
+
+elif env.CURRENT_ENV == 'TEST':
+    DATABASE_URL = \
+        "postgresql://test_user:test_password@spm_database_test:5432/test_spm"
+
 else:  # Assuming 'development' or other environments
     DATABASE_URL = (
         f"{env.DATABASE_DIALECT}://{env.POSTGRES_USER}:{env.POSTGRES_PASSWORD}"
@@ -35,6 +42,7 @@ SessionLocal = sessionmaker(
     autocommit=False, autoflush=False, bind=Engine
 )
 
+
 def get_db_connection():
     db = scoped_session(SessionLocal)
     try:
@@ -44,7 +52,8 @@ def get_db_connection():
 
 
 def init_db():
-    init_sql_path = os.path.join(os.path.dirname(__file__), '..', '..', 'postgres', 'init.sql')
+    init_sql_path = (
+        os.path.join(os.path.dirname(__file__), '..', '..', 'postgres', 'init.sql'))
 
     with Engine.connect() as connection:
         # Explicitly start a transaction for the entire operation

@@ -1,10 +1,8 @@
-from pydantic import BaseModel, Field, validator, field_validator, model_validator
+from pydantic import BaseModel, Field, model_validator
 from datetime import datetime, date, timedelta
 from typing import Optional, List
 
-from backend.models.enums import EventLocationEnum
 from backend.models.enums.ApplicationHourEnum import ApplicationHourEnum
-from backend.models.enums.EmployeeRoleEnum import EmployeeRole
 from backend.models.enums.RecurrenceType import RecurrenceType
 
 import logging
@@ -39,7 +37,11 @@ class ApplicationSchema(BaseModel):
 class ApplicationResponse(BaseModel):
     staff: BaseEmployeeInfo = Field(default_factory=BaseEmployeeInfo)
     application_id: int = Field(examples=[201, 202, 203])
-    application_state: Optional[str] = Field(default=None, examples=["new_application", "cancel_one_request", "cancel_request", "change_request"])
+    application_state: Optional[str] = Field(default=None,
+                                             examples=["new_application",
+                                                       "cancel_one_request",
+                                                       "cancel_request",
+                                                       "change_request"])
     reason: str = Field(
         examples=["Vacation request", "Sick leave", "Personal day"])
     description: Optional[str] = Field(
@@ -56,26 +58,34 @@ class ApplicationResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
 class ApplicationCreateSchema(BaseModel):
     location: str = Field(examples=["Home", "Office", "Remote"])
     reason: str = Field(
         examples=["Vacation request", "Sick leave", "Personal day"])
     requested_date: date = Field(examples=[date.today()])
     application_hour: ApplicationHourEnum = Field(
-        examples=[ApplicationHourEnum.FULLDAY, ApplicationHourEnum.AM, ApplicationHourEnum.PM])
+        examples=[ApplicationHourEnum.FULLDAY, ApplicationHourEnum.AM,
+                  ApplicationHourEnum.PM])
     description: Optional[str] = Field(
         default=None, examples=["Going on a family vacation", "Doctor's appointment"])
     staff_id: int = Field(examples=[101, 102, 103])
     recurring: bool = Field(default=False, examples=[True, False])
-    recurrence_type: Optional[RecurrenceType] = Field(default=None, examples=[
-                                                      RecurrenceType.DAILY, RecurrenceType.WEEKLY, RecurrenceType.MONTHLY])
+    recurrence_type: Optional[RecurrenceType] = (
+        Field(default=None, examples=[
+            RecurrenceType.DAILY,
+            RecurrenceType.WEEKLY,
+            RecurrenceType.MONTHLY]
+        ))
     end_date: Optional[date] = Field(
         default=None, examples=[date.today() + timedelta(days=7)])
     events: List[EventCreateSchema] = Field(default=[],
                                             examples=[
         [
-            {"requested_date": date.today(), "application_hour": ApplicationHourEnum.FULLDAY},
-            {"requested_date": date.today() + timedelta(days=3), "application_hour": ApplicationHourEnum.FULLDAY}
+            {"requested_date": date.today(), "application_hour":
+                ApplicationHourEnum.FULLDAY},
+            {"requested_date": date.today() + timedelta(days=3), "application_hour":
+                ApplicationHourEnum.FULLDAY}
         ]
     ])
 
@@ -89,40 +99,52 @@ class ApplicationCreateSchema(BaseModel):
         validate_assignment = True
         from_attributes = True
 
+
 class ApplicationWithdrawSchema(BaseModel):
     status: str = Field(examples=["withdrawn"])
     editor_id: int = Field(examples=[101, 102, 103])
     application_id: int = Field(examples=[201, 202, 203])
-    withdraw_reason: Optional[str] = Field(default=None, examples=["Personal reasons", "Change of plans"])
+    withdraw_reason: Optional[str] = Field(default=None,
+                                           examples=["Personal reasons",
+
+                                                     "Change of plans"])
+
     class Config:
         from_attributes = True
+
 
 class ApplicationWithdrawEventSchema(BaseModel):
     status: str = Field(examples=["withdrawn"])
     editor_id: int = Field(examples=[101, 102, 103])
-    withdraw_reason: Optional[str] = Field(default=None, examples=["Personal reasons", "Change of plans"])
+    withdraw_reason: Optional[str] = Field(default=None,
+                                           examples=["Personal reasons",
+                                                     "Change of plans"])
+
     class Config:
         from_attributes = True
+
 
 class ApplicationApproveRejectSchema(BaseModel):
     status: str = Field(examples=["approved", "rejected"])
     approver_id: int = Field(examples=[100, 102, 103])
     application_id: int = Field(examples=[201, 202, 203])
-    outcome_reason: Optional[str] = Field(default=None, examples=["Some reason for decision"])
+    outcome_reason: Optional[str] = Field(default=None,
+                                          examples=["Some reason for decision"])
+
     class Config:
         from_attributes = True
 
 
 class ApprovedApplicationLocationSchema(BaseModel):
-    employee_id:int
+    employee_id: int
     employee_fname: str = Field(examples=["John", "Jane"])
     employee_lname: str = Field(examples=["Doe", "Smith"])
     location: str = Field(examples=["New York", "London"])
     position: str = Field(examples=["Manager", "Developer"])
     date: str = Field(examples=["2023-10-01", "2023-10-02"])
-    application_hour:str = Field(examples=["FULLDAY","AM","PM"])
-    role:int
-    team_id:int
+    application_hour: str = Field(examples=["FULLDAY", "AM", "PM"])
+    role: int
+    team_id: int
 
     class Config:
         from_attributes = True
