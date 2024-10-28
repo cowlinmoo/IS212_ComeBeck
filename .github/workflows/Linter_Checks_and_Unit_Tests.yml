@@ -9,7 +9,7 @@ on:
       - '*'
 
 jobs:
-  Lint-Backend-Code:
+  Backend-Linter-Checks:
     runs-on: ubuntu-latest
 
     steps:
@@ -22,7 +22,7 @@ jobs:
       run: |
         docker run --rm my-app-lint poetry run flake8 backend/
 
-  Lint-Frontend-Code:
+  Frontend-Linter-Checks:
     runs-on: ubuntu-latest
 
     steps:
