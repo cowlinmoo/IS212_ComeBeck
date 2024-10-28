@@ -564,7 +564,6 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                     </FormItem>
                   )}
                 />
-                  
                   )}
 
                   <FormField

@@ -11,8 +11,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { TabsContent } from "@/components/ui/tabs";
-import { subWeeks, addWeeks, getYear, addYears,subYears, getMonth } from "date-fns";
+import { subWeeks, addWeeks, getYear, addYears,subYears, getMonth, addMonths, subMonths, format, isWeekend} from "date-fns";
 import {
   Select,
   SelectContent,
@@ -43,6 +48,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { CalendarIcon } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const URL = `${BASE_URL}/application`;
@@ -60,6 +68,7 @@ const changeFormSchema = z.object({
     .refine((data) => data.eventID !== "", {
       message: "Please select an arrangement to withdraw.",
     }),
+  
   reason: z.string(),
 });
 
@@ -84,6 +93,8 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
 
   //all months for pending application filtering
   const [filterMonths, setFilterMonths] = useState(Array);
+
+  const [fromEndDate, setFromEndDate] = useState<Date>(new Date())
 
   useEffect(() => {
     async function fetchData() {
@@ -340,6 +351,113 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
   const currentYear = getYear(new Date());
   const aheadYear = getYear(addYears(new Date(), 1));
   const behindYear = getYear(subYears(new Date(), 1));
+
+  // restricted calendar
+  const [fromDate, setFromDate] = useState<Date>(new Date());
+  const [toDate, setToDate] = useState<Date>(new Date());
+
+  useEffect(() => {
+    const currentDate = new Date();
+    setFromDate(subMonths(currentDate, 2));
+    setToDate(addMonths(currentDate, 3));
+  }, []);
+
+  const [wfhApplications, setwfhApplications] = useState(Array);
+  useEffect(() => {
+    async function fetchData() {
+      const headers = { Authorization: `Bearer ${token}` };
+      try {
+        const response = await fetch(`${URL}/staff/` + staffId, { headers });
+        if (!response.ok) {
+          throw new Error(`GET Application API validation ERROR`);
+        } else {
+          const data = await response.json();
+          let applications = [];
+          if (data.length < 1) {
+            applications = [];
+          } else {
+            for (const application of data) {
+              console.log(application);
+              for (const event of application["events"]) {
+                const dateSplit = event["requested_date"].split("-");
+                const date = new Date(
+                  Number(dateSplit[0]),
+                  Number(dateSplit[1]) - 1,
+                  Number(dateSplit[2])
+                );
+                applications.push({
+                  date: date,
+                  hour: event["application_hour"],
+                });
+              }
+            }
+            setwfhApplications(applications);
+          }
+        }
+      } catch (error: any) {
+        console.log("GET API fetching error.", error.message);
+      }
+    }
+    fetchData();
+  }, [staffId, token]);
+  console.log(wfhApplications)
+
+  // // disable weekends and all dates with existing wfh arrangements or pending wfh applications
+  const isDateDisabled = (date: Date) => {
+    let hasApplication = false;
+    for (const d of wfhApplications) {
+      if ((d.date as Date).toDateString() === date.toDateString()) {
+        if (d.hour === "fullday"){
+          hasApplication = true;
+          break;
+        }
+      }
+    }
+    return (
+      isWeekend(date) || date < fromDate || date > toDate || hasApplication
+    );
+  };
+  const onlyDisableWeekend = (date: Date) => {
+    return isWeekend(date) || date < fromDate || date > toDate;
+  };
+  const isAMButtonDisabled = (date:Date) =>{
+    let hasApplication = false;
+    for (const d of wfhApplications) {
+      if ((d.date as Date).toDateString() === date.toDateString()) {
+        if (d.hour === "am"){
+          hasApplication = true;
+          break;
+        }
+      }
+    }
+    return hasApplication
+  }
+  const isPMButtonDisabled = (date:Date) =>{
+    let hasApplication = false;
+    for (const d of wfhApplications) {
+      if ((d.date as Date).toDateString() === date.toDateString()) {
+        if (d.hour === "pm"){
+          hasApplication = true;
+          break;
+        }
+      }
+    }
+    return hasApplication
+
+  }
+  const isFULLDAYButtonDisabled = (date:Date) =>{
+    let hasApplication = false;
+    for (const d of wfhApplications) {
+      if ((d.date as Date).toDateString() === date.toDateString()) {
+        if (d.hour === "pm" || d.hour==="am"){
+          hasApplication = true;
+          break;
+        }
+      }
+    }
+    return hasApplication
+
+  }
 
 
   //Submission for apply form
@@ -703,6 +821,100 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
                   )}
                 />
               )}
+              {changeForm.watch("selectedArrangement") && (
+                <FormField
+                control={changeForm.control}
+                name="singleDate"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Date:</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-[240px] justify-start text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent>
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={(date) => {
+                            field.onChange(date);
+                            if (date) {
+                              setFromEndDate(date);
+                            }
+                          }}
+                          fromDate={fromDate}
+                          toDate={toDate}
+                          disabled={isDateDisabled}
+                          initialFocus
+                          
+                        />
+                        <div className="p-3 border-t">
+                          <p className="text-s text-muted-foreground">
+                            Selectable range:{" "}
+                            {format(fromDate, "MMM d, yyyy")} -{" "}
+                            {format(toDate, "MMM d, yyyy")}
+                          </p>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </FormItem>
+                )}/>
+              )}
+              {changeForm.watch("singleDate") && (
+                  <FormField
+                  control={changeForm.control}
+                  name={`singleDate.hour`}
+                  render={({ field }) => (
+                    <FormItem className="space-y-3">
+                      <FormLabel>{format(fromEndDate, "PPP")}</FormLabel>
+                      <FormDescription  hidden={!isAMButtonDisabled(fromEndDate)} >There is an existing AM wfh arrangement for this day</FormDescription>
+                      <FormDescription hidden={!isPMButtonDisabled(fromEndDate)}>There is an existing PM wfh arrangement for this day</FormDescription>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          className="flex space-x-4"
+                        >
+                          <FormItem className="flex items-center space-x-2 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="fullday" id="r1" hidden={isFULLDAYButtonDisabled(fromEndDate)}/>
+                            </FormControl>
+                            <FormLabel className="font-normal" hidden={isFULLDAYButtonDisabled(fromEndDate)}>Full Day</FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-2 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="am" hidden={isAMButtonDisabled(fromEndDate)}/>
+                            </FormControl>
+                            <FormLabel className="font-normal" hidden={isAMButtonDisabled(fromEndDate)}>AM</FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-2 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="pm" hidden={isPMButtonDisabled(fromEndDate)} />
+                            </FormControl>
+                            <FormLabel className="font-normal" hidden={isPMButtonDisabled(fromEndDate)}>PM</FormLabel>
+                          </FormItem>
+                        </RadioGroup>
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                  )}
+
               <FormField
                 control={changeForm.control}
                 name="reason"
