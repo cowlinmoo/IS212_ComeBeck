@@ -1,59 +1,36 @@
-name: Github Actions
+name: End-To-End Tests
 
 on:
   push:
     branches:
-      - '*'
+      - 'main'
   pull_request:
     branches:
-      - '*'
+      - 'main'
 
 jobs:
-  Backend-Linter-Checks:
+  Run-End-to-End-Tests:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
 
-    - name: Build Docker image for linting
-      run: docker build -t my-app-lint .
-
-    - name: Run Flake8 Linter
-      run: |
-        docker run --rm my-app-lint poetry run flake8 backend/
-
-  Frontend-Linter-Checks:
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v2
-
-    - name: Set up Node.js
-      uses: actions/setup-node@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
       with:
-        node-version: '18.17.0'
+        python-version: '3.12'
 
-    - name: Install dependencies
+    - name: Install Dependencies
       run: |
-        cd frontend
-        npm install
+        # Install Poetry
+        curl -sSL https://install.python-poetry.org | python -
+        export PATH="$HOME/.local/bin:$PATH"
+        poetry install
 
-    - name: Run Frontend Linter and Build
-      run: |
-        cd frontend
-        npm run lint
-        npm run build
+    - name: Build Docker Image for End-to-End Tests
+      run: docker build -t my-app-e2e .
 
-  Run-Backend-Unit-Tests:
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v2
-
-    - name: Build Docker image
-      run: docker build -t my-app .
-
-    - name: Run tests
+    - name: Run End to End Tests
       env:
         CURRENT_ENV: DEV
         PRODUCTION_DB_USER: ${{ secrets.PRODUCTION_DB_USER }}
@@ -91,4 +68,4 @@ jobs:
           -e SMTP_PORT \
           -e SENDER_EMAIL \
           -e SENDER_PASSWORD \
-          my-app poetry run pytest tests/ -m "not E2ETest" -n auto -v
+          my-app-e2e poetry run pytest tests/ -m "E2ETest" -n auto -v
