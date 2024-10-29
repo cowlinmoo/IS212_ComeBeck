@@ -65,7 +65,7 @@ def mock_environment_settings():
         DATABASE_HOSTNAME = 'localhost'
     return MockSettings()
 
-@patch('BackendUnitTests.config.Environment.EnvironmentSettings')
+@patch('backend.config.Environment.EnvironmentSettings')
 def test_get_environment_variables(mock_settings, mock_environment_settings):
     mock_settings.return_value = mock_environment_settings
     env_vars = get_environment_variables()

@@ -43,7 +43,7 @@ def test_create_access_token_without_expiry():
     assert "exp" in decoded
 
 
-@patch('BackendUnitTests.services.AuthenticationService.bcrypt_context')
+@patch('backend.services.AuthenticationService.bcrypt_context')
 def test_authenticate_employee_success(mock_bcrypt, auth_service, mock_db):
     mock_employee = Mock(spec=Employee)
     mock_employee.email = "test@example.com"
@@ -59,7 +59,7 @@ def test_authenticate_employee_success(mock_bcrypt, auth_service, mock_db):
     assert role == EmployeeRole.STAFF
     mock_bcrypt.verify.assert_called_once_with("password", "hashed_password")
 
-@patch('BackendUnitTests.services.AuthenticationService.bcrypt_context')
+@patch('backend.services.AuthenticationService.bcrypt_context')
 def test_authenticate_manager_success(mock_bcrypt, auth_service, mock_db):
     mock_employee = Mock(spec=Employee)
     mock_employee.email = "test@example.com"
@@ -75,7 +75,7 @@ def test_authenticate_manager_success(mock_bcrypt, auth_service, mock_db):
     assert role == EmployeeRole.MANAGER
     mock_bcrypt.verify.assert_called_once_with("password", "hashed_password")
 
-@patch('BackendUnitTests.services.AuthenticationService.bcrypt_context')
+@patch('backend.services.AuthenticationService.bcrypt_context')
 def test_authenticate_hr_success(mock_bcrypt, auth_service, mock_db):
     mock_employee = Mock(spec=Employee)
     mock_employee.email = "test@example.com"
@@ -91,7 +91,7 @@ def test_authenticate_hr_success(mock_bcrypt, auth_service, mock_db):
     assert role == EmployeeRole.HR
     mock_bcrypt.verify.assert_called_once_with("password", "hashed_password")
 
-@patch('BackendUnitTests.services.AuthenticationService.bcrypt_context')
+@patch('backend.services.AuthenticationService.bcrypt_context')
 def test_authenticate_employee_wrong_password(mock_bcrypt, auth_service, mock_db):
     mock_employee = Mock(spec=Employee)
     mock_employee.email = "test@example.com"
@@ -115,7 +115,7 @@ def test_authenticate_employee_not_found(auth_service, mock_db):
     assert role is None
 
 
-@patch('BackendUnitTests.services.AuthenticationService.bcrypt_context')
+@patch('backend.services.AuthenticationService.bcrypt_context')
 def test_authenticate_employee_exception(mock_bcrypt, auth_service, mock_db):
     mock_db.query.side_effect = Exception("Database error")
 

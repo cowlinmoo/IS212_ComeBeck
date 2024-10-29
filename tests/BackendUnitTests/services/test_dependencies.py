@@ -66,7 +66,7 @@ def mock_event_service():
 
 
 # Tests for get_current_user
-@patch('BackendUnitTests.services.dependencies.jwt.decode')
+@patch('backend.services.dependencies.jwt.decode')
 def test_get_current_user_valid_token(mock_jwt_decode):
     mock_jwt_decode.return_value = {"sub": "test@example.com", "role": 1}
     token = "valid_token"
@@ -74,7 +74,7 @@ def test_get_current_user_valid_token(mock_jwt_decode):
     assert result == {"email": "test@example.com", "role": EmployeeRole(1)}
 
 
-@patch('BackendUnitTests.services.dependencies.jwt.decode')
+@patch('backend.services.dependencies.jwt.decode')
 def test_get_current_user_invalid_token(mock_jwt_decode):
     mock_jwt_decode.side_effect = JWTError()
     token = "invalid_token"
@@ -84,7 +84,7 @@ def test_get_current_user_invalid_token(mock_jwt_decode):
     assert exc_info.value.detail == "Could not validate credentials"
 
 
-@patch('BackendUnitTests.services.dependencies.jwt.decode')
+@patch('backend.services.dependencies.jwt.decode')
 def test_get_current_user_missing_fields(mock_jwt_decode):
     mock_jwt_decode.return_value = {"sub": "test@example.com"}
     token = "incomplete_token"
@@ -137,7 +137,7 @@ def test_get_event_repository(mock_db):
     assert result.db == mock_db
 
 
-@patch('BackendUnitTests.services.dependencies.EventService')
+@patch('backend.services.dependencies.EventService')
 def test_get_event_service(mock_event_service_class, mock_event_repository):
     result = get_event_service(mock_event_repository)
     mock_event_service_class.assert_called_once_with(mock_event_repository)
@@ -168,14 +168,14 @@ def test_get_application_service(
 
 
 # Test for get_scheduler_service
-@patch('BackendUnitTests.services.dependencies.get_db_connection')
-@patch('BackendUnitTests.services.dependencies.ApplicationRepository')
-@patch('BackendUnitTests.services.dependencies.EmployeeRepository')
-@patch('BackendUnitTests.services.dependencies.EmailService')
-@patch('BackendUnitTests.services.dependencies.EventRepository')
-@patch('BackendUnitTests.services.dependencies.EventService')
-@patch('BackendUnitTests.services.dependencies.ApplicationService')
-@patch('BackendUnitTests.services.dependencies.SchedulerService')
+@patch('backend.services.dependencies.get_db_connection')
+@patch('backend.services.dependencies.ApplicationRepository')
+@patch('backend.services.dependencies.EmployeeRepository')
+@patch('backend.services.dependencies.EmailService')
+@patch('backend.services.dependencies.EventRepository')
+@patch('backend.services.dependencies.EventService')
+@patch('backend.services.dependencies.ApplicationService')
+@patch('backend.services.dependencies.SchedulerService')
 def test_get_scheduler_service(
         mock_scheduler_service,
         mock_application_service,

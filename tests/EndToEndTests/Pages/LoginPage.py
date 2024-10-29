@@ -1,5 +1,5 @@
 from playwright.sync_api import Page
-from tests.End2EndTests.Pages.BasePage import BasePage
+from tests.EndToEndTests.Pages.BasePage import BasePage
 
 class LoginPage(BasePage):
     def __init__(self, page: Page):

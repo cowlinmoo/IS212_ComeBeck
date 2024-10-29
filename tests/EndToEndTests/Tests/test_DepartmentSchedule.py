@@ -1,6 +1,6 @@
 import pytest
-from tests.End2EndTests.Pages.LoginPage import LoginPage
-from tests.End2EndTests.Tests.BaseTest import BaseTest
+from tests.EndToEndTests.Pages.LoginPage import LoginPage
+from tests.EndToEndTests.Tests.BaseTest import BaseTest
 
 class TestDepartmentScheduleVisibility(BaseTest):
 
