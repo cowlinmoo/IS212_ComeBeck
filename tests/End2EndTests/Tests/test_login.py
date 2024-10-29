@@ -8,6 +8,7 @@ def setup_page(playwright):
     yield page
     browser.close()
 
+@pytest.mark.integration
 def test_successful_login(setup_page):
     page = setup_page
     login_page = LoginPage(page)
@@ -18,7 +19,7 @@ def test_successful_login(setup_page):
     # Assert that the user is redirected to the schedule page
     assert page.url == "https://comebeckwfhtracker.systems/schedule", "User was not redirected to the expected page after login"
 
-
+@pytest.mark.integration
 def test_login_failed_message(setup_page):
     page = setup_page
     login_page = LoginPage(page)
