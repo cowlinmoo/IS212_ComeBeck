@@ -68,7 +68,13 @@ const changeFormSchema = z.object({
     .refine((data) => data.eventID !== "", {
       message: "Please select an arrangement to withdraw.",
     }),
-  
+  singleDate: z
+    .object({
+      date: z.date(),
+      hour: z.enum(["fullday", "am", "pm"]),
+    })
+    .refine((date) => !isWeekend(date), { message: "Weekends are not allowed" })
+    .optional(),
   reason: z.string(),
 });
 
@@ -333,6 +339,9 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
 
   //Alert variable if reason text area is not filled
   const [showEmptyReasonAlert, setShowEmptyReasonAlert] = useState(false);
+  //Alert variable if no date selected when form is submitted
+  const [showEmptyDateAlert, setShowEmptyDateAlert] = useState(false);
+
   //Apply form
   const changeForm = useForm<z.infer<typeof changeFormSchema>>({
     resolver: zodResolver(changeFormSchema),
@@ -378,6 +387,8 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
           } else {
             for (const application of data) {
               console.log(application);
+              const application_id = application["application_id"].toString()
+              let events = []
               for (const event of application["events"]) {
                 const dateSplit = event["requested_date"].split("-");
                 const date = new Date(
@@ -385,11 +396,17 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
                   Number(dateSplit[1]) - 1,
                   Number(dateSplit[2])
                 );
-                applications.push({
+                events.push({
+                  event_id: event["event_id"],
                   date: date,
                   hour: event["application_hour"],
                 });
               }
+              applications.push(
+                { "application_id" :application_id,
+                  "recurring": application["recurring"],
+                  "events": events}
+              )
             }
             setwfhApplications(applications);
           }
@@ -405,11 +422,13 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
   // // disable weekends and all dates with existing wfh arrangements or pending wfh applications
   const isDateDisabled = (date: Date) => {
     let hasApplication = false;
-    for (const d of wfhApplications) {
-      if ((d.date as Date).toDateString() === date.toDateString()) {
-        if (d.hour === "fullday"){
-          hasApplication = true;
-          break;
+    for (const application of wfhApplications) {
+      for (const d of application.events){
+        if ((d.date as Date).toDateString() === date.toDateString()) {
+          if (d.hour === "fullday"){
+            hasApplication = true;
+            break;
+          }
         }
       }
     }
@@ -417,16 +436,15 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
       isWeekend(date) || date < fromDate || date > toDate || hasApplication
     );
   };
-  const onlyDisableWeekend = (date: Date) => {
-    return isWeekend(date) || date < fromDate || date > toDate;
-  };
   const isAMButtonDisabled = (date:Date) =>{
     let hasApplication = false;
-    for (const d of wfhApplications) {
-      if ((d.date as Date).toDateString() === date.toDateString()) {
-        if (d.hour === "am"){
-          hasApplication = true;
-          break;
+    for (const application of wfhApplications) {
+      for (const d of application.events){
+        if ((d.date as Date).toDateString() === date.toDateString()) {
+          if (d.hour === "am"){
+            hasApplication = true;
+            break;
+          }
         }
       }
     }
@@ -434,11 +452,13 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
   }
   const isPMButtonDisabled = (date:Date) =>{
     let hasApplication = false;
-    for (const d of wfhApplications) {
-      if ((d.date as Date).toDateString() === date.toDateString()) {
-        if (d.hour === "pm"){
-          hasApplication = true;
-          break;
+    for (const application of wfhApplications) {
+      for (const d of application.events){
+        if ((d.date as Date).toDateString() === date.toDateString()) {
+          if (d.hour === "pm"){
+            hasApplication = true;
+            break;
+          }
         }
       }
     }
@@ -447,18 +467,18 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
   }
   const isFULLDAYButtonDisabled = (date:Date) =>{
     let hasApplication = false;
-    for (const d of wfhApplications) {
+    for (const application of wfhApplications) {
+    for (const d of application.events) {
       if ((d.date as Date).toDateString() === date.toDateString()) {
         if (d.hour === "pm" || d.hour==="am"){
           hasApplication = true;
           break;
         }
       }
-    }
+    }}
     return hasApplication
 
   }
-
 
   //Submission for apply form
   async function applySubmit(values: z.infer<typeof changeFormSchema>) {
@@ -471,6 +491,8 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
       setShowNoSelectionAlert(true);
     }
     if (showEmptyReasonAlert === false && showNoSelectionAlert === false) {
+    setShowEmptyDateAlert(!values.singleDate);
+    if (showEmptyReasonAlert === false && showNoSelectionAlert === false && values.singleDate) {
       const headers = {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
@@ -479,19 +501,58 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
       //
       console.log(values.selectedArrangement.applicationID);
       console.log(values.selectedArrangement.eventID);
-      if (values.arrangementType === "Pending Approval") {
-        const content = {
-          status: "withdrawn",
-          editor_id: staffId,
-          withdraw_reason: values.reason,
-        };
+      let changeApplicationID = ""
+      let changeEvents = []
+      let requested_date = ""
+      let application_hour =""
+
+      for (const application of wfhApplications){
+        if (application.application_id === values.selectedArrangement.applicationID){
+          changeApplicationID = values.selectedArrangement.applicationID
+          let count = 0
+          for (const event of application.events){
+            count += 1
+            if (event.event_id === values.selectedArrangement.eventID){
+              if (count ==1){
+                requested_date = format(values.singleDate.date, "yyyy-MM-dd")
+                application_hour = values.singleDate.hour
+              }
+              else{
+                changeEvents.push({
+                  "application_hour":values.singleDate.hour,
+                  "requested_date": format(values.singleDate.date, "yyyy-MM-dd")
+                })
+              }
+            }
+            else{
+              if (count ==1){
+                requested_date = event.date
+                application_hour = event.hour
+              }
+              else{
+                changeEvents.push({
+                  "application_hour":event.hour,
+                  "requested_date": event.date
+                })
+              }
+            }
+          }
+        }
+      }
+      const content = {
+        "location": "Home",
+        "reason": values.reason,
+        "requested_date": requested_date,
+        "application_hour": application_hour,
+        "description": "",
+        "staff_id": staffId,
+        "events": changeEvents 
+      };
         console.log(content);
         try {
           const response = await fetch(
-            `${URL}/withdraw/` +
-              values.selectedArrangement.applicationID +
-              "/" +
-              values.selectedArrangement.eventID,
+            `${URL}/` +
+              values.selectedArrangement.applicationID,
             { headers: headers, method: "PUT", body: JSON.stringify(content) }
           );
           if (!response.ok) {
@@ -508,42 +569,8 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
         } catch (error: any) {
           console.log("POST API fetching error.", error.message);
         }
-      }
-      //multiple dates selected
-      else if (values.arrangementType === "Approved") {
-        const content = {
-          status: "withdrawn",
-          editor_id: staffId,
-          withdraw_reason: values.reason,
-        };
-        try {
-          const response = await fetch(
-            `${URL}/withdraw/` +
-              +values.selectedArrangement.applicationID +
-              "/" +
-              values.selectedArrangement.eventID,
-            {
-              headers: headers,
-              method: "PUT",
-              body: JSON.stringify(content),
-            }
-          );
-          if (!response.ok) {
-            console.log(await response.json());
-            throw new Error(`POST Application API validation ERROR`);
-          } else {
-            console.log(response.json());
-            setShowSuccessAlert(true);
-            //reset form once submission is successful
-            changeForm.reset();
-            //set timeout for alert
-            setTimeout(() => setShowSuccessAlert(false), 5000);
-          }
-        } catch (error: any) {
-          console.log("POST API fetching error.", error.message);
-        }
-      }
     }
+  }
   }
 
   return (
@@ -589,6 +616,15 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
                   </AlertDescription>
                 </Alert>
               )}
+              {showEmptyDateAlert && (
+                    <Alert variant="destructive">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertTitle>Warning</AlertTitle>
+                      <AlertDescription>
+                        No date has been selected.
+                      </AlertDescription>
+                    </Alert>
+                  )}
               <FormField
                 control={changeForm.control}
                 name="arrangementType"

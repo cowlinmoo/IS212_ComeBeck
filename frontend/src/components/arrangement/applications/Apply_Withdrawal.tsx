@@ -361,7 +361,6 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
       //
       console.log(values.selectedArrangement.applicationID);
       console.log(values.selectedArrangement.eventID);
-      if (values.arrangementType === "Pending Approval") {
         const content = {
           status: "withdrawn",
           editor_id: staffId,
@@ -390,41 +389,6 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
         } catch (error: any) {
           console.log("POST API fetching error.", error.message);
         }
-      }
-      //multiple dates selected
-      else if (values.arrangementType === "Approved") {
-        const content = {
-          status: "withdrawn",
-          editor_id: staffId,
-          withdraw_reason: values.reason,
-        };
-        try {
-          const response = await fetch(
-            `${URL}/withdraw/` +
-              +values.selectedArrangement.applicationID +
-              "/" +
-              values.selectedArrangement.eventID,
-            {
-              headers: headers,
-              method: "PUT",
-              body: JSON.stringify(content),
-            }
-          );
-          if (!response.ok) {
-            console.log(await response.json());
-            throw new Error(`POST Application API validation ERROR`);
-          } else {
-            console.log(response.json());
-            setShowSuccessAlert(true);
-            //reset form once submission is successful
-            withdrawalForm.reset();
-            //set timeout for alert
-            setTimeout(() => setShowSuccessAlert(false), 5000);
-          }
-        } catch (error: any) {
-          console.log("POST API fetching error.", error.message);
-        }
-      }
     }
   }
 
