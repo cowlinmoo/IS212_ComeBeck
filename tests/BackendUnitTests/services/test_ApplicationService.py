@@ -699,7 +699,8 @@ def test_change_request(mock_datetime, application_service, mock_application_rep
         location="New Location"
     )
 
-    new_application_dict_expected = change_request_data.model_dump(exclude={"events", "location", "requested_date"})
+    new_application_dict_expected = change_request_data.model_dump(exclude={"events",
+                                                                            "location", "requested_date", "application_hour"})
     new_application_dict_expected.update({
         "status": "pending",
         "created_on": mock_datetime.return_value,

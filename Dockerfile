@@ -20,7 +20,7 @@ ENV PATH="${PATH}:/root/.local/bin"
 RUN poetry config virtualenvs.create false
 
 # Copy the project files
-COPY poetry.lock pyproject.toml .flake8 ./
+COPY poetry.lock pyproject.toml .flake8 pytest.ini ./
 
 COPY backend backend
 COPY tests tests
@@ -28,6 +28,12 @@ COPY postgres/init.sql postgres/init.sql
 
 # Install all dependencies
 RUN poetry install
+
+# Install Playwright OS dependencies
+RUN poetry run playwright install-deps
+
+# Install playwright
+RUN poetry run playwright install
 
 # Open required ports
 EXPOSE 8080
