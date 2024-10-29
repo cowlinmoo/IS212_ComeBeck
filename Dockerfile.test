@@ -1,0 +1,37 @@
+# Use the official Python 3.12.3 image
+FROM python:3.12-slim-bookworm
+
+# Set the working directory
+WORKDIR /code
+
+# Install OS dependencies
+RUN apt-get update \
+    && apt-get install -y curl
+
+# Install Poetry
+RUN curl -sSL https://install.python-poetry.org | python -
+ENV PATH="${PATH}:/root/.local/bin"
+RUN poetry config virtualenvs.create false
+
+# Copy project files
+COPY poetry.lock pyproject.toml .flake8 ./
+COPY backend backend
+COPY tests tests
+COPY postgres/init.sql postgres/init.sql
+
+# Install dependencies
+RUN poetry install
+
+# Open required ports
+EXPOSE 8081
+
+# Set the environment variables specifically for testing
+ENV CURRENT_ENV=TEST
+ENV DATABASE_HOSTNAME=spm_database_test
+ENV DATABASE_PORT=5432
+ENV POSTGRES_DB=test_spm
+ENV POSTGRES_USER=test_user
+ENV POSTGRES_PASSWORD=test_password
+
+# Command to run the tests
+CMD ["poetry", "run", "pytest", "tests/"]
