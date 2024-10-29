@@ -860,7 +860,7 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
               {changeForm.watch("selectedArrangement") && (
                 <FormField
                 control={changeForm.control}
-                name="singleDate"
+                name="singleDate.date"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Date:</FormLabel>
@@ -911,7 +911,7 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
                   </FormItem>
                 )}/>
               )}
-              {changeForm.watch("singleDate") && (
+              {changeForm.watch("singleDate.date") && (
                   <FormField
                   control={changeForm.control}
                   name={`singleDate.hour`}

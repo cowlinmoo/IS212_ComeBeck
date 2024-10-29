@@ -216,8 +216,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
   const [showEmptyReasonAlert, setShowEmptyReasonAlert] = useState(false);
   //Apply form
   const applyForm = useForm<
-    z.infer<typeof applyFormSchema> & { arrangementType: string }
-  >({
+    z.infer<typeof applyFormSchema>>({
     resolver: zodResolver(applyFormSchema),
     defaultValues: {
       arrangementType: "WFH",
@@ -252,6 +251,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
 
   //Submission for apply form
   async function applySubmit(values: z.infer<typeof applyFormSchema>) {
+    console.log(values.singleDate)
     if (values.reason.trim() === "") {
       setShowEmptyReasonAlert(true);
     } else {
@@ -273,8 +273,10 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
         "Content-Type": "application/json",
         accept: "application/json",
       };
+      console.log(values.singleDate)
       //singleDate selected/ recurring date
       if (values.singleDate) {
+        console.log(values.singleDate)
         let content = {};
         if (values.isRecurring === "No") {
           content = {
@@ -475,7 +477,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                 <>
                   <FormField
                     control={applyForm.control}
-                    name="singleDate"
+                    name="singleDate.date"
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
                         <FormLabel>Date:</FormLabel>
@@ -526,14 +528,14 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                       </FormItem>
                     )}
                   />
-                  {applyForm.watch("singleDate") && (
+                  {applyForm.watch("singleDate.date") && (
                   <FormField
                   control={applyForm.control}
-                  name={`singleDate.hour`}
+                  name={"singleDate.hour"}
                   render={({ field }) => (
                     <FormItem className="space-y-3">
                       <FormLabel>{format(fromEndDate, "PPP")}</FormLabel>
-                      <FormDescription  hidden={!isAMButtonDisabled(fromEndDate)} >There is an existing AM wfh arrangement for this day</FormDescription>
+                      <FormDescription hidden={!isAMButtonDisabled(fromEndDate)} >There is an existing AM wfh arrangement for this day</FormDescription>
                       <FormDescription hidden={!isPMButtonDisabled(fromEndDate)}>There is an existing PM wfh arrangement for this day</FormDescription>
                       <FormControl>
                         <RadioGroup
@@ -577,7 +579,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                             onValueChange={(value) => {
                               field.onChange(value);
                               if (value === "No") {
-                                applyForm.setValue("singleDate", undefined);
+                                applyForm.setValue("endDate", undefined);
                               }
                             }}
                             defaultValue={field.value}
@@ -693,7 +695,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                   )}
                 </>
               )}
-              {applyForm.watch("isMultiple") === "Yes" && (
+              {applyForm.watch("isMultiple") === "Yes" &&  (
                 <FormField
                   control={applyForm.control}
                   name="multipleDate"
@@ -744,8 +746,9 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                     </FormItem>
                   )}
                 />
+
               )}
-              {fields.map((field, index) => (
+              {applyForm.watch("isMultiple") === "Yes" && fields.map((field, index) => (
                 <FormField
                   key={field.id}
                   control={applyForm.control}
