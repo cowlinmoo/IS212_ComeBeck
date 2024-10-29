@@ -4,6 +4,7 @@ from tests.End2EndTests.Tests.BaseTest import BaseTest
 
 class TestDepartmentScheduleVisibility(BaseTest):
 
+    @pytest.mark.E2ETest
     def test_department_schedule_visibility_for_specific_user(self):
         login_page = LoginPage(self.page)
         login_page.navigate_to_login()
@@ -20,7 +21,7 @@ class TestDepartmentScheduleVisibility(BaseTest):
         # Assert that "Department Schedule" tab is visible
         assert login_page.is_department_schedule_visible(), "Department Schedule tab is not visible for user with department access"
 
-    @pytest.mark.integration
+    @pytest.mark.E2ETest
     def test_department_schedule_not_visible_for_other_user(self):
         login_page = LoginPage(self.page)
         login_page.navigate_to_login()

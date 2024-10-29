@@ -68,4 +68,4 @@ jobs:
           -e SMTP_PORT \
           -e SENDER_EMAIL \
           -e SENDER_PASSWORD \
-          my-app-e2e poetry run pytest tests/ -m "integration" -n auto -v
+          my-app-e2e poetry run pytest tests/ -m "E2ETest" -n auto -v

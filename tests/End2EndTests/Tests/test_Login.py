@@ -4,7 +4,7 @@ from tests.End2EndTests.Tests.BaseTest import BaseTest
 
 class TestLogin(BaseTest):
 
-    @pytest.mark.integration
+    @pytest.mark.E2ETest
     def test_successful_login(self):
         login_page = LoginPage(self.page)
         login_page.navigate_to_login()
@@ -12,7 +12,7 @@ class TestLogin(BaseTest):
         self.wait_for_url("https://comebeckwfhtracker.systems/schedule")
         assert self.page.url == "https://comebeckwfhtracker.systems/schedule", "User was not redirected to the expected page after login"
 
-    @pytest.mark.integration
+    @pytest.mark.E2ETest
     def test_login_failed_message(self):
         login_page = LoginPage(self.page)
         login_page.navigate_to_login()
