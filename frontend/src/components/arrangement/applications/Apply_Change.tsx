@@ -123,7 +123,7 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
           } else {
             for (const application of data) {
               let type = "";
-              if (application["status"] === "pending") {
+              if (application["status"] === "pending" && application["application_state"]==="new_application") {
                 if (application["events"].length === 1) {
                   type = "Single";
                   const dateSplit =
@@ -180,7 +180,7 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
                     }
                   }
                 }
-              } else if (application["status"] === "approved") {
+              } else if (application["status"] === "approved" && application["application_state"]==="new_application") {
                 if (application["events"].length === 1) {
                   type = "Single";
                   const dateSplit =
@@ -505,7 +505,7 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
     console.log(showNoSelectionAlert)
     console.log(showEmptyReasonAlert)
     console.log(showEmptyDateAlert)
-    if (showEmptyReasonAlert === false && showNoSelectionAlert === false && values.singleDate) {
+    if (values.reason !=="" && showNoSelectionAlert === false && values.singleDate) {
       const headers = {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
