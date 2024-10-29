@@ -1,0 +1,16 @@
+[flake8]
+max-line-length = 88
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    __init__.py,
+    EmailTemplates.py,
+    EmailService.py
+ignore =
+    E127
+    E203
+    E225
+    E251
+    E261
+    W503

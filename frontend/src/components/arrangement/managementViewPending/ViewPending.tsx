@@ -73,6 +73,7 @@ export default function ViewPending({ data, token, userId }: { data: Application
     return (
         <div className="container mx-auto p-4">
             <Card>
+                <ScrollArea className="h-[600px] w-full rounded-md border p-4">
                 <CardHeader>
                     <CardTitle>Pending Arrangements </CardTitle>
                     <CardDescription>Review and manage pending arrangement requests.</CardDescription>
@@ -290,6 +291,7 @@ export default function ViewPending({ data, token, userId }: { data: Application
                         </TabsContent>
                     </Tabs>
                 </CardContent>
+                </ScrollArea>
             </Card>
         </div>
     )

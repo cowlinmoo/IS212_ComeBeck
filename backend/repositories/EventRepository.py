@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from backend.config.Database import get_db_connection
 from backend.models import Event
 
+
 class EventRepository:
     db: Session
 
@@ -25,11 +26,13 @@ class EventRepository:
             raise HTTPException(status_code=404, detail="Event not found")
 
     def get_event_by_application_id(self, application_id: int) -> List[Type[Event]]:
-        events = self.db.query(Event).filter(Event.application_id == application_id).all()
+        events = (self.db.query(Event)
+                  .filter(Event.application_id == application_id).all())
         return events if events is not None else []
 
     def get_first_event_by_application_id(self, application_id: int) -> Event:
-        event = self.db.query(Event).filter(Event.application_id == application_id).first()
+        event = (self.db.query(Event)
+                 .filter(Event.application_id == application_id).first())
         return event
 
     def create_event(self, event: Event) -> Event:
@@ -51,9 +54,11 @@ class EventRepository:
         self.db.delete(event_to_delete)
         self.db.commit()
         return event_to_delete
-    
-    def get_events_by_application_ids(self, application_ids: List[int]) -> List[Type[Event]]:
-        return self.db.query(Event).filter(Event.application_id.in_(application_ids)).all()
+
+    def get_events_by_application_ids(self,
+                                      application_ids: List[int]) -> List[Type[Event]]:
+        return (self.db.query(Event)
+                .filter(Event.application_id.in_(application_ids)).all())
 
     def update_application_id(self, event_id: int, application_id: int) -> Event:
         event = self.get_event_by_event_id(event_id)

@@ -43,7 +43,8 @@ class ApplicationRepository:
         self.db.refresh(new_application)
         return new_application
 
-    def withdraw_application(self, application_id: int, application: ApplicationWithdrawSchema) -> Application:
+    def withdraw_application(self, application_id: int, application:
+                                ApplicationWithdrawSchema) -> Application:
         db_application = self.get_application_by_application_id(application_id)
 
         db_application.status = application.status
@@ -54,14 +55,16 @@ class ApplicationRepository:
         self.db.refresh(db_application)
         return db_application
 
-    def update_application(self, application_id: int, application: ApplicationCreateSchema) -> Application:
+    def update_application(self, application_id: int, application:
+                            ApplicationCreateSchema) -> Application:
         db_application = self.db.query(Application).filter(
             Application.application_id == application_id).first()
         if db_application is None:
             raise HTTPException(
                 status_code=404, detail="Application not found")
 
-        update_data = application.model_dump(exclude={"location","application_hour","requested_date","events"})
+        update_data = application.model_dump(exclude={"location", "application_hour",
+                                                      "requested_date", "events"})
         print("this is the updated data {}", update_data)
         for key, value in update_data.items():
             setattr(db_application, key, value)
@@ -75,8 +78,10 @@ class ApplicationRepository:
             .order_by(desc(Application.created_on))
         return applications if applications is not None else []
 
-    def update_application_status(self, application_id: int, new_status: str, outcome_reason: str) -> Application:
-        db_application = self.db.query(Application).filter(Application.application_id == application_id).first()
+    def update_application_status(self, application_id: int, new_status: str,
+                                  outcome_reason: str) -> Application:
+        db_application = (self.db.query(Application)
+                          .filter(Application.application_id == application_id).first())
         if db_application is None:
             raise HTTPException(
                 status_code=404, detail="Application not found")
@@ -90,16 +95,19 @@ class ApplicationRepository:
         return db_application
 
     def get_pending_applications(self) -> List[Type[Application]]:
-        return self.db.query(Application).filter(Application.status == 'pending').all()
+        return (self.db.query(Application)
+                .filter(Application.status == 'pending').all())
 
     def get_applications_by_approver_id(self, approver_id):
-        return self.db.query(Application).filter(Application.approver_id == approver_id).all()
+        return (self.db.query(Application)
+                .filter(Application.approver_id == approver_id).all())
 
     def get_application_status_by_application_id(self, application_id: int) -> str:
         application = self.get_application_by_application_id(application_id)
         return application.status
 
-    def update_application_state(self, application_id, new_state, outcome_reason, status):
+    def update_application_state(self, application_id, new_state,
+                                 outcome_reason, status):
         db_application = self.get_application_by_application_id(application_id)
         db_application.application_state = new_state
         db_application.status = status

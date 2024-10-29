@@ -15,7 +15,44 @@ services:
       test: ["CMD-SHELL", "pg_isready -U admin -d spm"]
     profiles:
       - dev
-
+  postgres_test:
+    image: postgres:latest
+    container_name: spm_database_test
+    environment:
+      POSTGRES_DB: test_spm
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+      TZ: Asia/Singapore
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./postgres/test_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d test_spm"]
+    profiles:
+      - test
+  backend_test:
+    build:
+      context: .
+    ports:
+      - "8081:8081"
+    volumes:
+      - .:/code
+    command: >
+      uvicorn backend.main:app
+      --host 0.0.0.0 --port 8081 --reload
+    environment:
+      - DATABASE_HOSTNAME=spm_database_test
+    env_file:
+      - .env
+    image: backend_api_test
+    container_name: backend_api_test
+    depends_on:
+      postgres_test:
+        condition: service_healthy
+        required: false
+    profiles:
+      - test
   backend:
     build:
       context: .
@@ -34,6 +71,9 @@ services:
     container_name: backend_api
     depends_on:
       postgres:
+        condition: service_healthy
+        required: false
+      postgres_test:
         condition: service_healthy
         required: false
     profiles:

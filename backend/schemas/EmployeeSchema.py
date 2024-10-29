@@ -2,6 +2,7 @@ from typing import Optional, List
 from pydantic import BaseModel, Field
 from .BaseSchema import BaseEmployeeSchema, BaseDepartmentInfo, BaseTeamInfo
 
+
 class EmployeeSchema(BaseEmployeeSchema):
     department: Optional[BaseDepartmentInfo] = None
     team: Optional[BaseTeamInfo] = None
@@ -11,6 +12,7 @@ class EmployeeSchema(BaseEmployeeSchema):
 
     class Config:
         from_attributes = True
+
 
 class EmployeeCreateSchema(BaseModel):
     staff_fname: str = Field(examples=["John", "Jane", "Doe"])
@@ -24,6 +26,7 @@ class EmployeeCreateSchema(BaseModel):
 
     class Config:
         from_attributes = True
+
 
 class EmployeeUpdateSchema(BaseModel):
     staff_fname: Optional[str] = Field(examples=["John", "Jane", "Doe"])
