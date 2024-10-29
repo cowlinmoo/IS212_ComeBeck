@@ -1,4 +1,4 @@
-name: Integration Tests
+name: End-To-End Tests
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
       - '*'
 
 jobs:
-  Run-Integration-Tests:
+  Run-End-to-End-Tests:
     runs-on: ubuntu-latest
 
     steps:
@@ -30,7 +30,7 @@ jobs:
     - name: Build Docker Image for End-to-End Tests
       run: docker build -t my-app-e2e .
 
-    - name: Run Integration Tests
+    - name: Run End to End Tests
       env:
         CURRENT_ENV: DEV
         PRODUCTION_DB_USER: ${{ secrets.PRODUCTION_DB_USER }}
