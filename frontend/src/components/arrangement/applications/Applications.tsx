@@ -45,7 +45,6 @@ const URL = `${BASE_URL}/application`;
 
 //formschema
 const applyFormSchema = z.object({
-  arangementType: z.string().default("WFH"),
   isMultiple: z.enum(["Yes", "No"], {
     required_error: "Please specify if this is for multiple dates.",
   }),
@@ -54,7 +53,6 @@ const applyFormSchema = z.object({
       date: z.date(),
       hour: z.enum(["fullday", "am", "pm"]),
     })
-    .refine((date) => !isWeekend(date), { message: "Weekends are not allowed" })
     .optional(),
   multipleDate: z
     .array(
@@ -64,10 +62,7 @@ const applyFormSchema = z.object({
       })
     )
     .min(2, "Please select at least 2 dates.")
-    .refine(
-      (dates) => dates.length > 1 && dates.every((date) => !isWeekend(date)),
-      { message: "Please select dates (at least 2), excluding weekends." }
-    ).optional(),
+    .optional(),
   isRecurring: z.enum(["Yes", "No"]).optional(),
   recurringType: z.enum(["Weekly", "Monthly"]).optional(),
   endDate: z
@@ -85,7 +80,11 @@ interface IApplications {
 }
 const Applications: React.FC<IApplications> = ({ staffId, token }) => {
   // fetching wfh applications currently existing
-  const [wfhApplications, setwfhApplications] = useState(Array);
+  interface WFHApplication {
+    date: Date;
+    hour: 'fullday' | 'am' | 'pm';
+  }
+  const [wfhApplications, setwfhApplications] = useState<WFHApplication[]>([]);
   useEffect(() => {
     async function fetchData() {
       const headers = { Authorization: `Bearer ${token}` };
@@ -123,7 +122,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
     }
     fetchData();
   }, [staffId, token]);
-  console.log(wfhApplications)
+  // console.log(wfhApplications)
 
   // restricted calendar
   const [fromDate, setFromDate] = useState<Date>(new Date());
@@ -143,24 +142,27 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
     setToEndDate(addMonths(currentDate, 3));
   }, [fromEndDate]);
 
+  
   // // disable weekends and all dates with existing wfh arrangements or pending wfh applications
   const isDateDisabled = (date: Date) => {
     let hasApplication = false;
-    let dateCount= new Object()
-    for (const d of wfhApplications) {
-      if ((d.date as Date).toDateString() === date.toDateString()) {
-        if (d.hour === "fullday"){
-          hasApplication = true;
-          break;
+    const dateCount: { [key: string]: number } = {};
+    for (const d of wfhApplications) {  
+        if ((d.date as Date).toDateString() === date.toDateString()) {
+          if (d.hour === "fullday"){
+            hasApplication = true;
+            break;
+          }
+          if (d.date.toDateString() in dateCount){
+            hasApplication = true;
+            break
+          }
+          else{
+            dateCount[d.date.toDateString()] = 1
+          }
         }
-        if (d.date in dateCount){
-          hasApplication = true;
-          break
-        }
-        else{
-          dateCount[d.date]=1
-        }
-      }
+
+      
     }
     return (
       isWeekend(date) || date < fromDate || date > toDate || hasApplication
@@ -225,7 +227,6 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
   const applyForm = useForm<z.infer<typeof applyFormSchema>>({
     resolver: zodResolver(applyFormSchema),
     defaultValues: {
-      arrangementType: "WFH",
       isMultiple: "No",
       isRecurring: "No",
       reason: "",
@@ -252,13 +253,11 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
     setSelectedDates(dates)
   }
 
-
   //Success alert if form has been successfully submitted
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
 
   //Submission for apply form
   async function applySubmit(values: z.infer<typeof applyFormSchema>) {
-    console.log("hi")
     if (values.reason.trim() === "") {
       setShowEmptyReasonAlert(true);
     } else {

@@ -73,7 +73,6 @@ const changeFormSchema = z.object({
       date: z.date(),
       hour: z.enum(["fullday", "am", "pm"]),
     })
-    .refine((date) => !isWeekend(date), { message: "Weekends are not allowed" })
     .optional(),
   reason: z.string(),
 });
@@ -371,7 +370,18 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
     setToDate(addMonths(currentDate, 3));
   }, []);
 
-  const [wfhApplications, setwfhApplications] = useState(Array);
+  interface WFHEvent {
+    event_id: string;
+    date: Date;
+    hour: 'fullday' | 'am' | 'pm';
+  }
+
+  interface WFHApplication {
+    application_id: string;
+    recurring: boolean;
+    events: WFHEvent[]; 
+  }
+  const [wfhApplications, setwfhApplications] = useState<WFHApplication[]>([]);
   useEffect(() => {
     async function fetchData() {
       const headers = { Authorization: `Bearer ${token}` };
@@ -381,33 +391,26 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
           throw new Error(`GET Application API validation ERROR`);
         } else {
           const data = await response.json();
-          let applications = [];
+          let applications: WFHApplication[] = [];
           if (data.length < 1) {
             applications = [];
           } else {
-            for (const application of data) {
-              console.log(application);
-              const application_id = application["application_id"].toString()
-              let events = []
-              for (const event of application["events"]) {
-                const dateSplit = event["requested_date"].split("-");
-                const date = new Date(
-                  Number(dateSplit[0]),
-                  Number(dateSplit[1]) - 1,
-                  Number(dateSplit[2])
-                );
-                events.push({
-                  event_id: event["event_id"],
-                  date: date,
-                  hour: event["application_hour"],
-                });
-              }
-              applications.push(
-                { "application_id" :application_id,
-                  "recurring": application["recurring"],
-                  "events": events}
-              )
-            }
+            applications = data.map((application: any) => ({
+              application_id: application.application_id.toString(),
+              recurring: application.recurring,
+              events: application.events.map((event: any) => {
+                const dateSplit = event.requested_date.split("-");
+                return {
+                  event_id: event.event_id,
+                  date: new Date(
+                    Number(dateSplit[0]),
+                    Number(dateSplit[1]) - 1,
+                    Number(dateSplit[2])
+                  ),
+                  hour: event.application_hour as 'fullday' | 'am' | 'pm',
+                };
+              }),
+            }));
             setwfhApplications(applications);
           }
         }
@@ -417,12 +420,12 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
     }
     fetchData();
   }, [staffId, token]);
-  console.log(wfhApplications)
+  // console.log(wfhApplications)
 
   // // disable weekends and all dates with existing wfh arrangements or pending wfh applications
   const isDateDisabled = (date: Date) => {
     let hasApplication = false;
-    let dateCount= new Object()
+    const dateCount: { [key: string]: number } = {};
     for (const application of wfhApplications) {
       for (const d of application.events){
         if ((d.date as Date).toDateString() === date.toDateString()) {
@@ -430,12 +433,12 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
             hasApplication = true;
             break;
           }
-          if (d.date in dateCount){
+          if (d.date.toDateString() in dateCount){
             hasApplication = true;
             break
           }
           else{
-            dateCount[d.date]=1
+            dateCount[d.date.toDateString()] = 1
           }
         }
       }
@@ -487,7 +490,7 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
     return hasApplication
 
   }
-
+  
   //Submission for apply form
   async function applySubmit(values: z.infer<typeof changeFormSchema>) {
     if (values.reason.trim() === "") {
@@ -498,8 +501,10 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
     if (values.selectedArrangement.eventID === "") {
       setShowNoSelectionAlert(true);
     }
-    if (showEmptyReasonAlert === false && showNoSelectionAlert === false) {
     setShowEmptyDateAlert(!values.singleDate);
+    console.log(showNoSelectionAlert)
+    console.log(showEmptyReasonAlert)
+    console.log(showEmptyDateAlert)
     if (showEmptyReasonAlert === false && showNoSelectionAlert === false && values.singleDate) {
       const headers = {
         Authorization: `Bearer ${token}`,
@@ -509,14 +514,14 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
       //
       console.log(values.selectedArrangement.applicationID);
       console.log(values.selectedArrangement.eventID);
-      let changeApplicationID = ""
-      let changeEvents = []
+      
+      const changeEvents = []
       let requested_date = ""
       let application_hour =""
 
       for (const application of wfhApplications){
         if (application.application_id === values.selectedArrangement.applicationID){
-          changeApplicationID = values.selectedArrangement.applicationID
+          
           let count = 0
           for (const event of application.events){
             count += 1
@@ -578,7 +583,7 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
           console.log("POST API fetching error.", error.message);
         }
     }
-  }
+  
   }
 
   return (
