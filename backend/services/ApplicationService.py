@@ -423,7 +423,8 @@ class ApplicationService:
                         ApplicationCreateSchema) -> Application:
         # Create a new application based on the change request
         new_application_dict = change_request.model_dump(exclude={"events", "location",
-                                                                  "requested_date"})
+                                                                  "requested_date",
+                                                                  "application_hour"})
         new_application_dict["status"] = "pending"
         new_application_dict["created_on"] = get_current_datetime_sgt()
         new_application_dict["last_updated_on"] = get_current_datetime_sgt()
