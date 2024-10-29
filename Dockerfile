@@ -29,6 +29,9 @@ COPY postgres/init.sql postgres/init.sql
 # Install all dependencies
 RUN poetry install
 
+# Install Playwright OS dependencies
+RUN poetry run playwright install-deps
+
 # Install playwright
 RUN poetry run playwright install
 
