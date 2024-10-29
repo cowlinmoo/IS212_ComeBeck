@@ -352,7 +352,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
     if (values.selectedArrangement.eventID === "") {
       setShowNoSelectionAlert(true);
     }
-    if (showEmptyReasonAlert === false && showNoSelectionAlert === false) {
+    if (values.reason !=="" && showNoSelectionAlert === false) {
       const headers = {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
@@ -389,6 +389,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
         } catch (error: any) {
           console.log("POST API fetching error.", error.message);
         }
+        
     }
   }
 

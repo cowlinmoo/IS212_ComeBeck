@@ -273,7 +273,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
           values.isRecurring === "Yes" &&
           !values.endDate)
     );
-    if (showEmptyReasonAlert === false && showMultipleDateAlert === false) {
+    if (values.reason !=="") {
       const headers = {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
