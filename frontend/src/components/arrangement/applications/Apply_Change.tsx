@@ -422,12 +422,20 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
   // // disable weekends and all dates with existing wfh arrangements or pending wfh applications
   const isDateDisabled = (date: Date) => {
     let hasApplication = false;
+    let dateCount= new Object()
     for (const application of wfhApplications) {
       for (const d of application.events){
         if ((d.date as Date).toDateString() === date.toDateString()) {
           if (d.hour === "fullday"){
             hasApplication = true;
             break;
+          }
+          if (d.date in dateCount){
+            hasApplication = true;
+            break
+          }
+          else{
+            dateCount[d.date]=1
           }
         }
       }

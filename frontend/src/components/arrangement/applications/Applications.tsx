@@ -67,8 +67,7 @@ const applyFormSchema = z.object({
     .refine(
       (dates) => dates.length > 1 && dates.every((date) => !isWeekend(date)),
       { message: "Please select dates (at least 2), excluding weekends." }
-    )
-    .optional(),
+    ).optional(),
   isRecurring: z.enum(["Yes", "No"]).optional(),
   recurringType: z.enum(["Weekly", "Monthly"]).optional(),
   endDate: z
@@ -147,11 +146,19 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
   // // disable weekends and all dates with existing wfh arrangements or pending wfh applications
   const isDateDisabled = (date: Date) => {
     let hasApplication = false;
+    let dateCount= new Object()
     for (const d of wfhApplications) {
       if ((d.date as Date).toDateString() === date.toDateString()) {
         if (d.hour === "fullday"){
           hasApplication = true;
           break;
+        }
+        if (d.date in dateCount){
+          hasApplication = true;
+          break
+        }
+        else{
+          dateCount[d.date]=1
         }
       }
     }
@@ -215,8 +222,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
   //Alert variable if reason text area is not filled
   const [showEmptyReasonAlert, setShowEmptyReasonAlert] = useState(false);
   //Apply form
-  const applyForm = useForm<
-    z.infer<typeof applyFormSchema>>({
+  const applyForm = useForm<z.infer<typeof applyFormSchema>>({
     resolver: zodResolver(applyFormSchema),
     defaultValues: {
       arrangementType: "WFH",
@@ -225,6 +231,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
       reason: "",
     },
   });
+
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const { fields, append, remove } = useFieldArray({
     name: "multipleDate",
@@ -251,7 +258,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
 
   //Submission for apply form
   async function applySubmit(values: z.infer<typeof applyFormSchema>) {
-    console.log(values.singleDate)
+    console.log("hi")
     if (values.reason.trim() === "") {
       setShowEmptyReasonAlert(true);
     } else {
@@ -508,6 +515,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                                 field.onChange(date);
                                 if (date) {
                                   setFromEndDate(date);
+                                  applyForm.setValue("singleDate.hour", "fullday")
                                 }
                               }}
                               fromDate={fromDate}
@@ -788,7 +796,6 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                   )}
                 />
               ))}
-
               <FormField
                 control={applyForm.control}
                 name="reason"
