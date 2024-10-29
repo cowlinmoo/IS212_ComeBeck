@@ -56,7 +56,7 @@ def mock_env_prod():
 @pytest.fixture
 def mock_get_environment_variables(request):
     env = request.getfixturevalue(request.param)
-    with patch('backend.config.Environment.get_environment_variables', return_value=MockEnvironment(env)):
+    with patch('BackendUnitTests.config.Environment.get_environment_variables', return_value=MockEnvironment(env)):
         yield env
 
 

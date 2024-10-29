@@ -14,7 +14,7 @@ def mock_metadata():
     return metadata
 
 def test_create_database(mock_engine, mock_metadata):
-    with patch('backend.models.BaseModel.Engine', mock_engine), \
+    with patch('BackendUnitTests.models.BaseModel.Engine', mock_engine), \
          patch.object(EntityMeta, 'metadata', mock_metadata), \
          patch('builtins.print') as mock_print:
         create_database()
@@ -29,7 +29,7 @@ def test_create_database(mock_engine, mock_metadata):
 
 def test_create_database_empty_tables(mock_engine, mock_metadata, capsys):
     mock_metadata.tables = {}
-    with patch('backend.models.BaseModel.Engine', mock_engine), \
+    with patch('BackendUnitTests.models.BaseModel.Engine', mock_engine), \
          patch.object(EntityMeta, 'metadata', mock_metadata):
         create_database()
 
@@ -42,7 +42,7 @@ def test_create_database_empty_tables(mock_engine, mock_metadata, capsys):
 
 def test_create_database_exception(mock_engine, mock_metadata):
     mock_metadata.create_all.side_effect = Exception("Database creation failed")
-    with patch('backend.models.BaseModel.Engine', mock_engine), \
+    with patch('BackendUnitTests.models.BaseModel.Engine', mock_engine), \
          patch.object(EntityMeta, 'metadata', mock_metadata), \
          pytest.raises(Exception) as exc_info:
         create_database()

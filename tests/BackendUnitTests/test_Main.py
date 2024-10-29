@@ -11,9 +11,9 @@ mock_scheduler.stop = Mock()
 
 # Setup patches before importing main
 patches = [
-    patch('backend.config.Database.init_db'),
-    patch('backend.models.BaseModel.create_database'),
-    patch('backend.services.dependencies.get_scheduler_service', return_value=mock_scheduler)
+    patch('BackendUnitTests.config.Database.init_db'),
+    patch('BackendUnitTests.models.BaseModel.create_database'),
+    patch('BackendUnitTests.services.dependencies.get_scheduler_service', return_value=mock_scheduler)
 ]
 
 
@@ -43,14 +43,14 @@ def client(test_app):
 def test_app_configuration(test_app):
     """Test app configuration"""
     assert test_app.title == "ComeBeck Backend API"
-    assert test_app.description == "This is the backend for ComeBeck and it is built using FastAPI"
+    assert test_app.description == "This is the BackendUnitTests for ComeBeck and it is built using FastAPI"
     assert test_app.version == "1.0.0"
     assert test_app.docs_url == "/api/documentation"
 
 
 app = FastAPI(
     title="ComeBeck Backend API",
-    description="This is the backend for ComeBeck and it is built using FastAPI",
+    description="This is the BackendUnitTests for ComeBeck and it is built using FastAPI",
     version="1.0.0",
     docs_url="/api/documentation"
 )

@@ -102,7 +102,7 @@ def test_get_applications_by_staff_id_employee_not_found(application_service, mo
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Employee not found"
 
-@patch('backend.services.ApplicationService.get_current_datetime_sgt')
+@patch('BackendUnitTests.services.ApplicationService.get_current_datetime_sgt')
 def test_create_application_success(mock_datetime, application_service, mock_application_repository,
                                     mock_employee_repository, mock_email_service, mock_event_service):
     mock_datetime.return_value = datetime.now()
@@ -686,7 +686,7 @@ def test_withdraw_application_employee_cancel_request(application_service, mock_
         mock_cancel_request.assert_called_once_with(existing_application, withdraw_data)
         assert result == 'cancel_request_return_value'
 
-@patch('backend.services.ApplicationService.get_current_datetime_sgt')
+@patch('BackendUnitTests.services.ApplicationService.get_current_datetime_sgt')
 def test_change_request(mock_datetime, application_service, mock_application_repository, mock_employee_repository, mock_event_service, mock_email_service):
     # Arrange
     mock_datetime.return_value = datetime.now()
@@ -750,7 +750,7 @@ def test_change_request(mock_datetime, application_service, mock_application_rep
     # Check that the method returns the new application
     assert result == new_application
 
-@patch('backend.services.ApplicationService.get_current_datetime_sgt')
+@patch('BackendUnitTests.services.ApplicationService.get_current_datetime_sgt')
 def test_cancel_request(mock_datetime, application_service, mock_application_repository, mock_employee_repository, mock_email_service):
     # Arrange
     mock_datetime.return_value = datetime.now()
@@ -795,7 +795,7 @@ def test_cancel_request(mock_datetime, application_service, mock_application_rep
     # Check that the method returns the updated application
     assert result == updated_application
 
-@patch('backend.services.ApplicationService.get_current_date')
+@patch('BackendUnitTests.services.ApplicationService.get_current_date')
 def test_reject_old_applications(mock_current_date, application_service, mock_application_repository, mock_event_repository, mock_email_service):
     # Arrange
     mock_current_date.return_value = date(2023, 5, 1)
