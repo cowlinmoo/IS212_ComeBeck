@@ -526,13 +526,13 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
             }
             else{
               if (count ==1){
-                requested_date = event.date
+                requested_date = format(event.date, "yyyy-MM-dd")
                 application_hour = event.hour
               }
               else{
                 changeEvents.push({
                   "application_hour":event.hour,
-                  "requested_date": event.date
+                  "requested_date": format(event.date, "yyyy-MM-dd")
                 })
               }
             }
