@@ -29,6 +29,9 @@ COPY postgres/init.sql postgres/init.sql
 # Install all dependencies
 RUN poetry install
 
+# Install playwright
+RUN poetry run playwright install
+
 # Open required ports
 EXPOSE 8080
 

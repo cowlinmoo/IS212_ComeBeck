@@ -49,10 +49,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Install Dependencies
-      run: |
-        poetry install
-        playwright install
 
     - name: Build Docker image
       run: docker build -t my-app .
