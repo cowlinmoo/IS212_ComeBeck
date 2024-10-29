@@ -12,7 +12,6 @@ def test_successful_login(setup_page):
     page = setup_page
     login_page = LoginPage(page)
     login_page.navigate()
-    
     # Use valid credentials to log in successfully
     login_page.login("colinmok1000@gmail.com", "password123")
     page.wait_for_url("https://comebeckwfhtracker.systems/schedule")
