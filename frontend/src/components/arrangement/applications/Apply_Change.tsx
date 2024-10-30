@@ -904,7 +904,7 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
                       </FormControl>
                       <FormDescription>
                         Only arrangements that are 2 weeks ahead and before
-                        current date can be withdrawn
+                        current date can be changed
                       </FormDescription>
                     </FormItem>
                   )}
