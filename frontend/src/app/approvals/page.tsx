@@ -18,6 +18,7 @@ export interface Application {
   approver_id: number;
   recurring: boolean;
   application_state: string;
+  outcome_reason: string;
   events: Event[];
 }
 
