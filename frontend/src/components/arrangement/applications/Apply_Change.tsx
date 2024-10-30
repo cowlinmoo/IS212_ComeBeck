@@ -126,7 +126,7 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
             for (const application of data) {
               let type = "";
               if (application["status"] === "pending" && (application["application_state"]==="new_application"  ||
-              ( (application["application_state"]==="change_request") &&  (application["application_state"]==="approved"))) ) {
+              ( (application["application_state"]==="change_request") &&  (application["status"]==="approved"))) ) {
                 if (application["events"].length === 1) {
                   type = "Single";
                   const dateSplit =
@@ -184,7 +184,7 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
                   }
                 }
               } else if (application["status"] === "approved" &&  (application["application_state"]==="new_application"  ||
-              ( (application["application_state"]==="change_request") &&  (application["application_state"]==="approved"))) ) {
+              ( (application["application_state"]==="change_request") &&  (application["status"]==="approved"))) ) {
                 if (application["events"].length === 1) {
                   type = "Single";
                   const dateSplit =
