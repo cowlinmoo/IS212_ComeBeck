@@ -28,7 +28,7 @@ jobs:
         poetry install
 
     - name: Build Docker Image for End-to-End Tests
-      run: docker build -t my-app-e2e .
+      run: docker build --target e2e -t my-app-e2e .
 
     - name: Run End to End Tests
       env:
