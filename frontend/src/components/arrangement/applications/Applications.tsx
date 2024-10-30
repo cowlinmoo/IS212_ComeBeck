@@ -233,31 +233,38 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
     },
   });
 
-  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
-  const { fields, append, remove } = useFieldArray({
-    name: "multipleDate",
-    control: applyForm.control,
-  });
-  const handleDateSelect = (dates: Date[] | undefined) => {
-    if (!dates) return
-    // Remove dates that are no longer selected
-    remove(fields.map((_, index) => index).filter(
-      index => !dates.some(d => d.toDateString() === fields[index].date.toDateString())
-    ))
-    // Add newly selected dates
-    dates.forEach(date => {
-      if (!fields.some(field => field.date.toDateString() === date.toDateString())) {
-        append({ date, hour: 'fullday' })
-      }
-    })
-    setSelectedDates(dates)
+  
+  type DateSelection = {
+    date: Date;
+    hour: "fullday" | "am" | "pm";
   }
 
+  const [selectedDates, setSelectedDates] = useState<DateSelection[]>([])
+  const handleDateSelect = (dates: Date[] | undefined) => {
+    if (!dates) return
+
+    const updatedDates = dates.map(date => {
+      const existingDate = selectedDates.find(d => d.date.toDateString() === date.toDateString())
+      return existingDate || { date, hour: 'fullday' as const }
+    })
+
+    setSelectedDates(updatedDates)
+    applyForm.setValue('multipleDate', updatedDates)
+  }
+
+  const handleHourChange = (date: Date, hour: "fullday" | "am" | "pm") => {
+    const updatedDates = selectedDates.map(d => 
+      d.date.toDateString() === date.toDateString() ? { ...d, hour } : d
+    )
+    setSelectedDates(updatedDates)
+    applyForm.setValue('multipleDate', updatedDates)
+  }
   //Success alert if form has been successfully submitted
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
 
   //Submission for apply form
   async function applySubmit(values: z.infer<typeof applyFormSchema>) {
+    console.log("hi")
     if (values.reason.trim() === "") {
       setShowEmptyReasonAlert(true);
     } else {
@@ -731,7 +738,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                         <PopoverContent>
                           <Calendar
                             mode="multiple"
-                            selected={selectedDates}
+                            selected={selectedDates.map(d => d.date)}
                             onSelect={(dates) => {
                               handleDateSelect(dates);
                               checkMultipleDate(dates);
@@ -755,39 +762,39 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                 />
 
               )}
-              {applyForm.watch("isMultiple") === "Yes" && fields.map((field, index) => (
+              {applyForm.watch("isMultiple") === "Yes" && selectedDates.map((dateSelection, index) => (
                 <FormField
-                  key={field.id}
+                  key={dateSelection.date.toISOString()}
                   control={applyForm.control}
                   name={`multipleDate.${index}.hour`}
-                  render={({ field: hourField }) => (
+                  render={({ field }) => (
                     <FormItem className="space-y-3">
-                      <FormLabel>{format(field.date, "PPP")}</FormLabel>
-                      <FormDescription  hidden={!isAMButtonDisabled(field.date)} >There is an existing AM wfh arrangement for this day</FormDescription>
-                      <FormDescription hidden={!isPMButtonDisabled(field.date)}>There is an existing PM wfh arrangement for this day</FormDescription>
+                      <FormLabel>{format(dateSelection.date, "PPP")}</FormLabel>
+                      <FormDescription  hidden={!isAMButtonDisabled(dateSelection.date)} >There is an existing AM wfh arrangement for this day</FormDescription>
+                      <FormDescription hidden={!isPMButtonDisabled(dateSelection.date)}>There is an existing PM wfh arrangement for this day</FormDescription>
                       <FormControl>
                         <RadioGroup
-                          onValueChange={hourField.onChange}
-                          defaultValue={hourField.value}
+                          onValueChange={(value) => handleHourChange(dateSelection.date, value as "fullday" | "am" | "pm")}
+                          defaultValue={dateSelection.hour}
                           className="flex space-x-4"
                         >
                           <FormItem className="flex items-center space-x-2 space-y-0">
                             <FormControl>
-                              <RadioGroupItem value="fullday" id="r1" hidden={isFULLDAYButtonDisabled(field.date)}/>
+                              <RadioGroupItem value="fullday" id="r1" hidden={isFULLDAYButtonDisabled(dateSelection.date)}/>
                             </FormControl>
-                            <FormLabel className="font-normal" hidden={isFULLDAYButtonDisabled(field.date)}>Full Day</FormLabel>
+                            <FormLabel className="font-normal" hidden={isFULLDAYButtonDisabled(dateSelection.date)}>Full Day</FormLabel>
                           </FormItem>
                           <FormItem className="flex items-center space-x-2 space-y-0">
                             <FormControl>
-                              <RadioGroupItem value="am" hidden={isAMButtonDisabled(field.date)}/>
+                              <RadioGroupItem value="am" hidden={isAMButtonDisabled(dateSelection.date)}/>
                             </FormControl>
-                            <FormLabel className="font-normal" hidden={isAMButtonDisabled(field.date)}>AM</FormLabel>
+                            <FormLabel className="font-normal" hidden={isAMButtonDisabled(dateSelection.date)}>AM</FormLabel>
                           </FormItem>
                           <FormItem className="flex items-center space-x-2 space-y-0">
                             <FormControl>
-                              <RadioGroupItem value="pm" hidden={isPMButtonDisabled(field.date)} />
+                              <RadioGroupItem value="pm" hidden={isPMButtonDisabled(dateSelection.date)} />
                             </FormControl>
-                            <FormLabel className="font-normal" hidden={isPMButtonDisabled(field.date)}>PM</FormLabel>
+                            <FormLabel className="font-normal" hidden={isPMButtonDisabled(dateSelection.date)}>PM</FormLabel>
                           </FormItem>
                         </RadioGroup>
                       </FormControl>
