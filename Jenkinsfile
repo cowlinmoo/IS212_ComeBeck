@@ -25,7 +25,8 @@ pipeline {
                     updateGitHubStatus('pending', 'Building Docker image', 'Jenkins: 1. Build')
 
                     try {
-                        sh "docker build -t ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${BUILD_NUMBER} ."
+                        sh "docker build --target base -t ${ACR_NAME}.azurecr
+                        .io/${IMAGE_NAME}:${BUILD_NUMBER} ."
                         updateGitHubStatus('success', 'Docker image built successfully', 'Jenkins: 1. Build')
                     } catch (Exception e) {
                         updateGitHubStatus('failure', 'Docker image build failed', 'Jenkins: 1. Build')
