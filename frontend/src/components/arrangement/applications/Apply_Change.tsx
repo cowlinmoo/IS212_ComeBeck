@@ -532,16 +532,22 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
 
       for (const application of wfhApplications){
         if (application.application_id === values.selectedArrangement.applicationID){
-          
           let count = 0
           for (const event of application.events){
             count += 1
-            if (event.event_id === values.selectedArrangement.eventID){
+            console.log(event.event_id)
+            console.log(values.selectedArrangement.eventID)
+            console.log(typeof event.event_id )
+            console.log(typeof values.selectedArrangement.eventID)
+
+            if (event.event_id.toString() === values.selectedArrangement.eventID){
               if (count ==1){
+                console.log(values.singleDate.date)
                 requested_date = format(values.singleDate.date, "yyyy-MM-dd")
                 application_hour = values.singleDate.hour
               }
               else{
+                console.log(values.singleDate.date)
                 changeEvents.push({
                   "application_hour":values.singleDate.hour,
                   "requested_date": format(values.singleDate.date, "yyyy-MM-dd")
@@ -550,10 +556,12 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
             }
             else{
               if (count ==1){
+                console.log(event.date)
                 requested_date = format(event.date, "yyyy-MM-dd")
                 application_hour = event.hour
               }
               else{
+                console.log(event.date)
                 changeEvents.push({
                   "application_hour":event.hour,
                   "requested_date": format(event.date, "yyyy-MM-dd")
