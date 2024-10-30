@@ -36,7 +36,7 @@ The API documentation is served using *Swagger*. You may access it using:
 ## What is ComeBeck WFH Tracker
 ComeBeck WFH Tracker is an all-in-one work-from-home management platform that enables employees to apply for, view, and manage their remote work arrangements. The platform is designed to be intuitive and efficient, providing a streamlined experience for both employees and managers to coordinate in-office and remote schedules.
 
-Built with the FastAPI framework, ComeBeck WFH Tracker offers a fast and scalable backend supported by a PostgreSQL database to securely manage user and schedule data. A React front-end ensures a responsive and user-friendly interface for all users. In production, the front end is hosted on Vercel, while the backend operates in a Dockerized environment on an Azure Container Apps, providing a reliable, cloud-based solution for seamless work-from-home tracking and approval workflows.
+Built with the `FastAPI` framework, ComeBeck WFH Tracker offers a fast and scalable backend supported by a `PostgreSQL` database to securely manage user and schedule data. A `React` front-end ensures a responsive and user-friendly interface for all users. In production, the front end is hosted on `Vercel`, while the backend operates in a Dockerized environment on an `Azure Container Apps`, providing a reliable, cloud-based solution for seamless work-from-home tracking and approval workflows.
 
 ## Getting Started
 
