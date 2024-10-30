@@ -34,7 +34,7 @@ import * as z from "zod";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -56,10 +56,13 @@ const withdrawalFormSchema = z.object({
     .object({
       eventID: z.string(),
       applicationID: z.string()
-    })
-    .refine((data) => data.eventID !== "", {
-      message: "Please select an arrangement to withdraw.",
+    }).default({
+      eventID: "",
+      applicationID: "",
     }),
+    // .refine((data) => data.eventID !== "", {
+    //   message: "Please select an arrangement to withdraw.",
+    // }),
   reason: z.string(),
 });
 
@@ -68,6 +71,7 @@ interface IApplications {
   token: string | undefined;
 }
 const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
+  const [isLoading, setIsLoading] = useState(false)
   //Success alert if form has been successfully submitted
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   //alert if no selection of arrangement
@@ -344,12 +348,12 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
 
   //Submission for apply form
   async function applySubmit(values: z.infer<typeof withdrawalFormSchema>) {
+    setShowNoSelectionAlert(false);
+    setShowEmptyReasonAlert(false);
     if (values.reason.trim() === "") {
       setShowEmptyReasonAlert(true);
-    } else {
-      setShowEmptyReasonAlert(false);
-    }
-    if (values.selectedArrangement.eventID === "") {
+    } 
+    if (!values.selectedArrangement.eventID) {
       setShowNoSelectionAlert(true);
     }
     if (values.reason !=="" && showNoSelectionAlert === false) {
@@ -367,6 +371,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
           withdraw_reason: values.reason,
         };
         console.log(content);
+        setIsLoading(true)
         try {
           const response = await fetch(
             `${URL}/withdraw/` +
@@ -388,6 +393,9 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
           }
         } catch (error: any) {
           console.log("POST API fetching error.", error.message);
+        }
+        finally {
+          setIsLoading(false)
         }
         
     }
@@ -422,6 +430,12 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                     No arrangement has been chosen
                   </AlertDescription>
                 </Alert>
+              )}
+              {isLoading && (
+                <div className="flex justify-center items-center">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                  <span className="ml-2">Submitting withdrawal/cancellation request...</span>
+                </div>
               )}
               {showSuccessAlert && (
                 <Alert

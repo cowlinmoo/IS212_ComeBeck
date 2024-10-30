@@ -39,7 +39,7 @@ import * as z from "zod";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -65,8 +65,9 @@ const changeFormSchema = z.object({
       eventID: z.string(),
       applicationID: z.string()
     })
-    .refine((data) => data.eventID !== "", {
-      message: "Please select an arrangement to withdraw.",
+    .default({
+      eventID: "",
+      applicationID: "",
     }),
   singleDate: z
     .object({
@@ -82,6 +83,7 @@ interface IApplications {
   token: string | undefined;
 }
 const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
+  const [isLoading, setIsLoading] = useState(false)
   //Success alert if form has been successfully submitted
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   //alert if no selection of arrangement
@@ -99,7 +101,7 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
   //all months for pending application filtering
   const [filterMonths, setFilterMonths] = useState(Array);
 
-  const [fromEndDate, setFromEndDate] = useState<Date>(new Date())
+  
 
   useEffect(() => {
     async function fetchData() {
@@ -490,21 +492,28 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
     return hasApplication
 
   }
-  
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>()
+  interface Arrangement {
+    eventID: string, 
+    applicationID: string
+  }
+  const [selectedArrangement, setSelectedArrangement] = useState<Arrangement>()
+
+
   //Submission for apply form
   async function applySubmit(values: z.infer<typeof changeFormSchema>) {
+    setShowEmptyReasonAlert(false);
+    setShowNoSelectionAlert(false);
+    setShowEmptyDateAlert(false);
     if (values.reason.trim() === "") {
       setShowEmptyReasonAlert(true);
-    } else {
-      setShowEmptyReasonAlert(false);
-    }
-    if (values.selectedArrangement.eventID === "") {
+    } 
+    if (!values.selectedArrangement.eventID) {
       setShowNoSelectionAlert(true);
     }
-    setShowEmptyDateAlert(!values.singleDate);
-    console.log(showNoSelectionAlert)
-    console.log(showEmptyReasonAlert)
-    console.log(showEmptyDateAlert)
+    if (!values.singleDate?.date) {
+      setShowEmptyDateAlert(true)
+    }
     if (values.reason !=="" && showNoSelectionAlert === false && values.singleDate) {
       const headers = {
         Authorization: `Bearer ${token}`,
@@ -562,6 +571,7 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
         "events": changeEvents 
       };
         console.log(content);
+        setIsLoading(true)
         try {
           const response = await fetch(
             `${URL}/` +
@@ -573,6 +583,7 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
             throw new Error(`POST Application API validation ERROR`);
           } else {
             console.log(response.json());
+            
             setShowSuccessAlert(true);
             //reset form once submission is successful
             changeForm.reset();
@@ -581,6 +592,9 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
           }
         } catch (error: any) {
           console.log("POST API fetching error.", error.message);
+        }
+        finally {
+          setIsLoading(false)
         }
     }
   
@@ -615,6 +629,12 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
                     No arrangement has been chosen
                   </AlertDescription>
                 </Alert>
+              )}
+              {isLoading && (
+                <div className="flex justify-center items-center">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                  <span className="ml-2">Submitting change request...</span>
+                </div>
               )}
               {showSuccessAlert && (
                 <Alert
@@ -747,13 +767,18 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
                                   <TableRow key={arrangement.event_id}>
                                     <TableCell className="font-medium">
                                       <RadioGroup
-                                        onValueChange={(value) =>
+                                        onValueChange={(value) =>{
                                           field.onChange({
                                             eventID: value,
                                             applicationID:
                                               arrangement.application_id,
                                           })
-                                        }
+                                          setSelectedArrangement({
+                                            eventID: value,
+                                            applicationID:
+                                              arrangement.application_id,
+                                          })
+                                        }}
                                         value={field.value.eventID}
                                         className="space-y-1"
                                       >
@@ -821,13 +846,18 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
                               <TableRow key={arrangement.event_id}>
                                 <TableCell className="font-medium">
                                   <RadioGroup
-                                    onValueChange={(value) =>
+                                    onValueChange={(value) =>{
                                       field.onChange({
                                         eventID: value,
                                         applicationID:
                                           arrangement.application_id,
                                       })
-                                    }
+                                      setSelectedArrangement({
+                                        eventID: value,
+                                        applicationID:
+                                          arrangement.application_id,
+                                      })
+                                    }}
                                     value={field.value.eventID}
                                     className="space-y-1"
                                   >
@@ -870,7 +900,7 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
                   )}
                 />
               )}
-              {changeForm.watch("selectedArrangement") && (
+              {selectedArrangement && (
                 <FormField
                 control={changeForm.control}
                 name="singleDate.date"
@@ -903,7 +933,8 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
                           onSelect={(date) => {
                             field.onChange(date);
                             if (date) {
-                              setFromEndDate(date);
+                              
+                              setSelectedDate(date)
                             }
                           }}
                           fromDate={fromDate}
@@ -924,15 +955,15 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
                   </FormItem>
                 )}/>
               )}
-              {changeForm.watch("singleDate.date") && (
+              {selectedDate && (
                   <FormField
                   control={changeForm.control}
                   name={`singleDate.hour`}
                   render={({ field }) => (
                     <FormItem className="space-y-3">
-                      <FormLabel>{format(fromEndDate, "PPP")}</FormLabel>
-                      <FormDescription  hidden={!isAMButtonDisabled(fromEndDate)} >There is an existing AM wfh arrangement for this day</FormDescription>
-                      <FormDescription hidden={!isPMButtonDisabled(fromEndDate)}>There is an existing PM wfh arrangement for this day</FormDescription>
+                      <FormLabel>{format(selectedDate, "PPP")}</FormLabel>
+                      <FormDescription  hidden={!isAMButtonDisabled(selectedDate)} >There is an existing AM wfh arrangement for this day</FormDescription>
+                      <FormDescription hidden={!isPMButtonDisabled(selectedDate)}>There is an existing PM wfh arrangement for this day</FormDescription>
                       <FormControl>
                         <RadioGroup
                           onValueChange={field.onChange}
@@ -941,21 +972,21 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
                         >
                           <FormItem className="flex items-center space-x-2 space-y-0">
                             <FormControl>
-                              <RadioGroupItem value="fullday" id="r1" hidden={isFULLDAYButtonDisabled(fromEndDate)}/>
+                              <RadioGroupItem value="fullday" id="r1" hidden={isFULLDAYButtonDisabled(selectedDate)}/>
                             </FormControl>
-                            <FormLabel className="font-normal" hidden={isFULLDAYButtonDisabled(fromEndDate)}>Full Day</FormLabel>
+                            <FormLabel className="font-normal" hidden={isFULLDAYButtonDisabled(selectedDate)}>Full Day</FormLabel>
                           </FormItem>
                           <FormItem className="flex items-center space-x-2 space-y-0">
                             <FormControl>
-                              <RadioGroupItem value="am" hidden={isAMButtonDisabled(fromEndDate)}/>
+                              <RadioGroupItem value="am" hidden={isAMButtonDisabled(selectedDate)}/>
                             </FormControl>
-                            <FormLabel className="font-normal" hidden={isAMButtonDisabled(fromEndDate)}>AM</FormLabel>
+                            <FormLabel className="font-normal" hidden={isAMButtonDisabled(selectedDate)}>AM</FormLabel>
                           </FormItem>
                           <FormItem className="flex items-center space-x-2 space-y-0">
                             <FormControl>
-                              <RadioGroupItem value="pm" hidden={isPMButtonDisabled(fromEndDate)} />
+                              <RadioGroupItem value="pm" hidden={isPMButtonDisabled(selectedDate)} />
                             </FormControl>
-                            <FormLabel className="font-normal" hidden={isPMButtonDisabled(fromEndDate)}>PM</FormLabel>
+                            <FormLabel className="font-normal" hidden={isPMButtonDisabled(selectedDate)}>PM</FormLabel>
                           </FormItem>
                         </RadioGroup>
                       </FormControl>

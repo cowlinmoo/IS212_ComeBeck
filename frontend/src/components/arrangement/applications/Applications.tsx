@@ -32,13 +32,13 @@ import {
   FormItem,
   FormLabel,
 } from "@/components/ui/form";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm} from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const URL = `${BASE_URL}/application`;
@@ -53,9 +53,7 @@ const applyFormSchema = z.object({
       date: z.date(),
       hour: z.enum(["fullday", "am", "pm"])
     })
-    .optional().refine((data) => {
-      return true
-    }),
+    .optional(),
   multipleDate: z
     .array(
       z.object({
@@ -259,16 +257,25 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
       d.date.toDateString() === date.toDateString() ? { ...d, hour } : d
     )
     setSelectedDates(updatedDates)
-    applyForm.setValue('multipleDate', updatedDates)
+    
+    // Find the index of the date being updated
+    const dateIndex = selectedDates.findIndex(d => d.date.toDateString() === date.toDateString())
+    if (dateIndex !== -1) {
+      applyForm.setValue(`multipleDate.${dateIndex}.hour`, hour, {
+        shouldValidate: true,
+        shouldDirty: true,
+      })
+    }
   }
+
   //Success alert if form has been successfully submitted
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>()
-
-
+  const [isLoading, setIsLoading] = useState(false)
   //Submission for apply form
   async function applySubmit(values: z.infer<typeof applyFormSchema>) {
-    console.log("hi")
+    setShowEmptyDateAlert(false)
+    setShowEmptyReasonAlert(false)
     if (values.reason.trim() === "") {
       setShowEmptyReasonAlert(true);
     } 
@@ -329,6 +336,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
           }
         }
         console.log(content);
+        setIsLoading(true)
         try {
           const response = await fetch(URL, {
             headers: headers,
@@ -349,6 +357,9 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
         } catch (error: any) {
           console.log("POST API fetching error.", error.message);
         }
+        finally {
+          setIsLoading(false)
+        }
       }
       //multiple dates selected
       else if (values.multipleDate) {
@@ -368,6 +379,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
           recurring: false,
           events: events,
         };
+        setIsLoading(true)
         try {
           const response = await fetch(URL, {
             headers: headers,
@@ -387,6 +399,9 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
           }
         } catch (error: any) {
           console.log("POST API fetching error.", error.message);
+        }
+        finally {
+          setIsLoading(false)
         }
       }
     }
@@ -433,6 +448,12 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                     No date has been selected.
                   </AlertDescription>
                 </Alert>
+              )}
+              {isLoading && (
+                <div className="flex justify-center items-center">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                  <span className="ml-2">Submitting application...</span>
+                </div>
               )}
               {showSuccessAlert && (
                 <Alert
@@ -770,7 +791,10 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                       <FormDescription hidden={!isPMButtonDisabled(dateSelection.date)}>There is an existing PM wfh arrangement for this day</FormDescription>
                       <FormControl>
                         <RadioGroup
-                          onValueChange={(value) => handleHourChange(dateSelection.date, value as "fullday" | "am" | "pm")}
+                          onValueChange={(value) => {
+                            field.onChange(value)
+                            handleHourChange(dateSelection.date, value as "fullday" | "am" | "pm")
+                          }}
                           defaultValue={dateSelection.hour}
                           className="flex space-x-4"
                         >
