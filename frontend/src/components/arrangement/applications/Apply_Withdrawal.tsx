@@ -34,7 +34,7 @@ import * as z from "zod";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -56,10 +56,11 @@ const withdrawalFormSchema = z.object({
     .object({
       eventID: z.string(),
       applicationID: z.string()
-    })
-    .refine((data) => data.eventID !== "", {
-      message: "Please select an arrangement to withdraw.",
+    }).default({
+      eventID: "",
+      applicationID: "",
     }),
+   
   reason: z.string(),
 });
 
@@ -68,6 +69,7 @@ interface IApplications {
   token: string | undefined;
 }
 const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
+  const [isLoading, setIsLoading] = useState(false)
   //Success alert if form has been successfully submitted
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   //alert if no selection of arrangement
@@ -107,7 +109,8 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
           } else {
             for (const application of data) {
               let type = "";
-              if (application["status"] === "pending") {
+              if (application["status"] === "pending" &&  (application["application_state"]==="new_application"  ||
+              ( (application["application_state"]==="change_request") &&  (application["status"]==="approved"))) ) {
                 if (application["events"].length === 1) {
                   type = "Single";
                   const dateSplit =
@@ -123,6 +126,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                   pendingApplications.push({
                     application_type: type,
                     date: date,
+                    hour: application["events"][0]["application_hour"],
                     application_id: application["application_id"].toString(),
                     event_id: application["events"][0]["event_id"].toString(),
                   });
@@ -139,6 +143,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                       pendingApplications.push({
                         application_type: type,
                         date: date,
+                        hour: event["application_hour"],
                         application_id: application["application_id"].toString(),
                         event_id: event["event_id"].toString(),
                       });
@@ -155,13 +160,15 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                       pendingApplications.push({
                         application_type: type,
                         date: date,
+                        hour: event["application_hour"],
                         application_id: application["application_id"].toString(),
                         event_id: event["event_id"].toString(),
                       });
                     }
                   }
                 }
-              } else if (application["status"] === "approved") {
+              } else if (application["status"] === "approved" && (application["application_state"]==="new_application"  ||
+              ( (application["application_state"]==="change_request") &&  (application["status"]==="approved"))) ){
                 if (application["events"].length === 1) {
                   type = "Single";
                   const dateSplit =
@@ -176,6 +183,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                     approvedApplications.push({
                       application_type: type,
                       date: date,
+                      hour: application["events"][0]["application_hour"],
                       application_id: application["application_id"].toString(),
                       event_id: application["events"][0]["event_id"].toString(),
                     });
@@ -185,6 +193,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                       approvedApplications.push({
                         application_type: type,
                         date: date,
+                        hour: application["events"][0]["application_hour"],
                         application_id: application["application_id"].toString(),
                         event_id: application["events"][0]["event_id"].toString(),
                       });
@@ -195,6 +204,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                       approvedApplications.push({
                         application_type: type,
                         date: date,
+                        hour: application["events"][0]["application_hour"],
                         application_id: application["application_id"].toString(),
                         event_id: application["events"][0]["event_id"].toString(),
                       });
@@ -217,6 +227,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                         approvedApplications.push({
                           application_type: type,
                           date: date,
+                          hour: event["application_hour"],
                           application_id: application["application_id"].toString(),
                           event_id: event["event_id"].toString(),
                         });
@@ -225,6 +236,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                           approvedApplications.push({
                             application_type: type,
                             date: date,
+                            hour: event["application_hour"],
                             application_id: application["application_id"].toString(),
                             event_id: event["event_id"].toString(),
                           });
@@ -234,6 +246,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                           approvedApplications.push({
                             application_type: type,
                             date: date,
+                            hour: event["application_hour"],
                             application_id: application["application_id"].toString(),
                             event_id: event["event_id"].toString(),
                           });
@@ -256,6 +269,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                         approvedApplications.push({
                           application_type: type,
                           date: date,
+                          hour: event["application_hour"],
                           application_id: application["application_id"].toString(),
                           event_id: event["event_id"].toString(),
                         });
@@ -264,6 +278,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                           approvedApplications.push({
                             application_type: type,
                             date: date,
+                            hour: event["application_hour"],
                             application_id: application["application_id"].toString(),
                             event_id: event["event_id"].toString(),
                           });
@@ -273,6 +288,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                           approvedApplications.push({
                             application_type: type,
                             date: date,
+                            hour: event["application_hour"],
                             application_id: application["application_id"].toString(),
                             event_id: event["event_id"].toString(),
                           });
@@ -332,15 +348,15 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
 
   //Submission for apply form
   async function applySubmit(values: z.infer<typeof withdrawalFormSchema>) {
+    setShowNoSelectionAlert(false);
+    setShowEmptyReasonAlert(false);
     if (values.reason.trim() === "") {
       setShowEmptyReasonAlert(true);
-    } else {
-      setShowEmptyReasonAlert(false);
-    }
-    if (values.selectedArrangement.eventID === "") {
+    } 
+    if (!values.selectedArrangement.eventID) {
       setShowNoSelectionAlert(true);
     }
-    if (showEmptyReasonAlert === false && showNoSelectionAlert === false) {
+    if (values.reason !=="" && showNoSelectionAlert === false) {
       const headers = {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
@@ -349,13 +365,13 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
       //
       console.log(values.selectedArrangement.applicationID);
       console.log(values.selectedArrangement.eventID);
-      if (values.arrangementType === "Pending Approval") {
         const content = {
           status: "withdrawn",
           editor_id: staffId,
           withdraw_reason: values.reason,
         };
         console.log(content);
+        setIsLoading(true)
         try {
           const response = await fetch(
             `${URL}/withdraw/` +
@@ -378,41 +394,10 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
         } catch (error: any) {
           console.log("POST API fetching error.", error.message);
         }
-      }
-      //multiple dates selected
-      else if (values.arrangementType === "Approved") {
-        const content = {
-          status: "withdrawn",
-          editor_id: staffId,
-          withdraw_reason: values.reason,
-        };
-        try {
-          const response = await fetch(
-            `${URL}/withdraw/` +
-              +values.selectedArrangement.applicationID +
-              "/" +
-              values.selectedArrangement.eventID,
-            {
-              headers: headers,
-              method: "PUT",
-              body: JSON.stringify(content),
-            }
-          );
-          if (!response.ok) {
-            console.log(await response.json());
-            throw new Error(`POST Application API validation ERROR`);
-          } else {
-            console.log(response.json());
-            setShowSuccessAlert(true);
-            //reset form once submission is successful
-            withdrawalForm.reset();
-            //set timeout for alert
-            setTimeout(() => setShowSuccessAlert(false), 5000);
-          }
-        } catch (error: any) {
-          console.log("POST API fetching error.", error.message);
+        finally {
+          setIsLoading(false)
         }
-      }
+        
     }
   }
 
@@ -445,6 +430,12 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                     No arrangement has been chosen
                   </AlertDescription>
                 </Alert>
+              )}
+              {isLoading && (
+                <div className="flex justify-center items-center">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                  <span className="ml-2">Submitting withdrawal/cancellation request...</span>
+                </div>
               )}
               {showSuccessAlert && (
                 <Alert
@@ -559,6 +550,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                                 <TableHead>Application ID</TableHead>
                                 <TableHead>Date</TableHead>
                                 <TableHead>Type</TableHead>
+                                <TableHead>Time</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -571,7 +563,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                                           field.onChange({
                                             eventID: value,
                                             applicationID:
-                                              arrangement.application_id,
+                                            arrangement.application_id,
                                           })
                                         }
                                         value={field.value.eventID}
@@ -599,6 +591,9 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                                     </TableCell>
                                     <TableCell>
                                       {arrangement.application_type}
+                                    </TableCell>
+                                    <TableCell>
+                                      {arrangement.hour}
                                     </TableCell>
                                   </TableRow>
                                 )
@@ -630,6 +625,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                               <TableHead>Application ID</TableHead>
                               <TableHead>Date</TableHead>
                               <TableHead>Type</TableHead>
+                              <TableHead>Time</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -669,6 +665,9 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                                 </TableCell>
                                 <TableCell>
                                   {arrangement.application_type}
+                                </TableCell>
+                                <TableCell>
+                                  {arrangement.hour}
                                 </TableCell>
                               </TableRow>
                             ))}

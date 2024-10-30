@@ -17,6 +17,8 @@ export interface Application {
   staff_id: number;
   approver_id: number;
   recurring: boolean;
+  application_state: string;
+  outcome_reason: string;
   events: Event[];
 }
 
@@ -24,6 +26,7 @@ export interface Event {
   event_id: number;
   requested_date: string;
   location: string;
+  application_hour: string;
 }
 
 export default function Component() {
