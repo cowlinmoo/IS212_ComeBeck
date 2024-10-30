@@ -45,3 +45,33 @@ Built with the `FastAPI` framework, ComeBeck WFH Tracker offers a fast and scala
 **Just want to access ComeBeck WFH Tracker via the web? No problem!** You can skip the local setup and head straight to the deployed version at: [Link To Deployed Site](https://comebeckwfhtracker.systems/)
 
 ## Overview Of Steps To Run ComeBeck WFH Tracker Locally
+
+**Required Tools:**
+
+- **`Node.js` (v18.17.0)**: Node.js is a JavaScript runtime environment used for frontend development in this project. You can download and install it from the official website: [Node.js](https://nodejs.org/en/)
+- **`Python` (3.12.3)**: Python is the programming language used for the backend development of ComeBeck WFH Tracker with FastAPI. Download and install the Python version 3.12.3 from the official website: [Python](https://www.python.org/downloads/release/python-3123/)
+- **`Poetry`**: Poetry is a dependency management and packaging tool for Python. It is used to handle project dependencies and virtual environments in the backend. You can install Poetry by following the instructions on the official website: [Poetry](https://python-poetry.org/docs/)
+- **`Docker` (ensure it's running)**: Docker is a containerization platform used to run the backend application. You can find installation instructions and resources on the official website: [Docker](https://www.docker.com/get-started)
+- **`Docker Compose` (recommended)**: Docker Compose is a tool for managing multi-container Docker applications. It simplifies running applications with multiple interdependent services. Install instructions can be found on the official website: [Docker Compose](https://docs.docker.com/compose/install/)
+
+**Steps**
+
+1. Clone the repository
+2. Navigate to the repository directory
+3. Ensure docker is running
+4. Setting Up Environment Variables
+5. Start the Backend server
+6. Start the Frontend server
+7. Enjoy ComeBeck WFH Tracker 👨🏻‍💻
+
+### Set Up Environment Variables
+
+To run ComeBeck WFH Tracker locally, you need to create two `.env` files to store sensitive information (secrets).
+
+### Overview of the `.env` files needed
+- **`.env` file for Frontend:** This file stores environment variables specific to your frontend development environment.
+- **`.env` file for Backend:** This file stores environment variables specific to your backend development environment
+
+#### `.env` file for Frontend
+
+1. **Location:** Create a file named `.env` in the root directory of your frontend project. This is the same directory that contains your `package.json` file. The image provides a visual representation of this location.
