@@ -51,9 +51,11 @@ const applyFormSchema = z.object({
   singleDate: z
     .object({
       date: z.date(),
-      hour: z.enum(["fullday", "am", "pm"]),
+      hour: z.enum(["fullday", "am", "pm"])
     })
-    .optional(),
+    .optional().refine((data) => {
+      return true
+    }),
   multipleDate: z
     .array(
       z.object({
@@ -227,7 +229,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
   const applyForm = useForm<z.infer<typeof applyFormSchema>>({
     resolver: zodResolver(applyFormSchema),
     defaultValues: {
-      isMultiple: "No",
+     
       isRecurring: "No",
       reason: "",
     },
@@ -261,25 +263,19 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
   }
   //Success alert if form has been successfully submitted
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>()
+
 
   //Submission for apply form
   async function applySubmit(values: z.infer<typeof applyFormSchema>) {
     console.log("hi")
     if (values.reason.trim() === "") {
       setShowEmptyReasonAlert(true);
-    } else {
-      setShowEmptyReasonAlert(false);
-    }
-    setShowEmptyDateAlert(
-      (values.isMultiple === "No" &&
-        !values.singleDate &&
-        values.isRecurring === "No") ||
-        (values.isMultiple === "Yes" &&
-          (!values.multipleDate || values.multipleDate.length === 0)) ||
-        (values.isMultiple === "No" &&
-          values.isRecurring === "Yes" &&
-          !values.endDate)
-    );
+    } 
+    if ((values.isMultiple === "No" && !values.singleDate?.date ) || (values.isMultiple === "Yes" && (!values.multipleDate || values.multipleDate.length === 0)) ||
+        (values.isMultiple === "No" && values.isRecurring === "Yes" &&!values.endDate)){
+          setShowEmptyDateAlert(true)
+          }
     if (values.reason !=="") {
       const headers = {
         Authorization: `Bearer ${token}`,
@@ -521,7 +517,7 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                                 field.onChange(date);
                                 if (date) {
                                   setFromEndDate(date);
-                                  applyForm.setValue("singleDate.hour", "fullday")
+                                  setSelectedDate(date)
                                 }
                               }}
                               fromDate={fromDate}
@@ -542,15 +538,15 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                       </FormItem>
                     )}
                   />
-                  {applyForm.watch("singleDate.date") && (
+                  {selectedDate && (
                   <FormField
                   control={applyForm.control}
                   name={"singleDate.hour"}
                   render={({ field }) => (
                     <FormItem className="space-y-3">
-                      <FormLabel>{format(fromEndDate, "PPP")}</FormLabel>
-                      <FormDescription hidden={!isAMButtonDisabled(fromEndDate)} >There is an existing AM wfh arrangement for this day</FormDescription>
-                      <FormDescription hidden={!isPMButtonDisabled(fromEndDate)}>There is an existing PM wfh arrangement for this day</FormDescription>
+                      <FormLabel>{format(selectedDate, "PPP")}</FormLabel>
+                      <FormDescription hidden={!isAMButtonDisabled(selectedDate)} >There is an existing AM wfh arrangement for this day</FormDescription>
+                      <FormDescription hidden={!isPMButtonDisabled(selectedDate)}>There is an existing PM wfh arrangement for this day</FormDescription>
                       <FormControl>
                         <RadioGroup
                           onValueChange={field.onChange}
@@ -559,21 +555,21 @@ const Applications: React.FC<IApplications> = ({ staffId, token }) => {
                         >
                           <FormItem className="flex items-center space-x-2 space-y-0">
                             <FormControl>
-                              <RadioGroupItem value="fullday" id="r1" hidden={isFULLDAYButtonDisabled(fromEndDate)}/>
+                              <RadioGroupItem value="fullday" id="r1" hidden={isFULLDAYButtonDisabled(selectedDate)}/>
                             </FormControl>
-                            <FormLabel className="font-normal" hidden={isFULLDAYButtonDisabled(fromEndDate)}>Full Day</FormLabel>
+                            <FormLabel className="font-normal" hidden={isFULLDAYButtonDisabled(selectedDate)}>Full Day</FormLabel>
                           </FormItem>
                           <FormItem className="flex items-center space-x-2 space-y-0">
                             <FormControl>
-                              <RadioGroupItem value="am" hidden={isAMButtonDisabled(fromEndDate)}/>
+                              <RadioGroupItem value="am" hidden={isAMButtonDisabled(selectedDate)}/>
                             </FormControl>
-                            <FormLabel className="font-normal" hidden={isAMButtonDisabled(fromEndDate)}>AM</FormLabel>
+                            <FormLabel className="font-normal" hidden={isAMButtonDisabled(selectedDate)}>AM</FormLabel>
                           </FormItem>
                           <FormItem className="flex items-center space-x-2 space-y-0">
                             <FormControl>
-                              <RadioGroupItem value="pm" hidden={isPMButtonDisabled(fromEndDate)} />
+                              <RadioGroupItem value="pm" hidden={isPMButtonDisabled(selectedDate)} />
                             </FormControl>
-                            <FormLabel className="font-normal" hidden={isPMButtonDisabled(fromEndDate)}>PM</FormLabel>
+                            <FormLabel className="font-normal" hidden={isPMButtonDisabled(selectedDate)}>PM</FormLabel>
                           </FormItem>
                         </RadioGroup>
                       </FormControl>

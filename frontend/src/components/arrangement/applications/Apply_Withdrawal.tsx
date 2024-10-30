@@ -549,7 +549,7 @@ const Apply_Withdrawal: React.FC<IApplications> = ({ staffId, token }) => {
                                           field.onChange({
                                             eventID: value,
                                             applicationID:
-                                              arrangement.application_id,
+                                            arrangement.application_id,
                                           })
                                         }
                                         value={field.value.eventID}
