@@ -16,7 +16,7 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Build Docker image for linting
-      run: docker build -t my-app-lint .
+      run: docker build --target base -t my-app-lint .
 
     - name: Run Flake8 Linter
       run: |
@@ -51,7 +51,7 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Build Docker image
-      run: docker build -t my-app .
+      run: docker build --target base -t my-app .
 
     - name: Run tests
       env:
