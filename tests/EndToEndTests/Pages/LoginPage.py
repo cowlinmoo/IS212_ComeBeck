@@ -8,7 +8,7 @@ class LoginPage(BasePage):
         self.password_input = "#password"
         self.login_button = "button[type='submit']"
         self.error_message_text = "Login failed"  # Text content for the error message
-        self.department_schedule_tab = "text='Department Schedule'"  # Locator for "Department Schedule" tab
+        self.department_schedule_tab = "div[role='tablist'] button[role='tab'][aria-controls*='department']:has-text('Department Schedule')"
 
     def navigate_to_login(self):
         """Navigate to the login page."""
@@ -22,7 +22,16 @@ class LoginPage(BasePage):
 
     def is_department_schedule_visible(self):
         """Check if the "Department Schedule" tab is visible."""
-        return self.is_element_visible(self.department_schedule_tab)
+        # Wait for the "Department Schedule" tab within the tablist to appear
+        department_schedule_tab = self.page.locator(self.department_schedule_tab)
+        department_schedule_tab.wait_for(state="visible", timeout=10000)
+        return department_schedule_tab.is_visible()
+
+    def is_department_schedule_hidden(self) -> bool:
+        """Check if the 'Department Schedule' tab is hidden or absent."""
+        department_schedule_tab = self.page.locator(self.department_schedule_tab)
+        self.page.wait_for_timeout(5000)
+        return not department_schedule_tab.is_visible()
 
     def get_error_message_text(self):
         """Return the text of the error message if it appears."""

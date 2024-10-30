@@ -22,10 +22,6 @@ if env.CURRENT_ENV == 'PROD':
     DATABASE_URL = (f"postgresql://{production_username}:{production_password}"
                     f"@{production_hostname}:{production_port}/{production_db}")
 
-elif env.CURRENT_ENV == 'TEST':
-    DATABASE_URL = \
-        "postgresql://test_user:test_password@spm_database_test:5432/test_spm"
-
 else:  # Assuming 'development' or other environments
     DATABASE_URL = (
         f"{env.DATABASE_DIALECT}://{env.POSTGRES_USER}:{env.POSTGRES_PASSWORD}"
