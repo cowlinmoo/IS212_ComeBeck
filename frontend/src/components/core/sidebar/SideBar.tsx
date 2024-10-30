@@ -20,7 +20,7 @@ const tabs: Tab[] = [
   { name: "Arrangement Management", icon: Settings, path: "/arrangement" },
   { name: "Arrangement Approvals", icon: Settings, path: "/approvals" },
   { name: "Pending Arrangements", icon: Users, path: "/managementViewPending" },
-  { name: "Withdraw Arrangements (Manager)", icon: Users, path: "/managementViewWithdraw" },
+  { name: "Withdraw Arrangements", icon: Users, path: "/managementViewWithdraw" },
 ];
 
 export default function SideBar() {

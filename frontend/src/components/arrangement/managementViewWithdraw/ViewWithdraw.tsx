@@ -65,8 +65,8 @@ export default function ViewWithdraw({ data, onWithdraw }: ViewWithdrawProps) {
         <div className="container mx-auto p-4">
             <Card>
                 <CardHeader>
-                    <CardTitle>Pending Arrangements</CardTitle>
-                    <CardDescription>Review and manage pending arrangement requests.</CardDescription>
+                    <CardTitle>Approved Arrangements</CardTitle>
+                    <CardDescription>Review and manage approved arrangement requests.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <ScrollArea className="h-96">
