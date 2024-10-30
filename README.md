@@ -75,3 +75,112 @@ To run ComeBeck WFH Tracker locally, you need to create two `.env` files to stor
 #### `.env` file for Frontend
 
 1. **Location:** Create a file named `.env` in the root directory of your frontend project. This is the same directory that contains your `package.json` file. The image provides a visual representation of this location.
+
+<img src="./readme_files/FrontendEnvExample.png" width="350px">
+
+2. **Content:** The `.env` file should include environment variables specific to 
+   your frontend development setup. Here’s an example configuration for <strong><em>development environment</em></strong>:
+   ```
+    # URL for local development, pointing to the backend server
+    NEXT_PUBLIC_API_BASE_URL=http://localhost:<PORT>/api
+   ```
+   Replace <PORT> with the port number your backend server is running on, typically 
+   8080 during development. Alternatively, for <strong><em>production environment</em></strong>:
+    ```
+    NEXT_PUBLIC_API_BASE_URL=https://api.comebeckwfhtracker.systems/api/
+    ```
+#### `.env` file for Backend
+1. **Location:** Create a file named `.env` in the root directory of the entire project. This is the same directory that contains your `docker-compose.yml` file. The image provides a visual representation of this location.
+
+<img src="./readme_files/BackendEnvExample.png" width="350px">
+
+2. **Content:** The `.env` file should include environment variables specific to 
+your backend development setup. Here’s an example configuration for the <strong><em>development environment</em></strong>:
+
+```
+# Development environment variables
+CURRENT_ENV=DEV
+DATABASE_DIALECT=postgresql
+DATABASE_HOSTNAME=localhost
+POSTGRES_DB=<POSTGRES_DB>
+POSTGRES_USER=<POSTGRES_USER>
+POSTGRES_PASSWORD=<POSTGRES_PASSWORD>
+POSTGRES_PORT=5432
+DEBUG_MODE=true
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
+SENDER_EMAIL=<SENDER_EMAIL> # Email to send automated notifications about WFH related events 
+SENDER_PASSWORD=<SENDER_PASSWORD>
+```
+
+For the <strong><em>production</em></strong> environment, replace the database credentials and host information as follows:
+
+```
+# Production environment variables
+CURRENT_ENV=PROD
+PRODUCTION_DB_USER=<PRODUCTION_DB_USER>
+PRODUCTION_DB_PASSWORD=<PRODUCTION_DB_PASSWORD>
+PRODUCTION_DB_HOSTNAME=comebeck.postgres.database.azure.com
+PRODUCTION_DB_PORT=5432
+PRODUCTION_DB_NAME=<PRODUCTION_DB_NAME>
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
+SENDER_EMAIL=<SENDER_EMAIL> # Email to send automated notifications about WFH related events 
+SENDER_PASSWORD=<SENDER_PASSWORD>
+```
+
+### Start the Backend server
+
+To start the backend server locally and connect to the <strong><em>local database</em></strong> run the following commands
+
+```
+docker-compose --profile dev up
+```
+Alternatively, to start the backend server locally and connect to the <strong><em>production database</em></strong> run the following commands
+
+```
+docker-compose --profile prod up
+```
+
+### Running Frontend Server
+
+To start the frontend server, run the following command:
+```
+cd frontend # if you are not already in the frontend directory
+npm install # to install the required dependencies
+npm run dev # to start the development server
+```
+
+## Login Credentials
+| Role    | Email                     | Password    |
+|---------|---------------------------|-------------|
+| HR      | colinmok1000@gmail.com    | password123 |
+| STAFF   | colinmok3@gmail.com       | password123 |
+| MANAGER | colinmokhengyee@gmail.com | password123 |
+
+For testing purposes, we have inserted all `554 employees` of All In One with the 
+same password `password123`. You can use the corresponding email addresses to login. However, please note that certain pages/functionalities are restricted to specific roles.
+
+- `Department Schedule Page` is only accessible to `HR` roles.
+- `Department Schedule Tab` inside Schedule page is only accessible to `HR` roles.
+- `Team Members I Manage Tab` inside Schedule page is only accessible to `MANAGER` roles.
+
+## Tech Stack of ComeBeck WFH Tracker
+<img src="./readme_files/ComeBeckWFHTrackerTechStack.png" width="600px">
+
+## Solution Architecture of ComeBeck WFH Tracker
+<img src="./readme_files/ComeBeckCloudArchitecture.png" width="600px">
+
+## Contributors
+
+#### G9 Team 7 (Beck)
+
+<table>
+    <tr>
+        <td align="center"><img src="readme_files\mok.jpg"width="150px"/><br/><sub><b>Colin Mok</b></sub></a></td>
+        <td align="center"><img src="readme_files\chester.jpg"width="150px"/><br/><sub><b>Chester Lim</b></sub></a></td>
+        <td align="center"><img src="readme_files\yoon.jpg"width="150px"/><br/><sub><b>Daryl Yoon</b></sub></a></td>
+        <td align="center"><img src="readme_files\nicholas.png"width="150px"/><br/><sub><b>Nicholas Goh</b></sub></a></td>
+        <td align="center"><img src="readme_files\joen.jpg"width="150px"/><br/><sub><b>Joen Tan</b></sub></a></td>
+    </tr>
+</table>

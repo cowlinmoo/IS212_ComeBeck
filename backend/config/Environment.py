@@ -20,19 +20,19 @@ class EnvironmentSettings(BaseSettings):
     PRODUCTION_DB_USER: str = "" # Optional
     PRODUCTION_DB_PASSWORD: str = "" # Optional
     PRODUCTION_DB_HOSTNAME: str = "" # Optional
-    PRODUCTION_DB_PORT: int = "" # Optional
+    PRODUCTION_DB_PORT: int = 5432 # Optional
     PRODUCTION_DB_NAME: str = "" # Optional
-    DATABASE_DIALECT: str
-    DATABASE_HOSTNAME: str
-    POSTGRES_DB: str
-    POSTGRES_PASSWORD: str
-    POSTGRES_PORT: int
-    POSTGRES_USER: str
-    DEBUG_MODE: bool
-    SMTP_SERVER: str
-    SMTP_PORT: int
-    SENDER_EMAIL: str
-    SENDER_PASSWORD: str
+    DATABASE_DIALECT: str = "postgresql"
+    DATABASE_HOSTNAME: str = "localhost"
+    POSTGRES_DB: str = "spm"
+    POSTGRES_PASSWORD: str = "admin"
+    POSTGRES_PORT: int = 5432
+    POSTGRES_USER: str = "admin"
+    DEBUG_MODE: bool = True
+    SMTP_SERVER: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SENDER_EMAIL: str = ""
+    SENDER_PASSWORD: str = ""
 
     class Config:
         extra = 'allow'
