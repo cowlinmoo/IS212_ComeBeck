@@ -37,9 +37,6 @@ services:
       postgres:
         condition: service_healthy
         required: false
-      postgres_test:
-        condition: service_healthy
-        required: false
     profiles:
       - dev
       - prod
