@@ -40,7 +40,7 @@ export default function Approvals({ data }: { data: Application[] }) {
                   <p>No pending requests.</p>
                 ) : (
                   data
-                    .filter((request) => request.status === "pending")
+                    .filter((request) => request.status === "pending" && request.events.length > 0)
                     .map((request) => (
                       setRequestType(request.application_state),
                       <Card key={request.application_id} className="mb-4">
@@ -76,7 +76,7 @@ export default function Approvals({ data }: { data: Application[] }) {
                   <p>No approved requests.</p>
                 ) : (
                   data
-                    .filter((request) => request.status === "approved")
+                    .filter((request) => request.status === "approved" && request.events.length > 0)
                     .map((request) => (
                       setRequestType(request.application_state),
                       <Card key={request.application_id} className="mb-4">
@@ -108,11 +108,11 @@ export default function Approvals({ data }: { data: Application[] }) {
 
             <TabsContent value="rejected">
               <ScrollArea className="h-[600px] w-full rounded-md border p-4">
-                {data.filter((request) => request.status === "rejected").length === 0 ? (
+                {data.filter((request) => request.status === "rejected" ).length === 0 ? (
                   <p>No rejected requests.</p>
                 ) : (
                   data
-                    .filter((request) => request.status === "rejected")
+                    .filter((request) => request.status === "rejected" && request.events.length > 0) 
                     .map((request) => (
                       setRequestType(request.application_state),
                       <Card key={request.application_id} className="mb-4">
