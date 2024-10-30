@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:16
+    image: postgres:latest
     container_name: spm_database
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
