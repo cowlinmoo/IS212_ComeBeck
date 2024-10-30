@@ -44,6 +44,8 @@ class ApplicationResponse(BaseModel):
                                                        "change_request"])
     reason: str = Field(
         examples=["Vacation request", "Sick leave", "Personal day"])
+    outcome_reason: Optional[str] = Field(default=None,
+                                          examples=["Some reason for decision"])
     description: Optional[str] = Field(
         default=None, examples=["Going on a family vacation", "Doctor's appointment"])
     created_on: datetime = Field(examples=[datetime.now()])
