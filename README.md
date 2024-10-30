@@ -32,6 +32,10 @@ The API documentation is served using *Swagger*. You may access it using:
 - [What is ComeBeck WFH Tracker?](#what-is-comebeck-wfh-tracker)
 - [Getting Started](#getting-started)
 - [Overview of Steps to run ComeBeck WFH Tracker Locally](#overview-of-steps-to-run-comebeck-wfh-tracker-locally)
+- [Login Credentials](#login-credentials)
+- [Tech Stack of Ticket Mama](#tech-stack-of-comebeck-wfh-tracker)
+- [Solution Architecture of Ticket Mama](#solution-architecture-of-comebeck-wfh-tracker)
+- [Contributors](#contributors)
 
 ## What is ComeBeck WFH Tracker
 ComeBeck WFH Tracker is an all-in-one work-from-home management platform that enables employees to apply for, view, and manage their remote work arrangements. The platform is designed to be intuitive and efficient, providing a streamlined experience for both employees and managers to coordinate in-office and remote schedules.
@@ -82,7 +86,7 @@ To run ComeBeck WFH Tracker locally, you need to create two `.env` files to stor
    your frontend development setup. Here’s an example configuration for <strong><em>development environment</em></strong>:
    ```
     # URL for local development, pointing to the backend server
-    NEXT_PUBLIC_API_BASE_URL=http://localhost:<PORT>/api
+    NEXT_PUBLIC_API_BASE_URL=http://localhost:<PORT>/api # PORT is usually 8080 unless configured otherwise
    ```
    Replace <PORT> with the port number your backend server is running on, typically 
    8080 during development. Alternatively, for <strong><em>production environment</em></strong>:
@@ -154,9 +158,9 @@ npm run dev # to start the development server
 ## Login Credentials
 | Role    | Email                     | Password    |
 |---------|---------------------------|-------------|
-| HR      | colinmok1000@gmail.com    | password123 |
-| STAFF   | colinmok3@gmail.com       | password123 |
-| MANAGER | colinmokhengyee@gmail.com | password123 |
+| HR (1)      | colinmok1000@gmail.com    | password123 |
+| STAFF (2)  | colinmok3@gmail.com       | password123 |
+| MANAGER (3) | colinmokhengyee@gmail.com | password123 |
 
 For testing purposes, we have inserted all `554 employees` of All In One with the 
 same password `password123`. You can use the corresponding email addresses to login. However, please note that certain pages/functionalities are restricted to specific roles.
