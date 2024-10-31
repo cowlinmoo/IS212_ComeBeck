@@ -72,6 +72,7 @@ def sample_department():
 
 
 class TestEmployeeService:
+    @pytest.mark.unit
     def test_get_all_employees(self, employee_service, mock_employee_repository,
                                mock_department_repository, mock_team_repository,
                                sample_employee, sample_department, sample_team):
@@ -94,6 +95,7 @@ class TestEmployeeService:
         assert result[0].department.department_id == sample_department.department_id
         assert result[0].team.team_id == sample_team.team_id
 
+    @pytest.mark.unit
     def test_create_employee_success(self, employee_service, mock_employee_repository,
                                      mock_team_repository, mock_department_repository,
                                      sample_team, sample_employee, sample_department):
@@ -131,6 +133,7 @@ class TestEmployeeService:
         # Verify get_team_by_id was called twice with the same argument
         assert mock_team_repository.get_team_by_id.call_count == 2
 
+    @pytest.mark.unit
     def test_create_employee_duplicate_email(self, employee_service, mock_employee_repository,
                                              mock_team_repository, sample_team):
         # Arrange
@@ -155,6 +158,7 @@ class TestEmployeeService:
         assert exc.value.status_code == 409
         assert exc.value.detail == "Employee with this email already exists"
 
+    @pytest.mark.unit
     def test_create_employee_team_not_found(self, employee_service, mock_employee_repository,
                                             mock_team_repository):
         # Arrange
@@ -179,6 +183,7 @@ class TestEmployeeService:
         assert exc.value.status_code == 404
         assert exc.value.detail == "Team ID does not exist"
 
+    @pytest.mark.unit
     def test_create_employee_team_no_manager(self, employee_service, mock_employee_repository,
                                             mock_team_repository, sample_team):
         # Arrange
@@ -201,6 +206,7 @@ class TestEmployeeService:
         with pytest.raises(HTTPException) as exc:
             employee_service.create_employee(employee_create_data)
 
+    @pytest.mark.unit
     def test_update_employee_success(self, employee_service, mock_employee_repository,
                                      mock_team_repository, mock_department_repository,
                                      sample_team, sample_employee, sample_department):
@@ -241,6 +247,7 @@ class TestEmployeeService:
         mock_employee_repository.update_employee.assert_called_once_with(1, expected_update_data)
         assert result.staff_id == sample_employee.staff_id
 
+    @pytest.mark.unit
     def test_update_employee_team_not_found(self, employee_service, mock_employee_repository,
                                             mock_team_repository, sample_employee):
         # Arrange
@@ -261,6 +268,7 @@ class TestEmployeeService:
         with pytest.raises(HTTPException) as exc:
             employee_service.update_employee(1, update_data)
 
+    @pytest.mark.unit
     def test_update_employee_team_no_manager(self, employee_service, mock_employee_repository,
                                             mock_team_repository, sample_team):
         # Arrange
@@ -281,6 +289,7 @@ class TestEmployeeService:
         with pytest.raises(HTTPException) as exc:
             employee_service.update_employee(1, update_data)
 
+    @pytest.mark.unit
     def test_employee_to_schema_with_all_relationships(self, employee_service,
                                                        mock_employee_repository,
                                                        mock_department_repository,
@@ -321,6 +330,7 @@ class TestEmployeeService:
         assert len(result.direct_reports) == 1
         assert result.direct_reports[0].staff_id == direct_report.staff_id
 
+    @pytest.mark.unit
     def test_delete_employee_success(self, employee_service, mock_employee_repository, sample_employee):
         # Arrange
         mock_employee_repository.get_employee.return_value = sample_employee
@@ -333,6 +343,7 @@ class TestEmployeeService:
         assert result.staff_id == sample_employee.staff_id
         mock_employee_repository.delete_employee.assert_called_once_with(1)
 
+    @pytest.mark.unit
     def test_delete_employee_not_found(self, employee_service, mock_employee_repository):
         # Arrange
         mock_employee_repository.delete_employee.side_effect = HTTPException(
@@ -345,6 +356,7 @@ class TestEmployeeService:
         assert exc.value.status_code == 404
         assert exc.value.detail == "Employee not found"
 
+    @pytest.mark.unit
     def test_get_one_employee(self, employee_service, mock_employee_repository,
                               mock_department_repository, mock_team_repository,
                               sample_employee, sample_department, sample_team):

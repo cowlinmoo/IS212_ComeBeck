@@ -44,60 +44,71 @@ def mock_service():
 def mock_current_user():
     return {"role": EmployeeRole.HR}
 
+@pytest.mark.unit
 def test_get_all_applications(mock_service, mock_current_user):
     result = get_all_applications(service=mock_service, current_user=mock_current_user)
     assert result == [MOCK_APPLICATION]
     mock_service.get_all_applications.assert_called_once()
 
+@pytest.mark.unit
 def test_get_application_by_id(mock_service, mock_current_user):
     result = get_application_by_id(1, service=mock_service, current_user=mock_current_user)
     assert result == MOCK_APPLICATION
     mock_service.get_application_by_id.assert_called_once_with(1)
 
+@pytest.mark.unit
 def test_get_applications_by_staff_id(mock_service, mock_current_user):
     result = get_applications_by_staff_id(1, service=mock_service, current_user=mock_current_user)
     assert result == [MOCK_APPLICATION]
     mock_service.get_applications_by_staff_id.assert_called_once_with(1)
 
+@pytest.mark.unit
 def test_get_applications_by_approver_id(mock_service, mock_current_user):
     result = get_applications_by_approver_id(1, service=mock_service, current_user=mock_current_user)
     assert result == [MOCK_APPLICATION]
     mock_service.get_applications_by_approver_id.assert_called_once_with(1)
 
+@pytest.mark.unit
 def test_create_application(mock_service, mock_current_user):
     application_data = Mock()
     result = create_application(application=application_data, service=mock_service, current_user=mock_current_user)
     assert result == MOCK_APPLICATION
     mock_service.create_application.assert_called_once_with(application_data, "new_application")
 
+@pytest.mark.unit
 def test_update_application(mock_service, mock_current_user):
     application_data = Mock()
     result = update_application(1, application=application_data, service=mock_service, current_user=mock_current_user)
     assert result == MOCK_APPLICATION
     mock_service.update_application.assert_called_once_with(1, application_data)
 
+@pytest.mark.unit
 def test_withdraw_application(mock_service, mock_current_user):
     withdraw_data = Mock()
     result = withdraw_application(1, application=withdraw_data, service=mock_service, current_user=mock_current_user)
     assert result == MOCK_APPLICATION
     mock_service.withdraw_application.assert_called_once_with(1, withdraw_data)
 
+@pytest.mark.unit
 def test_withdraw_application_event(mock_service, mock_current_user):
     withdraw_data = Mock()
     result = withdraw_application_event(1, 1, application=withdraw_data, service=mock_service, current_user=mock_current_user)
     assert result == MOCK_EVENT
     mock_service.withdraw_application_event.assert_called_once_with(1, 1, withdraw_data)
 
+@pytest.mark.unit
 def test_get_applications_by_status(mock_service, mock_current_user):
     result = get_applications_by_status("PENDING", service=mock_service, current_user=mock_current_user)
     assert result == [MOCK_APPLICATION]
     mock_service.get_applications_by_status.assert_called_once_with("PENDING")
 
+@pytest.mark.unit
 def test_get_employee_locations_by_manager(mock_service, mock_current_user):
     result = get_all_employee_locations_by_manager_id(1, service=mock_service, current_user=mock_current_user)
     assert result == [{"location": "Office A", "staff_id": 1}]
     mock_service.get_employee_approved_application_locations.assert_called_once_with(manager_id=1, current_user_role=mock_current_user["role"])
 
+@pytest.mark.unit
 def test_process_application(mock_service, mock_current_user):
     application_data = Mock()
     result = process_application(application=application_data, service=mock_service, current_user=mock_current_user)

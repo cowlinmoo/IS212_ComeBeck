@@ -34,6 +34,7 @@ def mock_auth_service():
     return service
 
 
+@pytest.mark.unit
 def test_successful_login(mock_form_data, mock_auth_service):
     # Test successful login
     result = login_for_access_token(
@@ -60,6 +61,7 @@ def test_successful_login(mock_form_data, mock_auth_service):
     assert result.staff_id == 1
 
 
+@pytest.mark.unit
 def test_failed_authentication(mock_form_data, mock_auth_service):
     # Mock failed authentication
     mock_auth_service.authenticate_employee.return_value = (None, None)
@@ -86,6 +88,7 @@ def test_failed_authentication(mock_form_data, mock_auth_service):
     mock_auth_service.create_access_token.assert_not_called()
 
 
+@pytest.mark.unit
 def test_different_role_login(mock_form_data, mock_auth_service):
     # Mock HR employee authentication
     hr_employee = MockEmployee(
@@ -110,6 +113,7 @@ def test_different_role_login(mock_form_data, mock_auth_service):
     assert result.staff_id == 2
 
 
+@pytest.mark.unit
 def test_manager_role_login(mock_form_data, mock_auth_service):
     # Mock Manager employee authentication
     manager_employee = MockEmployee(

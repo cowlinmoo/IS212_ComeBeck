@@ -42,6 +42,7 @@ def mock_service():
 def mock_current_user():
     return {"role": EmployeeRole.HR}
 
+pytest.mark.unit
 def test_get_department_by_department_id(mock_service, mock_current_user):
     """
     Test the get_department_by_department_id endpoint
@@ -65,6 +66,7 @@ def test_get_department_by_department_id(mock_service, mock_current_user):
     EmployeeRole.MANAGER,
     EmployeeRole.STAFF
 ])
+@pytest.mark.unit
 def test_get_department_by_department_id_different_roles(mock_service, role):
     """
     Test the get_department_by_department_id endpoint with different user roles
@@ -81,6 +83,7 @@ def test_get_department_by_department_id_different_roles(mock_service, role):
     mock_service.get_department_by_department_id.assert_called_once_with(1)
 
 # Test with invalid department ID
+@pytest.mark.unit
 def test_get_department_by_department_id_invalid_id(mock_service, mock_current_user):
     """
     Test the get_department_by_department_id endpoint with an invalid department ID
@@ -97,6 +100,7 @@ def test_get_department_by_department_id_invalid_id(mock_service, mock_current_u
     assert result is None
     mock_service.get_department_by_department_id.assert_called_once_with(999)
 
+@pytest.mark.unit
 def test_get_all_departments(mock_service, mock_current_user):
     """
     Test the get_all_departments endpoint
@@ -119,6 +123,7 @@ def test_get_all_departments(mock_service, mock_current_user):
     EmployeeRole.MANAGER,
     EmployeeRole.STAFF
 ])
+@pytest.mark.unit
 def test_get_all_departments_different_roles(mock_service, role):
     """
     Test the get_all_departments endpoint with different user roles
@@ -134,6 +139,7 @@ def test_get_all_departments_different_roles(mock_service, role):
     mock_service.get_all_departments.assert_called_once_with()
 
 # Test with no departments available
+@pytest.mark.unit
 def test_get_all_departments_no_departments(mock_service, mock_current_user):
     """
     Test the get_all_departments endpoint when no departments are available

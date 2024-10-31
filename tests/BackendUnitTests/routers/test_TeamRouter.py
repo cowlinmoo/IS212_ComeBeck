@@ -66,6 +66,7 @@ def mock_current_user():
     return {"role": EmployeeRole.HR}
 
 # Tests for get_team_by_team_id
+@pytest.mark.unit
 def test_get_team_by_team_id(mock_service, mock_current_user):
     """
     Test getting team by team_id
@@ -84,6 +85,7 @@ def test_get_team_by_team_id(mock_service, mock_current_user):
     EmployeeRole.MANAGER,
     EmployeeRole.STAFF
 ])
+@pytest.mark.unit
 def test_get_team_by_team_id_different_roles(mock_service, role):
     """
     Test getting team by ID with different user roles
@@ -99,6 +101,7 @@ def test_get_team_by_team_id_different_roles(mock_service, role):
     assert result == MOCK_TEAM
     mock_service.get_team_employees_by_team_id.assert_called_once_with(1)
 
+@pytest.mark.unit
 def test_get_team_by_team_id_not_found(mock_service, mock_current_user):
     """
     Test getting a non-existent team by team_id
@@ -115,6 +118,7 @@ def test_get_team_by_team_id_not_found(mock_service, mock_current_user):
     mock_service.get_team_employees_by_team_id.assert_called_once_with(999)
 
 # Tests for get_team_by_manager_id
+@pytest.mark.unit
 def test_get_team_by_manager_id(mock_service, mock_current_user):
     """
     Test getting team by manager_id
@@ -135,6 +139,7 @@ def test_get_team_by_manager_id(mock_service, mock_current_user):
     EmployeeRole.HR,
     EmployeeRole.MANAGER
 ])
+@pytest.mark.unit
 def test_get_team_by_manager_id_different_roles(mock_service, role):
     """
     Test the get_team_by_manager_id endpoint with different user roles
@@ -150,6 +155,7 @@ def test_get_team_by_manager_id_different_roles(mock_service, role):
     assert result == MOCK_TEAM_BY_MANAGER
     mock_service.get_team_employees_by_manager_id.assert_called_once_with(1)
 
+@pytest.mark.unit
 def test_get_team_by_manager_id_not_found(mock_service, mock_current_user):
     """
     Test the get_team_by_manager_id endpoint with a non-existent manager

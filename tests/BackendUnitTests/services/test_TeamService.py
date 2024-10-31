@@ -18,6 +18,7 @@ def team_service():
     return TeamService(teamRepository=team_repo, departmentRepository=department_repo, employeeRepository=employee_repo)
 
 
+@pytest.mark.unit
 def test_get_team_employees_by_team_id_found(team_service):
     # Arrange
     team_id = 1
@@ -118,6 +119,7 @@ def test_get_team_employees_by_team_id_found(team_service):
     assert result["members"][1].staff_lname == "White"
 
 
+@pytest.mark.unit
 def test_get_team_employees_by_team_id_not_found(team_service):
     # Arrange
     team_id = 999  # Non-existing team ID
@@ -131,6 +133,7 @@ def test_get_team_employees_by_team_id_not_found(team_service):
     assert excinfo.value.detail == "Team not found"
 
 
+@pytest.mark.unit
 def test_team_to_schema(team_service):
     # Arrange
     team_id = 1
@@ -172,6 +175,7 @@ def test_team_to_schema(team_service):
     assert result.members[1].staff_id == 4
     assert result.members[1].staff_fname == "Charlie"
 
+@pytest.mark.unit
 def test_get_team_employees_by_manager_id_found(team_service):
     # Arrange
     manager_id = 2
@@ -200,6 +204,7 @@ def test_get_team_employees_by_manager_id_found(team_service):
     assert result["name"] == mock_team.name
     team_service.team_to_schema.assert_called_once_with(mock_team)
 
+@pytest.mark.unit
 def test_get_team_employees_by_manager_id_manager_not_found(team_service):
     # Arrange
     manager_id = 999  # Non-existing manager ID
@@ -212,6 +217,7 @@ def test_get_team_employees_by_manager_id_manager_not_found(team_service):
     assert excinfo.value.status_code == 404
     assert excinfo.value.detail == "Manager not found"
 
+@pytest.mark.unit
 def test_get_team_employees_by_manager_id_team_not_found(team_service):
     # Arrange
     manager_id = 2

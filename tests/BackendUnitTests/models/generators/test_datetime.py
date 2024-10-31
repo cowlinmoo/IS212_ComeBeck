@@ -10,7 +10,7 @@ def mock_singapore_time():
     # This fixture sets a fixed time in UTC
     return datetime(2023, 6, 15, 6, 30, 0, tzinfo=pytz.UTC)
 
-
+@pytest.mark.unit
 def test_get_current_datetime_sgt(mock_singapore_time):
     with freeze_time(mock_singapore_time):
         result = get_current_datetime_sgt()
@@ -24,7 +24,7 @@ def test_get_current_datetime_sgt(mock_singapore_time):
         assert result.minute == 30
         assert result.second == 0
 
-
+@pytest.mark.unit
 def test_get_current_date(mock_singapore_time):
     with freeze_time(mock_singapore_time):
         result = get_current_date()
@@ -34,7 +34,7 @@ def test_get_current_date(mock_singapore_time):
         assert result.month == 6
         assert result.day == 15
 
-
+@pytest.mark.unit
 def test_timezone_difference():
     # This test is now redundant with the main test, but we'll keep it for clarity
     utc_time = datetime(2023, 6, 15, 6, 30, 0, tzinfo=pytz.UTC)

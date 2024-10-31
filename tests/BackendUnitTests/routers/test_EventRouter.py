@@ -41,6 +41,7 @@ def mock_current_user():
     return {"role": EmployeeRole.HR}
 
 
+@pytest.mark.unit
 def test_get_all_events(mock_service, mock_current_user):
     """
     Test getting all events
@@ -59,6 +60,7 @@ def test_get_all_events(mock_service, mock_current_user):
     EmployeeRole.MANAGER,
     EmployeeRole.STAFF
 ])
+@pytest.mark.unit
 def test_get_all_events_different_roles(mock_service, role):
     """
     Test getting all events with different user roles
@@ -74,6 +76,7 @@ def test_get_all_events_different_roles(mock_service, role):
     mock_service.get_all_events.assert_called_once()
 
 
+@pytest.mark.unit
 def test_get_event_by_event_id(mock_service, mock_current_user):
     """
     Test getting a single event by event_id
@@ -93,6 +96,7 @@ def test_get_event_by_event_id(mock_service, mock_current_user):
     EmployeeRole.MANAGER,
     EmployeeRole.STAFF
 ])
+@pytest.mark.unit
 def test_get_event_by_event_id_different_roles(mock_service, role):
     """
     Test getting event by ID with different user roles
@@ -109,6 +113,7 @@ def test_get_event_by_event_id_different_roles(mock_service, role):
     mock_service.get_event_by_event_id.assert_called_once_with(1)
 
 
+@pytest.mark.unit
 def test_get_event_by_event_id_not_found(mock_service, mock_current_user):
     """
     Test getting a non-existent event

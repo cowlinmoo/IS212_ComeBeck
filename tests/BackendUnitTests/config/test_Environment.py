@@ -16,6 +16,7 @@ def mock_env_test():
 def mock_env_empty():
     return {}
 
+@pytest.mark.unit
 def test_get_env_filename(mock_env_test, mock_env_empty):
     # Test with ENV set to "test"
     with patch.dict(os.environ, mock_env_test):
@@ -66,6 +67,7 @@ def mock_environment_settings():
     return MockSettings()
 
 @patch('backend.config.Environment.EnvironmentSettings')
+@pytest.mark.unit
 def test_get_environment_variables(mock_settings, mock_environment_settings):
     mock_settings.return_value = mock_environment_settings
     env_vars = get_environment_variables()

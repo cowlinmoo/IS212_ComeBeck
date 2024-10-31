@@ -35,14 +35,17 @@ from backend.config.EmailTemplates import (
     get_event_cancellation_employee_email_template
 )
 
+@pytest.mark.unit
 def test_get_new_application_manager_email_subject():
     subject = get_new_application_manager_email_subject(12345, "John Doe")
     assert subject == "New Application Request from Employee ID: 12345 - John Doe"
 
+@pytest.mark.unit
 def test_get_new_application_employee_email_subject():
     subject = get_new_application_employee_email_subject(67890)
     assert subject == "Application Submitted - Application ID: 67890"
 
+@pytest.mark.unit
 def test_get_application_withdrawn_manager_email_subject():
     subject = get_application_withdrawn_manager_email_subject(12345, "John Doe", True)
     assert subject == "Application Withdrawn for Employee ID: 12345 - John Doe"
@@ -50,6 +53,7 @@ def test_get_application_withdrawn_manager_email_subject():
     subject = get_application_withdrawn_manager_email_subject(12345, "John Doe", False)
     assert subject == "Application Cancelled for Employee ID: 12345 - John Doe"
 
+@pytest.mark.unit
 def test_get_application_withdrawn_employee_email_subject():
     subject = get_application_withdrawn_employee_email_subject(67890, True)
     assert subject == "WITHDRAWN: Application withdrawn - Application ID: 67890"
@@ -57,10 +61,12 @@ def test_get_application_withdrawn_employee_email_subject():
     subject = get_application_withdrawn_employee_email_subject(67890, False)
     assert subject == "CANCELLED: Application cancelled - Application ID: 67890"
 
+@pytest.mark.unit
 def test_get_application_auto_rejected_employee_email_subject():
     subject = get_application_auto_rejected_employee_email_subject(67890)
     assert subject == "REJECTED: Application Auto Rejected - Application ID: 67890"
 
+@pytest.mark.unit
 def test_get_new_application_manager_email_template():
     template = get_new_application_manager_email_template(
         manager_name="Jane Smith",
@@ -85,6 +91,7 @@ def test_get_new_application_manager_email_template():
     assert "Submission Date: 2023-06-01" in template
     assert "Location: Hawaii" in template
 
+@pytest.mark.unit
 def test_get_new_application_employee_email_template():
     template = get_new_application_employee_email_template(
         employee_name="John Doe",
@@ -105,6 +112,7 @@ def test_get_new_application_employee_email_template():
     assert "Submission Date: 2023-06-01" in template
     assert "Location: Hawaii" in template
 
+@pytest.mark.unit
 def test_get_application_withdrawn_manager_email_template():
     template = get_application_withdrawn_manager_email_template(
         manager_name="Jane Smith",
@@ -125,6 +133,7 @@ def test_get_application_withdrawn_manager_email_template():
     assert "Withdrawn On: 2023-06-15 10:30:00" in template
     assert "Withdrawn By: Employee" in template
 
+@pytest.mark.unit
 def test_get_application_withdrawn_employee_email_template():
     template = get_application_withdrawn_employee_email_template(
         employee_name="John Doe",
@@ -141,6 +150,7 @@ def test_get_application_withdrawn_employee_email_template():
     assert "Withdrawn On: 2023-06-15 10:30:00" in template
     assert "Withdrawn By: You" in template
 
+@pytest.mark.unit
 def test_get_application_auto_rejected_employee_email_template():
     template = get_application_auto_rejected_employee_email_template(
         employee_name="John Doe",
@@ -161,6 +171,7 @@ def test_get_application_auto_rejected_employee_email_template():
     (False, None, None, [EventCreateSchema(requested_date=date(2023, 7, 1), application_hour=ApplicationHourEnum.FULLDAY), EventCreateSchema(requested_date=date(2023, 7, 8), application_hour=ApplicationHourEnum.FULLDAY)], "Multiple Dates:"),
     (False, None, None, None, "Requested Date: 2023-07-01"),
 ])
+@pytest.mark.unit
 def test_get_new_application_manager_email_template_variations(recurring, recurrence_type, end_date, events, expected_text):
     template = get_new_application_manager_email_template(
         manager_name="Jane Smith",
@@ -185,6 +196,7 @@ def test_get_new_application_manager_email_template_variations(recurring, recurr
     (False, None, None, [EventCreateSchema(requested_date=date(2023, 7, 1), application_hour=ApplicationHourEnum.FULLDAY), EventCreateSchema(requested_date=date(2023, 7, 8), application_hour=ApplicationHourEnum.FULLDAY)], "Multiple Dates:"),
     (False, None, None, None, "Requested Date: 2023-07-01"),
 ])
+@pytest.mark.unit
 def test_get_new_application_employee_email_template_variations(recurring, recurrence_type, end_date, events, expected_text):
     template = get_new_application_employee_email_template(
         employee_name="John Doe",
@@ -202,15 +214,18 @@ def test_get_new_application_employee_email_template_variations(recurring, recur
     )
     assert expected_text in template
 
+@pytest.mark.unit
 def test_get_application_outcome_employee_email_subject():
     assert get_application_outcome_employee_email_subject(12345, "approved") == "Application APPROVED - ID: 12345"
     assert get_application_outcome_employee_email_subject(67890, "rejected") == "Application REJECTED - ID: 67890"
 
+@pytest.mark.unit
 def test_get_application_outcome_approver_email_subject():
     assert get_application_outcome_approver_email_subject(12345, "approved", "John Doe") == "Confirmation: Application APPROVED - ID: 12345 - John Doe"
     assert get_application_outcome_approver_email_subject(67890, "rejected", "Jane Smith") == "Confirmation: Application REJECTED - ID: 67890 - Jane Smith"
 
 
+@pytest.mark.unit
 def test_get_application_outcome_employee_email_template():
     template = get_application_outcome_employee_email_template(
         employee_name="John Doe",
@@ -241,6 +256,7 @@ def test_get_application_outcome_employee_email_template():
     assert "This is an automated message. Please do not reply directly to this email." in template
 
 
+@pytest.mark.unit
 def test_get_application_outcome_approver_email_template():
     template = get_application_outcome_approver_email_template(
         approver_name="Jane Smith",
@@ -298,15 +314,19 @@ Location: Office
         """
     )
 ])
+@pytest.mark.unit
 def test_format_event_details(app_type, event_info, expected_output):
     assert _format_event_details(app_type, event_info).strip() == expected_output.strip()
 
+@pytest.mark.unit
 def test_get_cancellation_request_manager_email_subject():
     assert get_cancellation_request_manager_email_subject(12345, "John Doe") == "Cancellation Request for Employee ID: 12345 - John Doe"
 
+@pytest.mark.unit
 def test_get_cancellation_request_employee_email_subject():
     assert get_cancellation_request_employee_email_subject(67890) == "Cancellation Request Submitted - Application ID: 67890"
 
+@pytest.mark.unit
 def test_get_cancellation_request_manager_email_template():
     result = get_cancellation_request_manager_email_template(
         manager_name="Jane Smith",
@@ -328,6 +348,7 @@ def test_get_cancellation_request_manager_email_template():
     assert "Application ID: 67890" in result
     assert "Reason for Cancellation: Change of plans" in result
     assert "Date: 2023-07-15" in result
+@pytest.mark.unit
 def test_get_cancellation_request_manager_email_template_recurring():
     result = get_cancellation_request_manager_email_template(
         manager_name="Robert Johnson",
@@ -355,6 +376,7 @@ def test_get_cancellation_request_manager_email_template_recurring():
     assert "Start Date: 2023-08-01" in result
     assert "End Date: 2023-12-31" in result
 
+@pytest.mark.unit
 def test_get_cancellation_request_employee_email_template():
     result = get_cancellation_request_employee_email_template(
         employee_name="John Doe",
@@ -373,6 +395,7 @@ def test_get_cancellation_request_employee_email_template():
     assert "Reason for Cancellation: Change of plans" in result
     assert "Date: 2023-07-15" in result
 
+@pytest.mark.unit
 def test_get_cancel_request_employee_email_template():
     result = get_cancel_request_employee_email_template(
         employee_name="John Doe",
@@ -389,6 +412,7 @@ def test_get_cancel_request_employee_email_template():
     assert "This is a one-time application." in result
 
 
+@pytest.mark.unit
 def test_get_cancel_request_employee_email_template_rejected():
     result = get_cancel_request_employee_email_template(
         employee_name="John Doe",
@@ -404,6 +428,7 @@ def test_get_cancel_request_employee_email_template_rejected():
     assert "has been rejected" in result
     assert "This is a one-time application." in result
 
+@pytest.mark.unit
 def test_get_cancellation_request_employee_email_template_recurring():
     result = get_cancellation_request_employee_email_template(
         employee_name="Alice Brown",
@@ -431,6 +456,7 @@ def test_get_cancellation_request_employee_email_template_recurring():
     assert "End Date: 2023-12-31" in result
     assert "Reason for Cancellation: Schedule conflict" in result
     assert "Submission Date of Cancellation Request: 2023-07-25 14:45:00" in result
+@pytest.mark.unit
 def test_get_cancel_request_manager_email_template():
     result = get_cancel_request_manager_email_template(
         manager_name="Jane Smith",
@@ -449,12 +475,15 @@ def test_get_cancel_request_manager_email_template():
     assert "This is a recurring application with weekly recurrence." in result
     assert "Reason for rejection: Insufficient staffing" in result
 
+@pytest.mark.unit
 def test_get_change_request_manager_email_subject():
     assert get_change_request_manager_email_subject(12345, "John Doe") == "Change Request for Application from 12345 - John Doe"
 
+@pytest.mark.unit
 def test_get_change_request_employee_email_subject():
     assert get_change_request_employee_email_subject(67890) == "Change Request Submitted for Application ID: 67890"
 
+@pytest.mark.unit
 def test_get_change_request_manager_email_template():
     result = get_change_request_manager_email_template(
         manager_name="Jane Smith",
@@ -473,6 +502,7 @@ def test_get_change_request_manager_email_template():
     assert "Updated Application Details:" in result
     assert "Original Application Details:" in result
 
+@pytest.mark.unit
 def test_get_change_request_employee_email_template():
     result = get_change_request_employee_email_template(
         employee_name="John Doe",
@@ -488,6 +518,7 @@ def test_get_change_request_employee_email_template():
     assert "Updated Application Details:" in result
     assert "Original Application Details:" in result
 
+@pytest.mark.unit
 def test_format_application_details_basic():
     application = Mock(
         reason="Vacation",
@@ -507,6 +538,7 @@ def test_format_application_details_basic():
     assert format_application_details(application) == expected_output
 
 
+@pytest.mark.unit
 def test_format_application_details_no_description():
     # Mock the required attributes only (without location or requested_date)
     application = Mock(reason="Meeting", description=None, recurring=False)
@@ -528,6 +560,7 @@ def mock_application():
     return Mock(spec=['reason', 'description', 'recurring', 'recurrence_type', 'end_date', 'events'])
 
 
+@pytest.mark.unit
 def test_format_application_details_recurring(mock_application, monkeypatch):
     mock_application.reason = "Team Meeting"
     mock_application.description = "Weekly sync"
@@ -551,6 +584,7 @@ def test_format_application_details_recurring(mock_application, monkeypatch):
     assert format_application_details(mock_application) == expected_output
 
 
+@pytest.mark.unit
 def test_format_application_details_recurring_with_events(mock_application, monkeypatch):
     mock_application.reason = "Team Meeting"
     mock_application.description = "Weekly sync"
@@ -581,6 +615,7 @@ def test_format_application_details_recurring_with_events(mock_application, monk
     assert format_application_details(mock_application) == expected_output
 
 
+@pytest.mark.unit
 def test_format_application_details_non_recurring_with_events(mock_application, monkeypatch):
     mock_application.reason = "Conference"
     mock_application.description = "Annual conference"
@@ -605,12 +640,14 @@ def test_format_application_details_non_recurring_with_events(mock_application, 
     )
     assert format_application_details(mock_application) == expected_output
 
+@pytest.mark.unit
 def test_change_request_outcome_employee_email():
     result = get_change_request_outcome_employee_email_subject(12345, "approved")
     assert result == "Change Request Approved - ID: 12345"
 
     result = get_change_request_outcome_employee_email_subject(67890, "rejected")
     assert result == "Change Request Rejected - ID: 67890"
+@pytest.mark.unit
 def test_get_change_request_outcome_employee_email_template():
     # Arrange
     employee_name = "John Doe"
@@ -664,6 +701,7 @@ HR Department"""
         current_time, original_details, updated_details
     )
     assert "Note: The original approved application remains valid." in result_rejected
+@pytest.mark.unit
 def test_get_change_request_outcome_manager_email_template():
     # Arrange
     manager_name = "Jane Smith"
@@ -734,6 +772,7 @@ HR Department"""
     assert "Decision Time: 2023-08-01 09:00:00" in result_different
     assert "Old details" in result_different
     assert "New details" in result_different
+@pytest.mark.unit
 def test_change_request_outcome_manager_email():
     result = get_change_request_outcome_manager_email_subject("John", "approved")
     assert result == f"Change Request Approved for John"
@@ -741,36 +780,43 @@ def test_change_request_outcome_manager_email():
     result = get_change_request_outcome_manager_email_subject("John", "rejected")
     assert result == f"Change Request Rejected for John"
 
+@pytest.mark.unit
 def test_event_withdrawal_manager_email():
     result = get_event_withdrawn_manager_email_subject(12345, 1)
     assert result == "Event Withdrawn - Event ID: 12345 (Application ID: 1)"
 
+@pytest.mark.unit
 def test_event_withdrawal_employee_email():
     result = get_event_withdrawn_employee_email_subject(12345, 1)
     assert result == "Event Withdrawal Confirmation - Event ID: 12345"
 
 
+@pytest.mark.unit
 def test_event_cancellation_manager_email_subject():
     result = get_event_cancellation_manager_email_subject(12345, "John Doe")
     assert result == "Event Cancellation Request - Event ID: 12345 - John Doe"
 
 
+@pytest.mark.unit
 def test_event_cancellation_employee_email_subject():
     result = get_event_cancellation_employee_email_subject(12345)
     assert result == "Event Cancellation Submitted - Event ID: 12345"
 
+@pytest.mark.unit
 def test_cancel_one_request_outcome_manager_email_subject():
     result = get_cancel_one_request_outcome_manager_email_subject(12345, "approved")
     assert result == "Cancellation Request Approved - Event ID: 12345"
     result = get_cancel_one_request_outcome_manager_email_subject(12345, "rejected")
     assert result == "Cancellation Request Rejected - Event ID: 12345"
 
+@pytest.mark.unit
 def test_cancel_one_request_outcome_employee_email_subject():
     result = get_cancel_one_request_outcome_employee_email_subject(12345, "approved")
     assert result == "Cancellation Request Approved - Event ID: 12345"
     result = get_cancel_one_request_outcome_employee_email_subject(12345, "rejected")
     assert result == "Cancellation Request Rejected - Event ID: 12345"
 
+@pytest.mark.unit
 def test_cancel_one_request_outcome_manager_email_template():
     result = get_cancel_one_request_outcome_manager_email_template("Jane Smith", "John Doe", 12345, "approved",
                                                                    datetime.now())
@@ -783,6 +829,7 @@ def test_cancel_one_request_outcome_manager_email_template():
     assert "HR Department" in result
     assert "This is an automated message. Please do not reply directly to this email." in result
 
+@pytest.mark.unit
 def test_cancel_one_request_outcome_employee_email_template():
     result = get_cancel_one_request_outcome_employee_email_template("John Doe", 12345, "approved",
                                                                     datetime.now())
@@ -794,6 +841,7 @@ def test_cancel_one_request_outcome_employee_email_template():
     assert "HR Department" in result
     assert "This is an automated message. Please do not reply directly to this email." in result
 
+@pytest.mark.unit
 def test_get_event_withdrawn_manager_email_template():
     # Arrange
     manager_name = "Jane Smith"
@@ -831,6 +879,7 @@ def test_get_event_withdrawn_manager_email_template():
     for content in expected_content:
         assert content in result
 
+@pytest.mark.unit
 def test_get_event_withdrawn_employee_email_template():
     # Arrange
     employee_name = "John Doe"
@@ -867,6 +916,7 @@ def test_get_event_withdrawn_employee_email_template():
     for content in expected_content:
         assert content in result
 
+@pytest.mark.unit
 def test_get_event_cancellation_manager_email_template():
     # Arrange
     manager_name = "Jane Smith"
@@ -911,6 +961,7 @@ def test_get_event_cancellation_manager_email_template():
     )
     assert "Cancellation Reason: No reason provided" in result_no_reason
 
+@pytest.mark.unit
 def test_get_event_cancellation_employee_email_template():
     # Arrange
     employee_name = "John Doe"

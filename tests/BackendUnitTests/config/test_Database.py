@@ -61,6 +61,7 @@ def mock_get_environment_variables(request):
         yield env
 
 
+@pytest.mark.unit
 @pytest.mark.parametrize("mock_get_environment_variables", ["mock_env", "mock_env_prod"], indirect=True)
 def test_database_url(mock_get_environment_variables):
     # Reload the Database module to use the mocked environment
@@ -82,6 +83,7 @@ def test_database_url(mock_get_environment_variables):
     assert backend.config.Database.DATABASE_URL == expected_url, f"Actual URL: {backend.config.Database.DATABASE_URL}"
 
 
+@pytest.mark.unit
 @pytest.mark.parametrize("mock_get_environment_variables", ["mock_env"], indirect=True)
 def test_engine_creation(mock_get_environment_variables):
     import backend.config.Database
@@ -89,6 +91,7 @@ def test_engine_creation(mock_get_environment_variables):
     assert isinstance(backend.config.Database.Engine, Engine)
 
 
+@pytest.mark.unit
 @pytest.mark.parametrize("mock_get_environment_variables", ["mock_env"], indirect=True)
 def test_session_local_creation(mock_get_environment_variables):
     import backend.config.Database
@@ -96,6 +99,7 @@ def test_session_local_creation(mock_get_environment_variables):
     assert isinstance(backend.config.Database.SessionLocal, sessionmaker().__class__)
 
 
+@pytest.mark.unit
 @pytest.mark.parametrize("mock_get_environment_variables", ["mock_env"], indirect=True)
 def test_get_db_connection(mock_get_environment_variables):
     import backend.config.Database
@@ -113,6 +117,7 @@ from unittest.mock import patch, MagicMock, ANY
 from sqlalchemy.sql import text
 
 
+@pytest.mark.unit
 @pytest.mark.parametrize("mock_get_environment_variables", ["mock_env"], indirect=True)
 def test_init_db(mock_get_environment_variables):
     # Mock the file reading
@@ -161,6 +166,7 @@ def test_init_db(mock_get_environment_variables):
 
 
 @pytest.mark.parametrize("data_exists", [True, False])
+@pytest.mark.unit
 @pytest.mark.parametrize("mock_get_environment_variables", ["mock_env"], indirect=True)
 def test_init_db(mock_get_environment_variables, data_exists):
     mock_sql_content = "INSERT INTO departments (department_id, name) VALUES (1, 'Test Department');"

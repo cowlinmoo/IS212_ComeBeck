@@ -30,6 +30,7 @@ def email_service(mocker):
     return service, mock_employee_repository
 
 
+@pytest.mark.unit
 def test_send_email_success(email_service, mocker):
     service, _ = email_service
     recipient_email = "test@example.com"
@@ -47,6 +48,7 @@ def test_send_email_success(email_service, mocker):
     assert result is True
 
 
+@pytest.mark.unit
 def test_send_email_failure(email_service, mocker):
     service, _ = email_service
     recipient_email = "test@example.com"
@@ -62,6 +64,7 @@ def test_send_email_failure(email_service, mocker):
     assert result is False
 
 
+@pytest.mark.unit
 def test_send_application_creation_emails(email_service):
     service, mock_employee_repository = email_service
 
@@ -94,6 +97,7 @@ def test_send_application_creation_emails(email_service):
 
 
 
+@pytest.mark.unit
 def test_send_outcome_emails_one_time(email_service):
     service, mock_employee_repository = email_service
 
@@ -125,6 +129,7 @@ def test_send_outcome_emails_one_time(email_service):
     assert service.send_email.called
     assert service.send_email.call_count == 2  # Two emails should be sent
 
+@pytest.mark.unit
 def test_send_outcome_emails_recurring(email_service):
     service, mock_employee_repository = email_service
 
@@ -157,6 +162,7 @@ def test_send_outcome_emails_recurring(email_service):
     assert service.send_email.called
     assert service.send_email.call_count == 2  # Two emails should be sent
 
+@pytest.mark.unit
 def test_send_outcome_emails_multiple_dates(email_service):
     service, mock_employee_repository = email_service
 
@@ -191,6 +197,7 @@ def test_send_outcome_emails_multiple_dates(email_service):
     assert service.send_email.called
     assert service.send_email.call_count == 2  # Two emails should be sent
 
+@pytest.mark.unit
 def test_send_outcome_emails_employee_not_found(email_service):
     service, mock_employee_repository = email_service
 
@@ -218,6 +225,7 @@ def test_send_outcome_emails_employee_not_found(email_service):
     assert exc_info.value.detail == "Employee or approver not found"
 
 
+@pytest.mark.unit
 def test_send_outcome_emails_approver_not_found(email_service):
     service, mock_employee_repository = email_service
 
@@ -243,6 +251,7 @@ def test_send_outcome_emails_approver_not_found(email_service):
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Employee or approver not found"
+@pytest.mark.unit
 def test_send_event_withdrawal_emails(email_service):
     service, mock_employee_repository = email_service
 
@@ -262,6 +271,7 @@ def test_send_event_withdrawal_emails(email_service):
     # Assertions for emails being sent
     assert service.send_email.call_count == 2  # One for manager, one for employee
 
+@pytest.mark.unit
 def test_send_cancel_one_request_emails(email_service):
     service, mock_employee_repository = email_service
 
@@ -280,6 +290,7 @@ def test_send_cancel_one_request_emails(email_service):
     # Assertions for emails being sent
     assert service.send_email.call_count == 2  # One for manager, one for employee
 
+@pytest.mark.unit
 def test_send_cancel_one_request_outcome_emails(email_service):
     service, mock_employee_repository = email_service
 
@@ -302,6 +313,7 @@ def test_send_cancel_one_request_outcome_emails(email_service):
     # Assertions for emails being sent
     assert service.send_email.call_count == 2  # One for manager, one for employee
 
+@pytest.mark.unit
 def test_send_change_request_outcome_emails_success(email_service):
     service, mock_employee_repository = email_service
 
@@ -344,6 +356,7 @@ def test_send_change_request_outcome_emails_success(email_service):
     assert service.send_email.call_count == 2  # One for employee, one for manager
     # You can also add more assertions to check the arguments passed to send_email
 
+@pytest.mark.unit
 def test_send_change_request_outcome_emails_employee_not_found(email_service):
     service, mock_employee_repository = email_service
 
@@ -366,6 +379,7 @@ def test_send_change_request_outcome_emails_employee_not_found(email_service):
     assert exc_info.value.detail == "Employee or manager not found"
 
 
+@pytest.mark.unit
 def test_send_change_request_outcome_emails_manager_not_found(email_service):
     service, mock_employee_repository = email_service
 
@@ -387,6 +401,7 @@ def test_send_change_request_outcome_emails_manager_not_found(email_service):
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Employee or manager not found"
 
+@pytest.mark.unit
 def test_send_change_request_emails(email_service):
     service, mock_employee_repository = email_service
 
@@ -464,6 +479,7 @@ def test_send_change_request_emails(email_service):
     service.send_email.assert_any_call(employee.email, employee_subject, employee_body)
 
 
+@pytest.mark.unit
 def test_send_cancellation_request_emails():
     # Arrange
     service = EmailService()  # Assuming this is the class containing the method
@@ -559,6 +575,7 @@ def test_send_cancellation_request_emails():
     assert service.send_email.call_count == 2  # One for employee, one for manager
 
 
+@pytest.mark.unit
 def test_send_rejection_emails():
     # Arrange
     service = EmailService()  # Assuming this is the class containing the method
@@ -601,6 +618,7 @@ def test_send_rejection_emails():
 
     service.send_email.assert_called_once_with(employee.email, employee_subject, employee_body)
 
+@pytest.mark.unit
 def test_send_withdrawal_emails():
     # Arrange
     service = EmailService()  # Assuming this is the class containing the method
@@ -678,6 +696,7 @@ def test_send_withdrawal_emails():
     # Verify the number of email sent calls
     assert service.send_email.call_count == (2 if manager and manager.email else 1)  # One for employee, one for manager if applicable
 
+@pytest.mark.unit
 def test_send_cancel_request_outcome_emails_with_withdrawn_status():
     # Arrange
     service = EmailService()  # Assuming this is the class containing the method
@@ -725,6 +744,7 @@ def test_send_cancel_request_outcome_emails_with_withdrawn_status():
     # Assert that the modified_application status is still 'withdrawn'
     assert modified_application.status == "withdrawn"
 
+@pytest.mark.unit
 def test_send_cancel_request_outcome_emails_with_approved_status():
     # Arrange
     service = EmailService()  # Assuming this is the class containing the method
@@ -772,6 +792,7 @@ def test_send_cancel_request_outcome_emails_with_approved_status():
     # Assert that the modified_application status is still 'approved'
     assert modified_application.status == "approved"
 
+@pytest.mark.unit
 def test_send_email_to_employee():
     # Arrange
     service = EmailService()  # Assuming this is the class containing the method
@@ -813,6 +834,7 @@ def test_send_email_to_employee():
 
     service.send_email.assert_called_once_with(employee.email, subject, body)
 
+@pytest.mark.unit
 def test_send_email_to_manager():
     # Arrange
     service = EmailService()  # Assuming this is the class containing the method

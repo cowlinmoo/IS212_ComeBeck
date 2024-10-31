@@ -2,6 +2,7 @@ import pytest
 from pydantic import ValidationError
 from backend.schemas.TokenSchema import Token  # Make sure to import the Token class from the correct module
 
+@pytest.mark.unit
 def test_token_model_creation():
     # Arrange: Create valid data for the Token model
     valid_data = {
@@ -22,6 +23,7 @@ def test_token_model_creation():
     assert token_instance.token_type == valid_data["token_type"]
     assert token_instance.staff_id == valid_data["staff_id"]
 
+@pytest.mark.unit
 def test_token_model_missing_required_fields():
     # Arrange: Create data missing required fields
     incomplete_data = {

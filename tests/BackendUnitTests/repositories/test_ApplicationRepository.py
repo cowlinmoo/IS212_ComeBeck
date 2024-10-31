@@ -50,6 +50,7 @@ def application_repository():
     repo.db = MockSession()
     return repo
 
+@pytest.mark.unit
 def test_get_all_applications(application_repository):
     # Arrange
     mock_applications = [Application(application_id=1), Application(application_id=2)]
@@ -62,6 +63,7 @@ def test_get_all_applications(application_repository):
     assert len(result) == 2
     assert result == mock_applications
 
+@pytest.mark.unit
 def test_get_application_by_application_id(application_repository):
     # Arrange
     mock_application = Application(application_id=1)
@@ -74,6 +76,7 @@ def test_get_application_by_application_id(application_repository):
     assert result == mock_application
 
 
+@pytest.mark.unit
 def test_get_application_by_application_id_not_found(application_repository):
     # Arrange
     application_repository.db.applications = []
@@ -85,6 +88,7 @@ def test_get_application_by_application_id_not_found(application_repository):
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Application not found"
 
+@pytest.mark.unit
 def test_get_application_by_staff_id(application_repository):
     # Arrange
     mock_applications = [
@@ -105,6 +109,7 @@ def test_get_application_by_staff_id(application_repository):
     assert all(app.application_id in [1, 2] for app in result)
 
 
+@pytest.mark.unit
 def test_create_application(application_repository):
     # Arrange
     create_data = ApplicationCreateSchema(
@@ -125,6 +130,7 @@ def test_create_application(application_repository):
     assert result.staff_id == 1
 
 
+@pytest.mark.unit
 def test_withdraw_application(application_repository):
     # Arrange
     mock_application = Application(application_id=1, staff_id=1, status="pending")
@@ -142,6 +148,7 @@ def test_withdraw_application(application_repository):
     # Assert
     assert result.status == "withdrawn"
 
+@pytest.mark.unit
 def test_update_application(application_repository):
     # Arrange
     mock_application = Application(application_id=1, staff_id=1, status="pending")
@@ -161,6 +168,7 @@ def test_update_application(application_repository):
     assert result.status == "pending"
 
 
+@pytest.mark.unit
 def test_update_application_status(application_repository):
     # Arrange
     mock_application = Application(application_id=1, staff_id=1, status="pending")
@@ -173,6 +181,7 @@ def test_update_application_status(application_repository):
     assert result.status == "approved"
 
 
+@pytest.mark.unit
 def test_get_pending_applications(application_repository):
     # Arrange
     application_repository.db.applications = [
@@ -191,6 +200,8 @@ def test_get_pending_applications(application_repository):
 
     # Assert
     assert isinstance(result, list), "Expected result to be a list"
+
+@pytest.mark.unit
 def test_update_application_not_found(application_repository):
     # Arrange
     application_repository.db.applications = []  # No applications in the mock database
@@ -210,6 +221,7 @@ def test_update_application_not_found(application_repository):
     assert exc_info.value.detail == "Application not found"
 
 
+@pytest.mark.unit
 def test_update_application_status_not_found(application_repository):
     # Arrange
     application_repository.db.applications = []  # No applications in the mock database
@@ -221,6 +233,7 @@ def test_update_application_status_not_found(application_repository):
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Application not found"
 
+@pytest.mark.unit
 def test_update_application_state(application_repository):
     # Arrange
     mock_application = Application(application_id=1, staff_id=1, status="pending", application_state="initial")
@@ -234,6 +247,7 @@ def test_update_application_state(application_repository):
     assert result.status == "approved"
 
 
+@pytest.mark.unit
 def test_delete_application_not_found(application_repository):
     # Arrange
     application_repository.db.applications = []  # No applications in the mock database
@@ -246,6 +260,7 @@ def test_delete_application_not_found(application_repository):
     assert exc_info.value.detail == "Application not found"
 
 
+@pytest.mark.unit
 def test_update_original_application_id(application_repository):
     # Arrange
     mock_application = Application(application_id=1, original_application_id=None)
@@ -258,6 +273,7 @@ def test_update_original_application_id(application_repository):
     assert result.original_application_id == 2
 
 
+@pytest.mark.unit
 def test_delete_application(application_repository):
     # Arrange
     mock_application = Application(application_id=1)
@@ -271,6 +287,7 @@ def test_delete_application(application_repository):
     assert len(application_repository.db.applications) == 0  # Application should be deleted
 
 
+@pytest.mark.unit
 def test_add_event_to_application(application_repository):
     # Arrange
     mock_application = Application(application_id=1, events=[])
@@ -286,6 +303,7 @@ def test_add_event_to_application(application_repository):
     assert len(result.events) == 1
     assert result.events[0].event_id == 1
 
+@pytest.mark.unit
 def test_get_applications_by_approver_id(application_repository):
     # Arrange
     mock_applications = [
@@ -302,6 +320,7 @@ def test_get_applications_by_approver_id(application_repository):
     assert all(app.approver_id == 1 for app in result)
     assert {app.application_id for app in result} == {1, 2}
 
+@pytest.mark.unit
 def test_get_application_status_by_application_id(application_repository):
     # Arrange
     mock_application = Application(application_id=1, status="approved")
@@ -313,6 +332,7 @@ def test_get_application_status_by_application_id(application_repository):
     # Assert
     assert result == "approved"
 
+@pytest.mark.unit
 def test_get_application_status_by_application_id_not_found(application_repository):
     # Arrange
     application_repository.db.applications = []  # No applications in the mock database
@@ -325,6 +345,7 @@ def test_get_application_status_by_application_id_not_found(application_reposito
     assert exc_info.value.detail == "Application not found"
 
 
+@pytest.mark.unit
 def test_get_applications_by_status(application_repository):
     # Arrange
     application_repository.db.applications = [
@@ -349,6 +370,7 @@ def test_get_applications_by_status(application_repository):
     assert all(app.status == "pending" for app in result)
 
 
+@pytest.mark.unit
 def test_get_applications_by_status_empty(application_repository):
     # Arrange
     application_repository.db.applications = [

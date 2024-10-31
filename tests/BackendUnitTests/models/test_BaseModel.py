@@ -13,6 +13,7 @@ def mock_metadata():
     metadata.tables = {'table1': MagicMock(), 'table2': MagicMock()}
     return metadata
 
+@pytest.mark.unit
 def test_create_database(mock_engine, mock_metadata):
     with patch('backend.models.BaseModel.Engine', mock_engine), \
          patch.object(EntityMeta, 'metadata', mock_metadata), \
@@ -27,6 +28,7 @@ def test_create_database(mock_engine, mock_metadata):
 
     mock_metadata.create_all.assert_called_once_with(bind=mock_engine)
 
+@pytest.mark.unit
 def test_create_database_empty_tables(mock_engine, mock_metadata, capsys):
     mock_metadata.tables = {}
     with patch('backend.models.BaseModel.Engine', mock_engine), \
@@ -40,6 +42,7 @@ def test_create_database_empty_tables(mock_engine, mock_metadata, capsys):
 
     mock_metadata.create_all.assert_called_once_with(bind=mock_engine)
 
+@pytest.mark.unit
 def test_create_database_exception(mock_engine, mock_metadata):
     mock_metadata.create_all.side_effect = Exception("Database creation failed")
     with patch('backend.models.BaseModel.Engine', mock_engine), \

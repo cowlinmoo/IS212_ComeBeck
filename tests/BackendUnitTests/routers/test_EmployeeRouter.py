@@ -55,6 +55,8 @@ def mock_current_user():
     return {"role": EmployeeRole.HR}
 
 
+
+@pytest.mark.unit
 def test_get_all_employees(mock_service, mock_current_user):
     """
     Test getting all employees
@@ -73,6 +75,8 @@ def test_get_all_employees(mock_service, mock_current_user):
     EmployeeRole.MANAGER,
     EmployeeRole.STAFF
 ])
+
+@pytest.mark.unit
 def test_get_all_employees_different_roles(mock_service, role):
     """
     Test getting all employees with different user roles
@@ -88,6 +92,8 @@ def test_get_all_employees_different_roles(mock_service, role):
     mock_service.get_all_employees.assert_called_once()
 
 
+
+@pytest.mark.unit
 def test_get_employee(mock_service, mock_current_user):
     """
     Test getting a single employee by staff_id
@@ -102,6 +108,8 @@ def test_get_employee(mock_service, mock_current_user):
     mock_service.get_employee_by_staff_id.assert_called_once_with(1001)
 
 
+
+@pytest.mark.unit
 def test_create_employee(mock_service):
     """
     Test creating a new employee
@@ -117,6 +125,8 @@ def test_create_employee(mock_service):
     mock_service.create_employee.assert_called_once_with(employee_data)
 
 
+
+@pytest.mark.unit
 def test_update_employee(mock_service, mock_current_user):
     """
     Test updating an existing employee
@@ -138,6 +148,8 @@ def test_update_employee(mock_service, mock_current_user):
     EmployeeRole.HR,
     EmployeeRole.MANAGER
 ])
+
+@pytest.mark.unit
 def test_update_employee_different_roles(mock_service, role):
     """
     Test updating employee with different authorized roles
@@ -156,6 +168,8 @@ def test_update_employee_different_roles(mock_service, role):
     mock_service.update_employee.assert_called_once_with(1001, employee_data)
 
 
+
+@pytest.mark.unit
 def test_delete_employee(mock_service, mock_current_user):
     """
     Test deleting an employee
@@ -174,6 +188,8 @@ def test_delete_employee(mock_service, mock_current_user):
     EmployeeRole.HR,
     EmployeeRole.MANAGER
 ])
+
+@pytest.mark.unit
 def test_delete_employee_different_roles(mock_service, role):
     """
     Test deleting employee with different authorized roles
@@ -191,6 +207,8 @@ def test_delete_employee_different_roles(mock_service, role):
 
 
 # Test error cases
+
+@pytest.mark.unit
 def test_get_employee_not_found(mock_service, mock_current_user):
     """
     Test getting a non-existent employee

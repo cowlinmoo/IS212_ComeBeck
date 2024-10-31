@@ -28,7 +28,7 @@ def department_repository():
     repo = DepartmentRepository()
     repo.db = MockSession()
     return repo
-
+@pytest.mark.unit
 def test_get_all_department_ids(department_repository):
     # Arrange
     mock_departments = [
@@ -44,7 +44,7 @@ def test_get_all_department_ids(department_repository):
     # Assert
     assert len(result) == 3
     assert result == [1, 2, 3]
-
+@pytest.mark.unit
 def test_get_all_department(department_repository):
     # Arrange
     mock_departments = [
@@ -60,7 +60,7 @@ def test_get_all_department(department_repository):
     # Assert
     assert len(result) == 3
     assert result == mock_departments
-
+@pytest.mark.unit
 def test_get_department_by_id(department_repository):
     # Arrange
     mock_department = Department(department_id=1)
@@ -72,7 +72,7 @@ def test_get_department_by_id(department_repository):
     # Assert
     assert result == mock_department
     assert result.department_id == 1
-
+@pytest.mark.unit
 def test_get_department_by_id_not_found(department_repository):
     # Arrange
     department_repository.db.departments = []
@@ -83,7 +83,7 @@ def test_get_department_by_id_not_found(department_repository):
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Department not found"
-
+@pytest.mark.unit
 def test_get_department_by_director_id(department_repository):
     # Arrange
     mock_department = Department(department_id=1, director_id=100)
@@ -95,7 +95,7 @@ def test_get_department_by_director_id(department_repository):
     # Assert
     assert result == mock_department  # Change 'mock' to 'mock_department'
     assert result.department_id == 1
-
+@pytest.mark.unit
 def test_get_department_by_director_id_not_found(department_repository):
     # Arrange
     department_repository.db.departments = []
@@ -107,7 +107,7 @@ def test_get_department_by_director_id_not_found(department_repository):
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Department not found"
 
-
+@pytest.mark.unit
 def test_get_employees_by_department_id(department_repository):
     # Arrange
     employee1 = Employee(staff_id=1, staff_fname="Alice", staff_lname="Smith",
@@ -130,7 +130,7 @@ def test_get_employees_by_department_id(department_repository):
     assert result == [employee1, employee2]  # Ensure the result is correct
     assert len(result) == 2  # Check the count of employees
 
-
+@pytest.mark.unit
 def test_get_employees_by_department_id_not_found(department_repository):
     # Arrange
     department_repository.db.departments = []  # No departments available

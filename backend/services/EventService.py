@@ -1,6 +1,7 @@
 from datetime import timedelta
 from typing import List
 
+from dateutil.relativedelta import relativedelta
 from fastapi import Depends
 
 from backend.models import Event
@@ -89,8 +90,4 @@ class EventService:
                 current_date += timedelta(weeks=1)
             elif application.recurrence_type == RecurrenceType.MONTHLY:
                 # Move to the same day next month
-                if current_date.month == 12:
-                    current_date = current_date.replace(year=current_date.year + 1,
-                                                        month=1)
-                else:
-                    current_date = current_date.replace(month=current_date.month + 1)
+                current_date += relativedelta(months=1)
