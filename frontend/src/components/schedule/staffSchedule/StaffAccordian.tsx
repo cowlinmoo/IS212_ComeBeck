@@ -78,11 +78,11 @@ const StaffAccordion: React.FC<IStaffSchedule> = ({ employeeLocations }) => {
 
     const getPercentageColor = (percent: number) => {
         if (myTeam?.members.length == 3) {
+            if (percent >= 50) return 'text-red-500'
             if (percent >= 33) return 'text-yellow-500'
-            if (percent >= 50) return 'text-red-500'
         } else {
-            if (percent >= 40) return 'text-yellow-500'
             if (percent >= 50) return 'text-red-500'
+            if (percent >= 40) return 'text-yellow-500'
         }
         return 'text-green-500'
     }
