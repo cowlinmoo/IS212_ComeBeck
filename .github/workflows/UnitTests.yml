@@ -1,0 +1,59 @@
+name: Unit Tests
+
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  Backend-Unit-Tests:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Build Docker image
+      run: docker build --target base -t my-app .
+
+    - name: Run tests
+      env:
+        CURRENT_ENV: DEV
+        PRODUCTION_DB_USER: ${{ secrets.PRODUCTION_DB_USER }}
+        PRODUCTION_DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+        PRODUCTION_DB_HOSTNAME: ${{ secrets.PRODUCTION_DB_HOSTNAME }}
+        PRODUCTION_DB_PORT: 5432
+        PRODUCTION_DB_NAME: ${{ secrets.PRODUCTION_DB_NAME }}
+        DATABASE_DIALECT: postgresql
+        DATABASE_HOSTNAME: localhost
+        POSTGRES_DB: spm
+        POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+        POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        POSTGRES_PORT: 5432
+        DEBUG_MODE: 'true'
+        SMTP_SERVER: smtp.gmail.com
+        SMTP_PORT: 587
+        SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+        SENDER_PASSWORD: ${{ secrets.SENDER_PASSWORD }}
+      run: |
+        docker run --rm \
+          -e CURRENT_ENV \
+          -e PRODUCTION_DB_USER \
+          -e PRODUCTION_DB_PASSWORD \
+          -e PRODUCTION_DB_HOSTNAME \
+          -e PRODUCTION_DB_PORT \
+          -e PRODUCTION_DB_NAME \
+          -e DATABASE_DIALECT \
+          -e DATABASE_HOSTNAME \
+          -e POSTGRES_DB \
+          -e POSTGRES_USER \
+          -e POSTGRES_PASSWORD \
+          -e POSTGRES_PORT \
+          -e DEBUG_MODE \
+          -e SMTP_SERVER \
+          -e SMTP_PORT \
+          -e SENDER_EMAIL \
+          -e SENDER_PASSWORD \
+          my-app poetry run pytest tests/ -m "unit" -n auto -v
