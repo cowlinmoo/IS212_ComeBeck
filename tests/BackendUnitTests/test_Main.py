@@ -28,6 +28,7 @@ def apply_patches():
         p.stop()
 
 
+
 @pytest.fixture
 def test_app():
     """Create test app with dependencies mocked"""
@@ -41,6 +42,7 @@ def client(test_app):
     return TestClient(test_app)
 
 
+@pytest.mark.unit
 def test_app_configuration(test_app):
     """Test app configuration"""
     assert test_app.title == "ComeBeck Backend API"
@@ -69,6 +71,7 @@ app.add_middleware(
 
 
 # test_Main.py
+@pytest.mark.unit
 def test_cors_middleware(client):
     """Test CORS middleware configuration"""
     headers = {
@@ -89,6 +92,7 @@ def test_cors_middleware(client):
     assert "content-type" in response.headers["access-control-allow-headers"].lower()
 
 
+@pytest.mark.unit
 def test_router_registration(test_app):
     """Test router registration"""
     routes = [route.path for route in test_app.routes]
@@ -100,6 +104,7 @@ def test_router_registration(test_app):
     assert len(routes) > 1
 
 
+@pytest.mark.unit
 def test_lifespan():
     """Test lifespan functionality"""
     from backend.main import lifespan
@@ -129,18 +134,21 @@ def test_lifespan():
     loop.close()
 
 
+@pytest.mark.unit
 def test_middleware_setup(test_app):
     """Test middleware setup"""
     middlewares = [m.cls.__name__ for m in test_app.user_middleware]
     assert "CORSMiddleware" in middlewares
 
 
+@pytest.mark.unit
 def test_documentation_endpoint(client):
     """Test documentation endpoint is accessible"""
     response = client.get("/api/documentation")
     assert response.status_code in (200, 301, 302)  # Accept redirect or direct success
 
 
+@pytest.mark.unit
 def test_cors_preflight(client):
     """Test CORS preflight requests"""
     headers = {
@@ -153,6 +161,7 @@ def test_cors_preflight(client):
     assert "access-control-allow-headers" in response.headers
 
 
+@pytest.mark.unit
 def test_error_handling(client):
     """Test 404 handling"""
     response = client.get("/nonexistent")

@@ -67,6 +67,7 @@ def mock_event_service():
 
 # Tests for get_current_user
 @patch('backend.services.dependencies.jwt.decode')
+@pytest.mark.unit
 def test_get_current_user_valid_token(mock_jwt_decode):
     mock_jwt_decode.return_value = {"sub": "test@example.com", "role": 1}
     token = "valid_token"
@@ -75,6 +76,7 @@ def test_get_current_user_valid_token(mock_jwt_decode):
 
 
 @patch('backend.services.dependencies.jwt.decode')
+@pytest.mark.unit
 def test_get_current_user_invalid_token(mock_jwt_decode):
     mock_jwt_decode.side_effect = JWTError()
     token = "invalid_token"
@@ -85,6 +87,7 @@ def test_get_current_user_invalid_token(mock_jwt_decode):
 
 
 @patch('backend.services.dependencies.jwt.decode')
+@pytest.mark.unit
 def test_get_current_user_missing_fields(mock_jwt_decode):
     mock_jwt_decode.return_value = {"sub": "test@example.com"}
     token = "incomplete_token"
@@ -95,6 +98,7 @@ def test_get_current_user_missing_fields(mock_jwt_decode):
 
 
 # Tests for role_required
+@pytest.mark.unit
 def test_role_required_allowed_role():
     allowed_roles = [EmployeeRole.HR, EmployeeRole.MANAGER]
     decorator = role_required(*allowed_roles)
@@ -103,6 +107,7 @@ def test_role_required_allowed_role():
     assert result == current_user
 
 
+@pytest.mark.unit
 def test_role_required_forbidden_role():
     allowed_roles = [EmployeeRole.HR, EmployeeRole.MANAGER]
     decorator = role_required(*allowed_roles)
@@ -114,23 +119,27 @@ def test_role_required_forbidden_role():
 
 
 # Tests for repository and service getters
+@pytest.mark.unit
 def test_get_application_repository(mock_db):
     result = get_application_repository(mock_db)
     assert isinstance(result, ApplicationRepository)
     assert result.db == mock_db
 
 
+@pytest.mark.unit
 def test_get_employee_repository(mock_db):
     result = get_employee_repository(mock_db)
     assert isinstance(result, EmployeeRepository)
     assert result.db == mock_db
 
 
+@pytest.mark.unit
 def test_get_email_service():
     result = get_email_service()
     assert isinstance(result, EmailService)
 
 
+@pytest.mark.unit
 def test_get_event_repository(mock_db):
     result = get_event_repository(mock_db)
     assert isinstance(result, EventRepository)
@@ -138,6 +147,7 @@ def test_get_event_repository(mock_db):
 
 
 @patch('backend.services.dependencies.EventService')
+@pytest.mark.unit
 def test_get_event_service(mock_event_service_class, mock_event_repository):
     result = get_event_service(mock_event_repository)
     mock_event_service_class.assert_called_once_with(mock_event_repository)
@@ -145,6 +155,7 @@ def test_get_event_service(mock_event_service_class, mock_event_repository):
 
 
 # Test for get_application_service
+@pytest.mark.unit
 def test_get_application_service(
         mock_application_repository,
         mock_employee_repository,
@@ -176,6 +187,7 @@ def test_get_application_service(
 @patch('backend.services.dependencies.EventService')
 @patch('backend.services.dependencies.ApplicationService')
 @patch('backend.services.dependencies.SchedulerService')
+@pytest.mark.unit
 def test_get_scheduler_service(
         mock_scheduler_service,
         mock_application_service,

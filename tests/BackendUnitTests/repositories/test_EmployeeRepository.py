@@ -42,6 +42,7 @@ def mock_db():
 def employee_repository(mock_db):
     return EmployeeRepository(mock_db)
 
+@pytest.mark.unit
 def test_get_employee(employee_repository):
     # Arrange
     mock_employee = Employee(staff_id=1, email="test@example.com")
@@ -53,12 +54,14 @@ def test_get_employee(employee_repository):
     # Assert
     assert result == mock_employee
 
+@pytest.mark.unit
 def test_get_employee_not_found(employee_repository):
     # Act & Assert
     with pytest.raises(HTTPException) as exc_info:
         employee_repository.get_employee(1)
     assert exc_info.value.status_code == 404
 
+@pytest.mark.unit
 def test_get_all_employees(employee_repository):
     # Arrange
     mock_employees = [
@@ -73,6 +76,7 @@ def test_get_all_employees(employee_repository):
     # Assert
     assert result == mock_employees
 
+@pytest.mark.unit
 def test_create_employee(employee_repository):
     # Arrange
     new_employee = Employee(staff_id=1, email="new@example.com", password="password123")
@@ -85,6 +89,7 @@ def test_create_employee(employee_repository):
     assert result in employee_repository.db.employees
     assert result.password != "password123"  # Check if password was hashed
 
+@pytest.mark.unit
 def test_create_employee_duplicate_email(employee_repository):
     # Arrange
     existing_employee = Employee(staff_id=1, email="existing@example.com")
@@ -96,6 +101,7 @@ def test_create_employee_duplicate_email(employee_repository):
         employee_repository.create_employee(new_employee)
     assert exc_info.value.status_code == 409
 
+@pytest.mark.unit
 def test_update_employee(employee_repository):
     # Arrange
     existing_employee = Employee(staff_id=1, email="old@example.com")
@@ -108,12 +114,14 @@ def test_update_employee(employee_repository):
     # Assert
     assert result.email == "new@example.com"
 
+@pytest.mark.unit
 def test_update_employee_not_found(employee_repository):
     # Act & Assert
     with pytest.raises(HTTPException) as exc_info:
         employee_repository.update_employee(1, {"email": "new@example.com"})
     assert exc_info.value.status_code == 404
 
+@pytest.mark.unit
 def test_delete_employee(employee_repository):
     # Arrange
     existing_employee = Employee(staff_id=1, email="test@example.com")
@@ -126,6 +134,7 @@ def test_delete_employee(employee_repository):
     assert result == existing_employee
     assert existing_employee not in employee_repository.db.employees
 
+@pytest.mark.unit
 def test_get_employee_email_by_staff_id(employee_repository):
     # Arrange
     mock_employee = Employee(staff_id=1, email="test@example.com")
@@ -137,6 +146,7 @@ def test_get_employee_email_by_staff_id(employee_repository):
     # Assert
     assert result == "test@example.com"
 
+@pytest.mark.unit
 def test_get_employees_by_ids(employee_repository):
     # Arrange
     mock_employees = [
@@ -154,6 +164,7 @@ def test_get_employees_by_ids(employee_repository):
     assert any(emp.staff_id == 1 for emp in result)
     assert any(emp.staff_id == 3 for emp in result)
 
+@pytest.mark.unit
 def test_get_employees_under_manager(employee_repository):
     # Arrange
     mock_employees = [
@@ -172,6 +183,7 @@ def test_get_employees_under_manager(employee_repository):
     assert any(emp.staff_id == 2 for emp in result)
     assert any(emp.staff_id == 3 for emp in result)
 
+@pytest.mark.unit
 def test_get_employees_by_team_id(employee_repository):
     # Arrange
     mock_employees = [
@@ -189,6 +201,7 @@ def test_get_employees_by_team_id(employee_repository):
     assert any(emp.team_id == 1 for emp in result)
     assert len([emp for emp in result if emp.team_id == 1]) == 2
 
+@pytest.mark.unit
 def test_get_employees_by_manager_id(employee_repository):
     # Arrange
     mock_employees = [

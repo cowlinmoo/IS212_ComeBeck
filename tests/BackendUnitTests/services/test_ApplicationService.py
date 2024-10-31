@@ -53,6 +53,7 @@ def application_service(mock_application_repository, mock_employee_repository, m
     )
 
 
+@pytest.mark.unit
 def test_get_all_applications(application_service, mock_application_repository):
     mock_application_repository.get_all_applications.return_value = [Mock(Application), Mock(Application)]
     result = application_service.get_all_applications()
@@ -60,6 +61,7 @@ def test_get_all_applications(application_service, mock_application_repository):
     mock_application_repository.get_all_applications.assert_called_once()
 
 
+@pytest.mark.unit
 def test_get_application_by_id_success(application_service, mock_application_repository):
     # Create a mock application
     mock_application = Mock(spec=Application)
@@ -77,6 +79,7 @@ def test_get_application_by_id_success(application_service, mock_application_rep
     mock_application_repository.get_application_by_application_id.assert_called_with(1)
 
 
+@pytest.mark.unit
 def test_get_application_by_id_not_found(application_service, mock_application_repository):
     mock_application_repository.get_application_by_application_id.return_value = None
     with pytest.raises(HTTPException) as exc_info:
@@ -85,6 +88,7 @@ def test_get_application_by_id_not_found(application_service, mock_application_r
     assert exc_info.value.detail == "Application not found"
 
 
+@pytest.mark.unit
 def test_get_applications_by_staff_id_success(application_service, mock_application_repository,
                                               mock_employee_repository):
     mock_employee_repository.get_employee.return_value = Mock(Employee)
@@ -95,6 +99,7 @@ def test_get_applications_by_staff_id_success(application_service, mock_applicat
     mock_application_repository.get_application_by_staff_id.assert_called_once_with(1)
 
 
+@pytest.mark.unit
 def test_get_applications_by_staff_id_employee_not_found(application_service, mock_employee_repository):
     mock_employee_repository.get_employee.return_value = None
     with pytest.raises(HTTPException) as exc_info:
@@ -103,6 +108,7 @@ def test_get_applications_by_staff_id_employee_not_found(application_service, mo
     assert exc_info.value.detail == "Employee not found"
 
 @patch('backend.services.ApplicationService.get_current_datetime_sgt')
+@pytest.mark.unit
 def test_create_application_success(mock_datetime, application_service, mock_application_repository,
                                     mock_employee_repository, mock_email_service, mock_event_service):
     mock_datetime.return_value = datetime.now()
@@ -157,6 +163,7 @@ def test_create_application_success(mock_datetime, application_service, mock_app
     )
 
 
+@pytest.mark.unit
 def test_create_application_employee_not_found(application_service, mock_employee_repository):
     mock_employee_repository.get_employee.return_value = None
 
@@ -176,6 +183,7 @@ def test_create_application_employee_not_found(application_service, mock_employe
     assert exc_info.value.detail == "Employee not found"
 
 
+@pytest.mark.unit
 def test_create_application_recurring_missing_fields(application_service, mock_employee_repository):
     mock_employee_repository.get_employee.return_value = True  # Employee exists
 
@@ -196,6 +204,7 @@ def test_create_application_recurring_missing_fields(application_service, mock_e
     assert exc_info.value.status_code == 400
     assert exc_info.value.detail == "Recurring applications must have recurrence_type and end_date set"
 
+@pytest.mark.unit
 def test_create_events_with_application_events(application_service, mock_event_service):
     application_service.event_service = mock_event_service
 
@@ -236,6 +245,7 @@ def test_create_events_with_application_events(application_service, mock_event_s
     assert call[0][1] == application_id
 
 
+@pytest.mark.unit
 def test_create_application_end_date_too_far(application_service, mock_employee_repository):
     mock_employee_repository.get_employee.return_value = True  # Employee exists
 
@@ -262,6 +272,7 @@ def test_create_application_end_date_too_far(application_service, mock_employee_
 
 
 
+@pytest.mark.unit
 def test_withdraw_application_already_withdrawn(application_service, mock_application_repository):
     # Setup
     application_id = 1
@@ -282,6 +293,7 @@ def test_withdraw_application_already_withdrawn(application_service, mock_applic
     assert exc_info.value.status_code == 409
     assert exc_info.value.detail == "Application already withdrawn"
 
+@pytest.mark.unit
 def test_withdraw_application_not_found(application_service, mock_application_repository):
     mock_application_repository.get_application_by_application_id.return_value = None
 
@@ -300,6 +312,7 @@ def test_withdraw_application_not_found(application_service, mock_application_re
 
 
 
+@pytest.mark.unit
 def test_get_applications_by_status(application_service, mock_application_repository):
     mock_applications = [Mock(Application), Mock(Application)]
     mock_application_repository.get_applications_by_status.return_value = mock_applications
@@ -309,6 +322,7 @@ def test_get_applications_by_status(application_service, mock_application_reposi
     assert result == mock_applications
     mock_application_repository.get_applications_by_status.assert_called_once_with("pending")
 
+@pytest.mark.unit
 def test_update_application_status(application_service, mock_application_repository):
     mock_application = Mock(Application)
     mock_application_repository.update_application_status.return_value = mock_application
@@ -320,6 +334,7 @@ def test_update_application_status(application_service, mock_application_reposit
 
 
 
+@pytest.mark.unit
 def test_get_applications_by_approver_id(application_service, mock_application_repository, mock_employee_repository):
     approver_id = 1
     mock_employee_repository.get_employee.return_value = Mock(Employee)
@@ -330,6 +345,7 @@ def test_get_applications_by_approver_id(application_service, mock_application_r
     mock_employee_repository.get_employee.assert_called_once_with(approver_id)
     mock_application_repository.get_applications_by_approver_id.assert_called_once_with(approver_id)
 
+@pytest.mark.unit
 def test_get_applications_by_approver_id_employee_not_found(application_service, mock_application_repository, mock_employee_repository):
     approver_id = 1
     mock_employee_repository.get_employee.return_value = None
@@ -343,6 +359,7 @@ def test_get_applications_by_approver_id_employee_not_found(application_service,
 
 
 
+@pytest.mark.unit
 def test_approve_reject_pending_applications_not_found(application_service, mock_application_repository):
     mock_application_repository.get_application_by_application_id.return_value = None
 
@@ -360,6 +377,7 @@ def test_approve_reject_pending_applications_not_found(application_service, mock
     assert exc_info.value.detail == "Application not found"
 
 
+@pytest.mark.unit
 def test_approve_reject_pending_applications_not_pending(application_service, mock_application_repository):
     mock_application = Mock(Application, status='approved')
     mock_application_repository.get_application_by_application_id.return_value = mock_application
@@ -378,6 +396,7 @@ def test_approve_reject_pending_applications_not_pending(application_service, mo
     assert exc_info.value.detail == "Application is not pending"
 
 
+@pytest.mark.unit
 def test_approve_reject_pending_applications_unauthorized(application_service, mock_application_repository):
     mock_application = Mock(Application, approver_id=2, status='pending')
     mock_application_repository.get_application_by_application_id.return_value = mock_application
@@ -395,6 +414,7 @@ def test_approve_reject_pending_applications_unauthorized(application_service, m
     assert exc_info.value.status_code == 403
     assert exc_info.value.detail == "You are not authorized to approve this application"
 
+@pytest.mark.unit
 def test_get_employee_approved_application_locations_manager(application_service, mock_application_repository, mock_employee_repository, mock_event_repository):
     # Arrange
     manager_id = 1
@@ -454,6 +474,7 @@ def test_get_employee_approved_application_locations_manager(application_service
     assert result[1].position == 'Tester'
     assert result[1].date == events_for_app3[0].requested_date.isoformat()
 
+@pytest.mark.unit
 def test_get_employee_approved_application_locations_hr(application_service, mock_application_repository, mock_employee_repository, mock_event_repository):
     # Arrange
     manager_id = 1  # Not used when role is HR
@@ -501,6 +522,7 @@ def test_get_employee_approved_application_locations_hr(application_service, moc
     assert result[1].location == 'Home'
     assert result[1].position == 'Tester'
 
+@pytest.mark.unit
 def test_update_application_pending(application_service, mock_application_repository):
     # Arrange
     application_id = 1
@@ -524,6 +546,7 @@ def test_update_application_pending(application_service, mock_application_reposi
     mock_application_repository.update_application.assert_called_once_with(application_id, application_data)
     assert result == updated_application
 
+@pytest.mark.unit
 def test_update_application_withdrawn(application_service, mock_application_repository):
     # Arrange
     application_id = 1
@@ -543,6 +566,7 @@ def test_update_application_withdrawn(application_service, mock_application_repo
     assert exc_info.value.status_code == 409
     assert exc_info.value.detail == "Application has already been withdrawn or rejected"
 
+@pytest.mark.unit
 def test_update_application_rejected(application_service, mock_application_repository):
     # Arrange
     application_id = 1
@@ -562,6 +586,7 @@ def test_update_application_rejected(application_service, mock_application_repos
     assert exc_info.value.status_code == 409
     assert exc_info.value.detail == "Application has already been withdrawn or rejected"
 
+@pytest.mark.unit
 def test_update_application_other_status(application_service, mock_application_repository):
     # Arrange
     application_id = 1
@@ -586,6 +611,7 @@ def test_update_application_other_status(application_service, mock_application_r
         mock_change_request.assert_called_once_with(existing_application, application_data)
         assert result == 'change_request_result'
 
+@pytest.mark.unit
 def test_withdraw_application_unauthorized_editor(application_service, mock_application_repository, mock_employee_repository):
     # Setup
     application_id = 1
@@ -614,6 +640,7 @@ def test_withdraw_application_unauthorized_editor(application_service, mock_appl
     assert exc_info.value.status_code == 403
     assert exc_info.value.detail == "You are not authorized to withdraw this application"
 
+@pytest.mark.unit
 def test_withdraw_application_manager_withdraw(application_service, mock_application_repository, mock_employee_repository, mock_email_service):
     # Setup
     application_id = 1
@@ -653,6 +680,7 @@ def test_withdraw_application_manager_withdraw(application_service, mock_applica
         is_employee=False,
         current_time=ANY
     )
+@pytest.mark.unit
 def test_withdraw_application_employee_cancel_request(application_service, mock_application_repository, mock_employee_repository):
     # Setup
     application_id = 1
@@ -687,6 +715,7 @@ def test_withdraw_application_employee_cancel_request(application_service, mock_
         assert result == 'cancel_request_return_value'
 
 @patch('backend.services.ApplicationService.get_current_datetime_sgt')
+@pytest.mark.unit
 def test_change_request(mock_datetime, application_service, mock_application_repository, mock_employee_repository, mock_event_service, mock_email_service):
     # Arrange
     mock_datetime.return_value = datetime.now()
@@ -751,6 +780,7 @@ def test_change_request(mock_datetime, application_service, mock_application_rep
     assert result == new_application
 
 @patch('backend.services.ApplicationService.get_current_datetime_sgt')
+@pytest.mark.unit
 def test_cancel_request(mock_datetime, application_service, mock_application_repository, mock_employee_repository, mock_email_service):
     # Arrange
     mock_datetime.return_value = datetime.now()
@@ -796,6 +826,7 @@ def test_cancel_request(mock_datetime, application_service, mock_application_rep
     assert result == updated_application
 
 @patch('backend.services.ApplicationService.get_current_date')
+@pytest.mark.unit
 def test_reject_old_applications(mock_current_date, application_service, mock_application_repository, mock_event_repository, mock_email_service):
     # Arrange
     mock_current_date.return_value = date(2023, 5, 1)
@@ -835,6 +866,7 @@ def test_reject_old_applications(mock_current_date, application_service, mock_ap
     # Emails should be sent for the rejected applications
     assert mock_email_service.send_rejection_emails.call_count == 2
 
+@pytest.mark.unit
 def test_withdraw_application_editor_not_found(application_service, mock_application_repository, mock_employee_repository):
     # Setup
     application_id = 1
@@ -869,6 +901,7 @@ def test_withdraw_application_editor_not_found(application_service, mock_applica
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Editor not found"
+@pytest.mark.unit
 def test_approve_new_application_approved(application_service, mock_application_repository, mock_email_service):
     # Setup
     application_id = 1
@@ -902,6 +935,7 @@ def test_approve_new_application_approved(application_service, mock_application_
     mock_email_service.send_outcome_emails.assert_called_once_with(modified_application)
     assert result == modified_application
 
+@pytest.mark.unit
 def test_approve_new_application_rejected(application_service, mock_application_repository, mock_email_service):
     # Setup
     application_id = 1
@@ -934,6 +968,7 @@ def test_approve_new_application_rejected(application_service, mock_application_
     mock_email_service.send_outcome_emails.assert_called_once_with(modified_application)
     assert result == modified_application
 
+@pytest.mark.unit
 def test_approve_cancel_request_approved(application_service, mock_application_repository, mock_email_service):
     # Setup
     application_id = 1
@@ -966,6 +1001,7 @@ def test_approve_cancel_request_approved(application_service, mock_application_r
     mock_email_service.send_cancel_request_outcome_emails.assert_called_once_with(modified_application)
     assert result == modified_application
 
+@pytest.mark.unit
 def test_approve_cancel_request_rejected(application_service, mock_application_repository, mock_email_service):
     # Setup
     application_id = 1
@@ -998,6 +1034,7 @@ def test_approve_cancel_request_rejected(application_service, mock_application_r
     mock_email_service.send_cancel_request_outcome_emails.assert_called_once_with(modified_application)
     assert result == modified_application
 
+@pytest.mark.unit
 def test_approve_change_request_approved(application_service, mock_application_repository, mock_email_service):
     # Setup
     application_id = 2  # Change request application ID
@@ -1041,6 +1078,7 @@ def test_approve_change_request_approved(application_service, mock_application_r
     )
     mock_email_service.send_change_request_outcome_emails.assert_called_once_with(modified_application)
     assert result == modified_application
+@pytest.mark.unit
 def test_approve_change_request_rejected(application_service, mock_application_repository, mock_email_service):
     # Setup
     application_id = 2  # Change request application ID
@@ -1086,6 +1124,7 @@ def test_approve_change_request_rejected(application_service, mock_application_r
     assert result == modified_application
 
 
+@pytest.mark.unit
 def test_approve_cancel_one_request_approved(application_service, mock_application_repository, mock_event_repository,
                                              mock_email_service):
     # Setup
@@ -1120,6 +1159,7 @@ def test_approve_cancel_one_request_approved(application_service, mock_applicati
     mock_email_service.send_cancel_one_request_outcome_emails.assert_called_once_with(event, "approved")
     assert result == mock_application_repository.get_application_by_application_id.return_value
 
+@pytest.mark.unit
 def test_approve_cancel_one_request_rejected(application_service, mock_application_repository, mock_event_repository,
                                               mock_email_service):
     # Setup
@@ -1161,6 +1201,7 @@ def test_approve_cancel_one_request_rejected(application_service, mock_applicati
     # Execute the method
     application_service.approve_reject_pending_applications(application_data)
 
+@pytest.mark.unit
 def test_approve_application_else_block(application_service, mock_application_repository):
     # Setup
     application_id = 1
@@ -1189,6 +1230,7 @@ def test_approve_application_else_block(application_service, mock_application_re
     assert result == existing_application
 
 
+@pytest.mark.unit
 def test_withdraw_application_event_application_not_found(application_service, mock_application_repository):
     application_id = 1
     event_id = 1
@@ -1203,6 +1245,7 @@ def test_withdraw_application_event_application_not_found(application_service, m
     assert exc.value.detail == "Application not found"
 
 
+@pytest.mark.unit
 def test_withdraw_application_event_event_not_found(application_service, mock_application_repository,
                                                     mock_event_repository):
     application_id = 1
@@ -1228,6 +1271,7 @@ def test_withdraw_application_event_event_not_found(application_service, mock_ap
 
 
 
+@pytest.mark.unit
 def test_withdraw_application_event_editor_not_found(application_service, mock_application_repository,
                                                      mock_event_repository, mock_employee_repository):
     application_id = 1
@@ -1246,6 +1290,7 @@ def test_withdraw_application_event_editor_not_found(application_service, mock_a
         application_service.withdraw_application_event(application_id, event_id, application_data)
 
 
+@pytest.mark.unit
 def test_withdraw_application_event_unauthorized(application_service, mock_application_repository,
                                                  mock_event_repository, mock_employee_repository):
     application_id = 1
@@ -1265,6 +1310,7 @@ def test_withdraw_application_event_unauthorized(application_service, mock_appli
         application_service.withdraw_application_event(application_id, event_id, application_data)
 
 
+@pytest.mark.unit
 def test_withdraw_application_event_already_withdrawn(application_service, mock_application_repository,
                                                       mock_event_repository, mock_employee_repository):
     application_id = 1
@@ -1285,6 +1331,7 @@ def test_withdraw_application_event_already_withdrawn(application_service, mock_
     assert mock_employee_repository.get_employee.call_count == 3
 
 
+@pytest.mark.unit
 def test_withdraw_application_event_success_as_employee(application_service,
                                                         mock_application_repository,
                                                         mock_event_repository,
@@ -1311,6 +1358,7 @@ def test_withdraw_application_event_success_as_employee(application_service,
     result = application_service.withdraw_application_event(application_id, event_id, application_data)
 
 
+@pytest.mark.unit
 def test_withdraw_application_event_success_as_manager(application_service, mock_application_repository,
                                                        mock_event_repository, mock_employee_repository,
                                                        mock_email_service):
@@ -1334,6 +1382,7 @@ def test_withdraw_application_event_success_as_manager(application_service, mock
 
     # Assert results (you would need to add your assertions here)
 
+@pytest.mark.unit
 def test_withdraw_application_event_success_as_employee_with_approved_status(application_service,
                                                                            mock_application_repository,
                                                                            mock_event_repository,

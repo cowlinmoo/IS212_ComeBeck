@@ -20,12 +20,14 @@ def scheduler_service(application_service_mock):
     return SchedulerService(application_service=application_service_mock)
 
 
+@pytest.mark.unit
 def test_scheduler_initialization(scheduler_service):
     """Test that SchedulerService initializes with a BackgroundScheduler."""
     assert isinstance(scheduler_service.scheduler, BackgroundScheduler)
     assert scheduler_service.application_service is not None
 
 
+@pytest.mark.unit
 def test_setup_jobs(scheduler_service):
     """Test that the job is set up correctly."""
     scheduler_service.setup_jobs()
@@ -47,6 +49,7 @@ def test_setup_jobs(scheduler_service):
                                                               AllExpression)  # Check minute
 
 
+@pytest.mark.unit
 def test_start(scheduler_service):
     """Test that start sets up jobs and starts the scheduler."""
     scheduler_service.start()
@@ -59,6 +62,7 @@ def test_start(scheduler_service):
     assert scheduler_service.scheduler.running
 
 
+@pytest.mark.unit
 def test_stop(scheduler_service):
     """Test that stop shuts down the scheduler."""
     scheduler_service.start()  # Start the scheduler first

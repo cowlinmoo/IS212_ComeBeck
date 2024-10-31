@@ -18,6 +18,7 @@ def event_service(event_repository_mock):
     return EventService(eventRepository=event_repository_mock)
 
 
+@pytest.mark.unit
 def test_get_all_events(event_service, event_repository_mock):
     # Arrange
     mock_events = [Event(event_id=1), Event(event_id=2)]
@@ -31,6 +32,7 @@ def test_get_all_events(event_service, event_repository_mock):
     event_repository_mock.get_all_events.assert_called_once()
 
 
+@pytest.mark.unit
 def test_create_event(event_service, event_repository_mock):
     # Arrange
     new_event = Event(requested_date=datetime.now(), location="Location A", application_hour="am")
@@ -44,6 +46,7 @@ def test_create_event(event_service, event_repository_mock):
     event_repository_mock.create_event.assert_called_once_with(new_event)
 
 
+@pytest.mark.unit
 def test_create_multiple_events(event_service, event_repository_mock):
     # Arrange
     application = ApplicationCreateSchema(
@@ -75,6 +78,7 @@ def test_create_multiple_events(event_service, event_repository_mock):
     assert calls[1][0][0].location == application.location  # Second event's location
     assert calls[1][0][0].application_id == application_id  # Second event's application_id
 
+@pytest.mark.unit
 def test_create_multiple_events_loop():
     # Arrange
     event_service = EventService()  # Assume EventService is your service class
@@ -101,6 +105,7 @@ def test_create_multiple_events_loop():
         assert created_events[i].location == event.location
         assert created_events[i].application_hour == event.application_hour
 
+@pytest.mark.unit
 def test_create_single_event(event_service, event_repository_mock):
     # Arrange
     application = ApplicationCreateSchema(
@@ -136,6 +141,7 @@ def test_create_single_event(event_service, event_repository_mock):
     assert expected_event.application_hour == actual_event.application_hour
 
 
+@pytest.mark.unit
 def test_create_recurring_events(event_service, event_repository_mock):
     # Arrange
     application = ApplicationCreateSchema(
@@ -161,6 +167,7 @@ def test_create_recurring_events(event_service, event_repository_mock):
     event_service.create_recurring_events.assert_called_once_with(application, application_id)
 
 
+@pytest.mark.unit
 def test_delete_event(event_service, event_repository_mock):
     # Arrange
     event_id = 1
@@ -170,6 +177,7 @@ def test_delete_event(event_service, event_repository_mock):
 
     # Assert
     event_repository_mock.delete_event.assert_called_once_with(event_id)
+@pytest.mark.unit
 def test_get_event_by_event_id(event_service, event_repository_mock):
     # Arrange
     event_id = 1
@@ -184,6 +192,7 @@ def test_get_event_by_event_id(event_service, event_repository_mock):
     event_repository_mock.get_event_by_event_id.assert_called_once_with(event_id)
 
 
+@pytest.mark.unit
 def test_get_event_by_application_id(event_service, event_repository_mock):
     # Arrange
     application_id = 1
@@ -196,6 +205,7 @@ def test_get_event_by_application_id(event_service, event_repository_mock):
     # Assert
     assert event == mock_event
     event_repository_mock.get_event_by_application_id.assert_called_once_with(application_id)
+@pytest.mark.unit
 def test_update_event(event_service, event_repository_mock):
     # Arrange
     event_id = 1
@@ -210,6 +220,7 @@ def test_update_event(event_service, event_repository_mock):
     # Assert
     assert result == updated_event
     event_repository_mock.update_event.assert_called_once_with(event_id, updated_event)
+@pytest.mark.unit
 def test_create_recurring_events_daily(event_service, event_repository_mock):
     # Arrange
     application = ApplicationCreateSchema(
@@ -231,6 +242,7 @@ def test_create_recurring_events_daily(event_service, event_repository_mock):
     # Assert
     assert event_repository_mock.create_event.call_count == 365  # Expect 365 events created for daily recurrence
 
+@pytest.mark.unit
 def test_create_recurring_events_weekly(event_service, event_repository_mock):
     # Arrange
     application = ApplicationCreateSchema(
@@ -252,6 +264,7 @@ def test_create_recurring_events_weekly(event_service, event_repository_mock):
     # Assert
     assert event_repository_mock.create_event.call_count == 3  # Expect 3 events created for weekly recurrence
 
+@pytest.mark.unit
 def test_create_recurring_events_monthly(event_service, event_repository_mock):
     # Arrange
     application = ApplicationCreateSchema(

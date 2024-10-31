@@ -30,6 +30,7 @@ def team_repository():
     repo.db = MockSession()
     return repo
 
+@pytest.mark.unit
 def test_get_all_team_ids(team_repository):
     # Arrange
     mock_teams = [
@@ -46,6 +47,7 @@ def test_get_all_team_ids(team_repository):
     assert len(result) == 3
     assert result == [1, 2, 3]
 
+@pytest.mark.unit
 def test_get_team_by_id(team_repository):
     # Arrange
     mock_team = Team(team_id=1)
@@ -58,6 +60,7 @@ def test_get_team_by_id(team_repository):
     assert result == mock_team
     assert result.team_id == 1
 
+@pytest.mark.unit
 def test_get_team_by_id_not_found(team_repository):
     # Arrange
     team_repository.db.teams = []
@@ -69,6 +72,7 @@ def test_get_team_by_id_not_found(team_repository):
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Team not found"
 
+@pytest.mark.unit
 def test_get_team_by_manager_id(team_repository):
     # Arrange
     mock_team = Team(team_id=1, manager_id=100)
@@ -81,6 +85,7 @@ def test_get_team_by_manager_id(team_repository):
     assert result == mock_team
     assert result.team_id == 1
 
+@pytest.mark.unit
 def test_get_team_by_manager_id_not_found(team_repository):
     # Arrange
     team_repository.db.teams = []
@@ -92,6 +97,7 @@ def test_get_team_by_manager_id_not_found(team_repository):
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Team not found"
 
+@pytest.mark.unit
 def test_get_employees_by_team_id(team_repository):
     # Arrange
     member1 = Employee(staff_id=1, staff_fname="Alice", staff_lname="Smith")
@@ -106,6 +112,7 @@ def test_get_employees_by_team_id(team_repository):
     assert result == [member1, member2]
     assert len(result) == 2
 
+@pytest.mark.unit
 def test_get_employees_by_team_id_not_found(team_repository):
     # Arrange
     team_repository.db.teams = []
@@ -117,6 +124,7 @@ def test_get_employees_by_team_id_not_found(team_repository):
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Team not found"
 
+@pytest.mark.unit
 def test_get_teams_by_department_id(team_repository):
     # Arrange
     mock_team = Team(team_id=1, department_id=100)
@@ -129,6 +137,7 @@ def test_get_teams_by_department_id(team_repository):
     assert result == [mock_team]
     assert len(result) == 1
 
+@pytest.mark.unit
 def test_get_child_teams(team_repository):
     # Arrange
     mock_child_team = Team(team_id=2, parent_team_id=1)
@@ -142,6 +151,7 @@ def test_get_child_teams(team_repository):
     assert len(result) == 1
 
 
+@pytest.mark.unit
 def test_get_parent_team(team_repository):
     # Arrange
     # Create mock parent and child teams
@@ -163,6 +173,7 @@ def test_get_parent_team(team_repository):
     # Assert
     assert result == mock_parent_team  # This should pass if the logic is correct
 
+@pytest.mark.unit
 def test_get_parent_team_no_parent(team_repository):
     # Arrange
     mock_team = Team(team_id=1, parent_team_id=None)

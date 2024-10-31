@@ -27,6 +27,7 @@ def department_service(mock_repositories):
 
 class TestDepartmentService:
 
+    @pytest.mark.unit
     def test_get_department_by_department_id_success(self, department_service, mock_repositories):
         # Arrange
         mock_department = Mock()
@@ -75,6 +76,7 @@ class TestDepartmentService:
         assert len(result.teams) == 1
         assert result.teams[0].name == "Frontend Team"
 
+    @pytest.mark.unit
     def test_get_department_by_department_id_not_found(self, department_service, mock_repositories):
         # Arrange
         mock_repositories['department_repository'].get_department_by_id.return_value = None
@@ -85,6 +87,7 @@ class TestDepartmentService:
         assert exc_info.value.status_code == 404
         assert exc_info.value.detail == "Department not found"
 
+    @pytest.mark.unit
     def test_department_to_schema_without_director(self, department_service, mock_repositories):
         # Arrange
         mock_department = Mock()
@@ -104,6 +107,7 @@ class TestDepartmentService:
         assert result.director is None
         assert result.teams is None
 
+    @pytest.mark.unit
     def test_team_to_schema_full_hierarchy(self, department_service, mock_repositories):
         # Arrange
         mock_department = Mock()
@@ -162,6 +166,7 @@ class TestDepartmentService:
         assert result.members[0].staff_id == 300
         assert result.child_teams is None
 
+    @pytest.mark.unit
     def test_base_schema_conversions(self, department_service):
         # Arrange
         mock_team = Mock()
@@ -202,6 +207,7 @@ class TestDepartmentService:
         assert department_result.department_id == 1
         assert department_result.name == "Engineering"
 
+    @pytest.mark.unit
     def test_get_all_departments(self, department_service, mock_repositories):
         # Arrange
         mock_departments = [

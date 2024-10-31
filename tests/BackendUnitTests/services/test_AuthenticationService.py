@@ -20,6 +20,7 @@ def auth_service(mock_db):
     return AuthenticationService(mock_db)
 
 
+@pytest.mark.unit
 def test_create_access_token_with_expiry():
     service = AuthenticationService()
     data = {"sub": "test@example.com"}
@@ -32,6 +33,7 @@ def test_create_access_token_with_expiry():
     assert "exp" in decoded
 
 
+@pytest.mark.unit
 def test_create_access_token_without_expiry():
     service = AuthenticationService()
     data = {"sub": "test@example.com"}
@@ -44,6 +46,7 @@ def test_create_access_token_without_expiry():
 
 
 @patch('backend.services.AuthenticationService.bcrypt_context')
+@pytest.mark.unit
 def test_authenticate_employee_success(mock_bcrypt, auth_service, mock_db):
     mock_employee = Mock(spec=Employee)
     mock_employee.email = "test@example.com"
@@ -60,6 +63,7 @@ def test_authenticate_employee_success(mock_bcrypt, auth_service, mock_db):
     mock_bcrypt.verify.assert_called_once_with("password", "hashed_password")
 
 @patch('backend.services.AuthenticationService.bcrypt_context')
+@pytest.mark.unit
 def test_authenticate_manager_success(mock_bcrypt, auth_service, mock_db):
     mock_employee = Mock(spec=Employee)
     mock_employee.email = "test@example.com"
@@ -76,6 +80,7 @@ def test_authenticate_manager_success(mock_bcrypt, auth_service, mock_db):
     mock_bcrypt.verify.assert_called_once_with("password", "hashed_password")
 
 @patch('backend.services.AuthenticationService.bcrypt_context')
+@pytest.mark.unit
 def test_authenticate_hr_success(mock_bcrypt, auth_service, mock_db):
     mock_employee = Mock(spec=Employee)
     mock_employee.email = "test@example.com"
@@ -92,6 +97,7 @@ def test_authenticate_hr_success(mock_bcrypt, auth_service, mock_db):
     mock_bcrypt.verify.assert_called_once_with("password", "hashed_password")
 
 @patch('backend.services.AuthenticationService.bcrypt_context')
+@pytest.mark.unit
 def test_authenticate_employee_wrong_password(mock_bcrypt, auth_service, mock_db):
     mock_employee = Mock(spec=Employee)
     mock_employee.email = "test@example.com"
@@ -106,6 +112,7 @@ def test_authenticate_employee_wrong_password(mock_bcrypt, auth_service, mock_db
     assert role is None
 
 
+@pytest.mark.unit
 def test_authenticate_employee_not_found(auth_service, mock_db):
     mock_db.query.return_value.filter.return_value.first.return_value = None
 
@@ -116,6 +123,7 @@ def test_authenticate_employee_not_found(auth_service, mock_db):
 
 
 @patch('backend.services.AuthenticationService.bcrypt_context')
+@pytest.mark.unit
 def test_authenticate_employee_exception(mock_bcrypt, auth_service, mock_db):
     mock_db.query.side_effect = Exception("Database error")
 
@@ -125,6 +133,7 @@ def test_authenticate_employee_exception(mock_bcrypt, auth_service, mock_db):
     assert role is None
 
 
+@pytest.mark.unit
 def test_db_dependency_injection():
     mock_db = Mock(spec=Session)
     service = AuthenticationService(mock_db)
