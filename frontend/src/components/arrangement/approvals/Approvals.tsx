@@ -49,7 +49,7 @@ export default function Approvals({ data }: { data: Application[] }) {
                             <div>
                               <CardTitle>{`Application ID: ${request.application_id}`}</CardTitle>
                               <CardDescription>{`Application Type: ${requestType}`}</CardDescription>
-                              <CardDescription>{`Reason: ${request.reason}`}</CardDescription>
+                              <CardDescription>{`Application Reason: ${request.reason}`}</CardDescription>
                               <CardDescription>{`Approved by: -`}</CardDescription>
                               <CardDescription>{`Recurring: ${request.recurring ? "Yes" : "No"}`}</CardDescription>
                             </div>
@@ -85,7 +85,7 @@ export default function Approvals({ data }: { data: Application[] }) {
                             <div>
                               <CardTitle>{`Application ID: ${request.application_id}`}</CardTitle>
                               <CardDescription>{`Application Type: ${requestType}`}</CardDescription>
-                              <CardDescription>{`Reason: ${request.reason}`}</CardDescription>
+                              <CardDescription>{`Approval Reason: ${request.outcome_reason}`}</CardDescription>
                               <CardDescription>{`Approved by: ${request.approver_id}`}</CardDescription>
                               <CardDescription>{`Recurring: ${request.recurring ? "Yes" : "No"}`}</CardDescription>
                             </div>
@@ -121,7 +121,7 @@ export default function Approvals({ data }: { data: Application[] }) {
                             <div>
                               <CardTitle>{`Application ID: ${request.application_id}`}</CardTitle>
                               <CardDescription>{`Application Type: ${requestType}`}</CardDescription>
-                              <CardDescription>{`Reason: ${request.reason}`}</CardDescription>
+                              <CardDescription>{`Rejection Reason: ${request.outcome_reason}`}</CardDescription>
                               <CardDescription>{`Rejected by: ${request.approver_id}`}</CardDescription>
                               <CardDescription>{`Recurring: ${request.recurring ? "Yes" : "No"}`}</CardDescription>
                             </div>
