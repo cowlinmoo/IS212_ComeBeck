@@ -19,8 +19,8 @@ const tabs: Tab[] = [
   { name: "Schedule", icon: FileText, path: "/schedule" },
   { name: "Arrangement Management", icon: Settings, path: "/arrangement" },
   { name: "Arrangement Approvals", icon: Settings, path: "/approvals" },
-  { name: "Pending Arrangements", icon: Users, path: "/managementViewPending" },
-  { name: "Withdraw Arrangements", icon: Users, path: "/managementViewWithdraw" },
+  { name: "Pending Arrangements", icon: Users, path: "/managementViewPending", requiresRole: 3 },
+  { name: "Withdraw Arrangements", icon: Users, path: "/managementViewWithdraw", requiresRole: 3 }, 
 ];
 
 export default function SideBar() {
