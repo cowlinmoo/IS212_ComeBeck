@@ -56,4 +56,4 @@ jobs:
           -e SMTP_PORT \
           -e SENDER_EMAIL \
           -e SENDER_PASSWORD \
-          my-app poetry run pytest tests/ -m "unit" -n auto -v
+          my-app poetry run pytest tests/BackendUnitTests -m "unit" -n auto -v

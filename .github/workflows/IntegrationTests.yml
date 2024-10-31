@@ -50,7 +50,7 @@ jobs:
 
       # Run integration tests inside the backend container
       - name: Run Integration Tests
-        run: docker-compose exec backend poetry run pytest tests/ -m "integration" -n auto -v
+        run: docker-compose exec backend poetry run pytest tests/IntegrationTests -m "integration" -n auto -v
 
       # Tear down Docker Compose
       - name: Tear down Docker Compose
