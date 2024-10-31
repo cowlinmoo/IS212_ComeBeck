@@ -1,0 +1,57 @@
+name: Integration Tests
+
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  Run-Integration-Tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Check out the repository
+      - uses: actions/checkout@v2
+
+      # Set up Docker Compose
+      - name: Install Docker Compose
+        run: |
+          curl -L "https://github.com/docker/compose/releases/download/$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep -oP '"tag_name": "\K(.*)(?=")')/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          chmod +x /usr/local/bin/docker-compose
+          docker-compose --version
+
+      # Create .env file for Docker Compose
+      - name: Create .env file
+        run: |
+          echo "CURRENT_ENV=DEV" >> .env
+          echo "PRODUCTION_DB_USER=${{ secrets.PRODUCTION_DB_USER }}" >> .env
+          echo "PRODUCTION_DB_PASSWORD=${{ secrets.PRODUCTION_DB_PASSWORD }}" >> .env
+          echo "PRODUCTION_DB_HOSTNAME=${{ secrets.PRODUCTION_DB_HOSTNAME }}" >> .env
+          echo "PRODUCTION_DB_PORT=5432" >> .env
+          echo "PRODUCTION_DB_NAME=${{ secrets.PRODUCTION_DB_NAME }}" >> .env
+          echo "DATABASE_DIALECT=postgresql" >> .env
+          echo "DATABASE_HOSTNAME=localhost" >> .env
+          echo "POSTGRES_DB=spm" >> .env
+          echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env
+          echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
+          echo "POSTGRES_PORT=5432" >> .env
+          echo "DEBUG_MODE=true" >> .env
+          echo "SMTP_SERVER=smtp.gmail.com" >> .env
+          echo "SMTP_PORT=587" >> .env
+          echo "SENDER_EMAIL=${{ secrets.SENDER_EMAIL }}" >> .env
+          echo "SENDER_PASSWORD=${{ secrets.SENDER_PASSWORD }}" >> .env
+
+      # Start Docker Compose with the dev profile
+      - name: Start Backend and PostgreSQL services
+        run: docker-compose --profile dev up -d
+
+      # Run integration tests inside the backend container
+      - name: Run Integration Tests
+        run: docker-compose exec backend poetry run pytest tests/IntegrationTests -m "integration" -n auto -v
+
+      # Tear down Docker Compose
+      - name: Tear down Docker Compose
+        run: docker-compose --profile dev down
