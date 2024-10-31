@@ -23,26 +23,26 @@ jobs:
           chmod +x /usr/local/bin/docker-compose
           docker-compose --version
 
-      # Set up Docker environment variables
-      - name: Set up environment variables
+      # Create .env file for Docker Compose
+      - name: Create .env file
         run: |
-          echo "CURRENT_ENV=DEV" >> $GITHUB_ENV
-          echo "PRODUCTION_DB_USER=${{ secrets.PRODUCTION_DB_USER }}" >> $GITHUB_ENV
-          echo "PRODUCTION_DB_PASSWORD=${{ secrets.PRODUCTION_DB_PASSWORD }}" >> $GITHUB_ENV
-          echo "PRODUCTION_DB_HOSTNAME=${{ secrets.PRODUCTION_DB_HOSTNAME }}" >> $GITHUB_ENV
-          echo "PRODUCTION_DB_PORT=5432" >> $GITHUB_ENV
-          echo "PRODUCTION_DB_NAME=${{ secrets.PRODUCTION_DB_NAME }}" >> $GITHUB_ENV
-          echo "DATABASE_DIALECT=postgresql" >> $GITHUB_ENV
-          echo "DATABASE_HOSTNAME=localhost" >> $GITHUB_ENV
-          echo "POSTGRES_DB=spm" >> $GITHUB_ENV
-          echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> $GITHUB_ENV
-          echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> $GITHUB_ENV
-          echo "POSTGRES_PORT=5432" >> $GITHUB_ENV
-          echo "DEBUG_MODE=true" >> $GITHUB_ENV
-          echo "SMTP_SERVER=smtp.gmail.com" >> $GITHUB_ENV
-          echo "SMTP_PORT=587" >> $GITHUB_ENV
-          echo "SENDER_EMAIL=${{ secrets.SENDER_EMAIL }}" >> $GITHUB_ENV
-          echo "SENDER_PASSWORD=${{ secrets.SENDER_PASSWORD }}" >> $GITHUB_ENV
+          echo "CURRENT_ENV=DEV" >> .env
+          echo "PRODUCTION_DB_USER=${{ secrets.PRODUCTION_DB_USER }}" >> .env
+          echo "PRODUCTION_DB_PASSWORD=${{ secrets.PRODUCTION_DB_PASSWORD }}" >> .env
+          echo "PRODUCTION_DB_HOSTNAME=${{ secrets.PRODUCTION_DB_HOSTNAME }}" >> .env
+          echo "PRODUCTION_DB_PORT=5432" >> .env
+          echo "PRODUCTION_DB_NAME=${{ secrets.PRODUCTION_DB_NAME }}" >> .env
+          echo "DATABASE_DIALECT=postgresql" >> .env
+          echo "DATABASE_HOSTNAME=localhost" >> .env
+          echo "POSTGRES_DB=spm" >> .env
+          echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env
+          echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
+          echo "POSTGRES_PORT=5432" >> .env
+          echo "DEBUG_MODE=true" >> .env
+          echo "SMTP_SERVER=smtp.gmail.com" >> .env
+          echo "SMTP_PORT=587" >> .env
+          echo "SENDER_EMAIL=${{ secrets.SENDER_EMAIL }}" >> .env
+          echo "SENDER_PASSWORD=${{ secrets.SENDER_PASSWORD }}" >> .env
 
       # Start Docker Compose with the dev profile
       - name: Start Backend and PostgreSQL services
