@@ -3,7 +3,7 @@ from typing import List, Type
 
 from fastapi import Depends
 from sqlalchemy import desc
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from backend.config.Database import get_db_connection
 from backend.models import Application, Event
@@ -32,8 +32,10 @@ class ApplicationRepository:
                 status_code=404, detail="Application not found")
 
     def get_application_by_staff_id(self, staff_id: int) -> List[Type[Application]]:
-        applications = self.db.query(Application).filter(
-            Application.staff_id == staff_id).all()
+        applications = (self.db.query(Application)
+                        .filter(Application.staff_id == staff_id)
+                        .options(joinedload(Application.staff))
+                        .all())
         return applications if applications is not None else []
 
     def create_application(self, application: dict) -> Application:

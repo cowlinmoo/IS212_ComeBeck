@@ -1428,3 +1428,32 @@ def test_withdraw_application_event_success_as_employee_with_approved_status(app
 
     # You may want to add assertions here to verify the result
 
+@pytest.mark.unit
+def test_delete_all_applications_by_staff_id(application_service, mock_application_repository, mock_event_repository):
+    # Arrange
+    staff_id = 1
+
+    # Mock applications associated with the staff_id
+    mock_application1 = Mock(Application, application_id=1, staff_id=staff_id, events=[Mock(event_id=101), Mock(event_id=102)])
+    mock_application2 = Mock(Application, application_id=2, staff_id=staff_id, events=[Mock(event_id=103)])
+    mock_applications = [mock_application1, mock_application2]
+
+    # Set up the mock to return these applications
+    mock_application_repository.get_application_by_staff_id.return_value = mock_applications
+
+    # Act
+    result = application_service.delete_all_applications_by_staff_id(staff_id)
+
+    # Assert
+    # Check if each event is deleted
+    for application in mock_applications:
+        for event in application.events:
+            mock_event_repository.delete_event.assert_any_call(event.event_id)
+
+    # Check if each application is deleted
+    for application in mock_applications:
+        mock_application_repository.delete_application.assert_any_call(application.application_id)
+
+    # Verify the result matches the expected list of deleted applications
+    assert result == mock_applications
+    mock_application_repository.get_application_by_staff_id.assert_called_once_with(staff_id)
