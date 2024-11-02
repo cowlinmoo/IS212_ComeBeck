@@ -523,28 +523,41 @@ def test_get_employee_approved_application_locations_hr(application_service, moc
     assert result[1].position == 'Tester'
 
 @pytest.mark.unit
-def test_update_application_pending(application_service, mock_application_repository):
+def test_update_application_pending(application_service, mock_application_repository, mock_event_repository, mock_event_service):
     # Arrange
     application_id = 1
+    # Mock existing application with 'pending' status and a list of mock events
     existing_application = Mock(Application, status='pending')
-    mock_application_repository.get_application_by_application_id.return_value = existing_application
+    existing_application.events = [Mock(event_id=1), Mock(event_id=2)]  # Mock list of events with event_id attributes
+
+    # Set up the updated application mock before assigning it to side_effect
+    updated_application = Mock(Application)
+    mock_application_repository.get_application_by_application_id.side_effect = [existing_application, updated_application]
+    mock_application_repository.update_application.return_value = updated_application
+
+    # Set up the application data for updating
     application_data = ApplicationCreateSchema(
         staff_id=1,
         reason="Updated reason",
         requested_date=date.today(),
-        application_hour = ApplicationHourEnum.FULLDAY,
+        application_hour=ApplicationHourEnum.FULLDAY,
         location="Office"
     )
-    # Set up the repository's update_application to return the updated application
-    updated_application = Mock(Application)
-    mock_application_repository.update_application.return_value = updated_application
 
     # Act
     result = application_service.update_application(application_id, application_data)
 
     # Assert
     mock_application_repository.update_application.assert_called_once_with(application_id, application_data)
+    # Check that delete_event is called for each event in the existing application's events
+    assert mock_event_repository.delete_event.call_count == len(existing_application.events)
+    for event in existing_application.events:
+        mock_event_repository.delete_event.assert_any_call(event.event_id)
+    # Check that create_events is called once
+    mock_event_service.create_events.assert_called_once_with(application_data, application_id)
+    # Verify the final result matches the updated application
     assert result == updated_application
+
 
 @pytest.mark.unit
 def test_update_application_withdrawn(application_service, mock_application_repository):
