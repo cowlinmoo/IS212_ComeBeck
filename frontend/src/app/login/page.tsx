@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useRouter } from 'next/navigation';
 import { storeToken } from '@/lib/cookie';
+import Image from 'next/image';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const URL = `${BASE_URL}/authenticate`;
@@ -56,9 +57,10 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gray-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Login</CardTitle>
+          <Image src="/comebeck.png" alt="All In One Logo" width={150} height={150} className="mx-auto"/>
+          <CardTitle className="text-2xl font-bold text-center">ComeBeck</CardTitle>
           <CardDescription className="text-center">
-            Enter your username and password to login to your account
+            WFH Tracker
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -1,6 +1,7 @@
+"use client";
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Home, FileText, Settings, Users } from "lucide-react";
+import { FileText, Settings, Users, User } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import useAuth from "@/lib/auth";
 
@@ -14,7 +15,7 @@ interface Tab {
 
 // Define the tabs array with explicit typing
 const tabs: Tab[] = [
-  { name: "Home", icon: Home, path: "/profile" },
+  { name: "Profile", icon: User, path: "/profile" },
   { name: "Department Schedule", icon: Users, path: "/overview", requiresRole: 1 },
   { name: "Schedule", icon: FileText, path: "/schedule" },
   { name: "Arrangement Management", icon: Settings, path: "/arrangement" },
@@ -52,20 +53,21 @@ export default function SideBar() {
   return (
     <div>
       <nav className="bg-white w-64 h-screen flex flex-col border-r">
-        <div className="flex items-center justify-center py-5">
+        <div className="flex flex-col items-center justify-center py-5 space-y-2">
           <h2 className="text-xl font-bold">ComeBeck</h2>
+          <h4 className="text-xs text-gray-500 ml-1">WFH Tracker</h4>
         </div>
         <div className="flex-1 overflow-y-auto">
           {filteredTabs.map((tab) => (
-            <Button
-              key={tab.name}
-              variant={activeTab === tab.name ? "default" : "ghost"}
-              className="w-full justify-start rounded-none h-12"
-              onClick={() => handleTabClick(tab)}
-            >
-              <tab.icon className="mr-2 h-5 w-5" />
-              {tab.name}
-            </Button>
+              <Button
+                  key={tab.name}
+                  variant={activeTab === tab.name ? "default" : "ghost"}
+                  className="w-full justify-start rounded-none h-12"
+                  onClick={() => handleTabClick(tab)}
+              >
+                <tab.icon className="mr-2 h-5 w-5"/>
+                {tab.name}
+              </Button>
           ))}
         </div>
       </nav>
