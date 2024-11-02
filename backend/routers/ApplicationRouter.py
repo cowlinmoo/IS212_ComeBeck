@@ -161,6 +161,7 @@ def process_application(
 ):
     return service.approve_reject_pending_applications(application)
 
+
 @ApplicationRouter.delete("/delete/all_applications_by_staff_id/{staff_id}",
                           response_model=List[ApplicationResponse])
 def delete_all_applications_by_staff_id(

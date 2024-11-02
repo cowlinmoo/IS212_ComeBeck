@@ -32,8 +32,8 @@ class ApplicationRepository:
                 status_code=404, detail="Application not found")
 
     def get_application_by_staff_id(self, staff_id: int) -> List[Type[Application]]:
-        applications = (self.db.query(Application).filter(
-            Application.staff_id == staff_id)
+        applications = (self.db.query(Application)
+                        .filter(Application.staff_id == staff_id)
                         .options(joinedload(Application.staff))
                         .all())
         return applications if applications is not None else []
