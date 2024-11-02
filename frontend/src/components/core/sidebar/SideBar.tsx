@@ -10,7 +10,7 @@ interface Tab {
   name: string;
   icon: React.ComponentType<{ className?: string }>;
   path: string;
-  requiresRole?: number;
+  requiresRole?: number | number[]; // Updated to allow a single number or an array of numbers
 }
 
 // Define the tabs array with explicit typing
@@ -20,8 +20,8 @@ const tabs: Tab[] = [
   { name: "Schedule", icon: FileText, path: "/schedule" },
   { name: "Arrangement Management", icon: Settings, path: "/arrangement" },
   { name: "Arrangement Approvals", icon: Settings, path: "/approvals" },
-  { name: "Pending Arrangements", icon: Users, path: "/managementViewPending", requiresRole: 3 },
-  { name: "Withdraw Arrangements", icon: Users, path: "/managementViewWithdraw", requiresRole: 3 }, 
+  { name: "Pending Arrangements", icon: Users, path: "/managementViewPending", requiresRole: [1, 3] },
+  { name: "Withdraw Arrangements", icon: Users, path: "/managementViewWithdraw", requiresRole: [1, 3] },
 ];
 
 export default function SideBar() {
@@ -30,11 +30,14 @@ export default function SideBar() {
   const { role } = useAuth(); // Access role directly from useAuth
   const [activeTab, setActiveTab] = useState<string>("");
 
-  // Memoize filtered tabs based on role
   const filteredTabs = useMemo(
-    () => tabs.filter((tab) => !tab.requiresRole || tab.requiresRole === role),
+    () => tabs.filter((tab) => {
+      // Check if requiresRole is undefined, a single number that matches role, or an array that includes role
+      return !tab.requiresRole || (Array.isArray(tab.requiresRole) ? (role !== undefined && tab.requiresRole.includes(role)) : tab.requiresRole === role);
+    }),
     [role]
   );
+
 
   // Set activeTab based on the current pathname
   useEffect(() => {
