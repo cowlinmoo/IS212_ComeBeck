@@ -30,14 +30,14 @@ export default function SideBar() {
   const { role } = useAuth(); // Access role directly from useAuth
   const [activeTab, setActiveTab] = useState<string>("");
 
-  // Memoize filtered tabs based on role
   const filteredTabs = useMemo(
     () => tabs.filter((tab) => {
       // Check if requiresRole is undefined, a single number that matches role, or an array that includes role
-      return !tab.requiresRole || (Array.isArray(tab.requiresRole) ? tab.requiresRole.includes(role) : tab.requiresRole === role);
+      return !tab.requiresRole || (Array.isArray(tab.requiresRole) ? (role !== undefined && tab.requiresRole.includes(role)) : tab.requiresRole === role);
     }),
     [role]
   );
+
 
   // Set activeTab based on the current pathname
   useEffect(() => {
