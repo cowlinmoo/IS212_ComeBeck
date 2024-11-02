@@ -160,3 +160,14 @@ def process_application(
                                                EmployeeRole.MANAGER))
 ):
     return service.approve_reject_pending_applications(application)
+
+
+@ApplicationRouter.delete("/delete/all_applications_by_staff_id/{staff_id}",
+                          response_model=List[ApplicationResponse])
+def delete_all_applications_by_staff_id(
+        staff_id: int,
+        service: ApplicationService = Depends(),
+        current_user: dict = Depends(role_required(EmployeeRole.HR,
+                                                   EmployeeRole.MANAGER))
+):
+    return service.delete_all_applications_by_staff_id(staff_id)

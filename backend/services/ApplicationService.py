@@ -146,8 +146,13 @@ class ApplicationService:
                                     .get_application_by_application_id(
                                         application_id))
         if existing_application.status == "pending":
-            return self.application_repository.update_application(application_id,
-                                                                  application)
+            self.application_repository.update_application(application_id, application)
+            event_ids = [event.event_id for event in existing_application.events]
+            for event_id in event_ids:
+                self.event_repository.delete_event(event_id)
+            self.event_service.create_events(application, application_id)
+            return (self.application_repository
+                    .get_application_by_application_id(application_id))
         elif (existing_application.status == "withdrawn" or existing_application.status
               == "rejected"):
             raise HTTPException(status_code=409,
@@ -504,3 +509,13 @@ class ApplicationService:
          .send_cancel_one_request_emails(existing_event, employee, manager,
                                          cancellation_reason))
         return existing_event
+
+    def delete_all_applications_by_staff_id(self, staff_id):
+        applications = self.application_repository.get_application_by_staff_id(staff_id)
+        print("these are the applications" , applications)
+        for application in applications:
+            event_ids = [event.event_id for event in application.events]
+            for event_id in event_ids:
+                self.event_repository.delete_event(event_id)
+            self.application_repository.delete_application(application.application_id)
+        return applications
