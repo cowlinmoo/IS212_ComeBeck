@@ -5,7 +5,8 @@ from backend.routers.ApplicationRouter import (
     get_all_applications, get_application_by_id, get_applications_by_staff_id,
     get_applications_by_approver_id, create_application, update_application,
     withdraw_application, withdraw_application_event, get_applications_by_status,
-    get_all_employee_locations_by_manager_id, process_application
+    get_all_employee_locations_by_manager_id, process_application,
+    delete_all_applications_by_staff_id
 )
 
 # Mock response data
@@ -114,3 +115,15 @@ def test_process_application(mock_service, mock_current_user):
     result = process_application(application=application_data, service=mock_service, current_user=mock_current_user)
     assert result == MOCK_APPLICATION
     mock_service.approve_reject_pending_applications.assert_called_once_with(application_data)
+
+@pytest.mark.unit
+def test_delete_all_applications_by_staff_id(mock_service, mock_current_user):
+    # Arrange
+    mock_service.delete_all_applications_by_staff_id.return_value = [MOCK_APPLICATION]
+
+    # Act
+    result = delete_all_applications_by_staff_id(1, service=mock_service, current_user=mock_current_user)
+
+    # Assert
+    assert result == [MOCK_APPLICATION]
+    mock_service.delete_all_applications_by_staff_id.assert_called_once_with(1)

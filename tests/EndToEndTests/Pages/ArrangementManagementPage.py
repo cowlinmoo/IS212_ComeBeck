@@ -19,17 +19,25 @@ class ArrangementManagementPage(BasePage):
         else:
             self.page.locator("button[role='radio'][value='No']").click()
 
-    def select_date(self, date_str: str = "6"):
+    def select_date(self, date_str: str):
         """Open the date picker and select a specific day."""
-        # Click on the "Pick a date" button to open the date picker
+        # Open the date picker
         self.page.locator("button:has-text('Pick a date')").click()
 
-        # Wait for the date picker pop-up to appear
+        # Wait for the date picker to appear
         date_picker_popup = self.page.locator("div[role='dialog']")
         date_picker_popup.wait_for(state="visible")
 
-        # Click on the specific date within the date picker
-        date_picker_popup.locator(f"button:has-text('{date_str}')").click()
+        # Combine selectors to exclude disabled dates
+        specific_date_locator = date_picker_popup.locator(
+            f"button[role='gridcell']:has-text('{date_str}'):not([disabled])"
+        )
+
+        # Verify if the date is interactable
+        if specific_date_locator.count() > 0:
+            specific_date_locator.first.click()
+        else:
+            raise Exception(f"Date '{date_str}' is not available or is disabled.")
 
     def select_dates(self, date_list):
         """Open the date picker and select multiple days."""
@@ -93,4 +101,4 @@ class ArrangementManagementPage(BasePage):
         date_picker_popup.wait_for(state="visible")
 
         # Click on the specified end date
-        date_picker_popup.locator(f"button:has-text('{end_date}')").nth(1).click()
+        date_picker_popup.locator(f"button:has-text('{end_date}')").click()

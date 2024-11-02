@@ -44,6 +44,11 @@ class MockSession:
     def delete(self, application):
         # This method should delete the application from the mock database.
         self.applications.remove(application)
+
+    def options(self, *args):
+        # Simply return self to allow chaining
+        return self
+
 @pytest.fixture
 def application_repository():
     repo = ApplicationRepository()
