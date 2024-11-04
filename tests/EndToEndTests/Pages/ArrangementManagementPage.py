@@ -7,6 +7,13 @@ class ArrangementManagementPage(BasePage):
         # Define selectors
         self.arrangement_type_label = "label:text('Arrangement Type:')"
         self.submit_button = "button[type='submit']"
+        self.change_tab = "button#radix-\\:r28\\:-trigger-change"
+
+        # Change arrangement tab selectors
+        self.pending_approval_radio = "button[role='radio'][value='Pending Approval']"
+        self.application_table = "table"
+        self.reason_textarea = "textarea[placeholder='Please provide a reason for your change request.']"
+        self.application_row_selector = "tr:has(td:text('{}'))"  # Placeholder for application ID
 
     def navigate_to_arrangement_page(self):
         """Navigate directly to the arrangement page."""
@@ -102,3 +109,22 @@ class ArrangementManagementPage(BasePage):
 
         # Click on the specified end date
         date_picker_popup.locator(f"button:has-text('{end_date}')").click()
+
+    def switch_to_change_tab(self):
+        """Switch to the 'Change arrangement' tab."""
+        self.page.locator(self.change_tab).click()
+
+    def select_pending_approval(self):
+        """Ensure 'Pending Approval' radio button is selected in the change tab."""
+        if not self.page.locator(self.pending_approval_radio).get_attribute("aria-checked") == "true":
+            self.page.locator(self.pending_approval_radio).click()
+
+    def verify_application_in_table(self, application_id: str):
+        """Check if the application with the given ID is in the table and select it."""
+        application_row = self.page.locator(self.application_row_selector.format(application_id))
+        assert application_row.is_visible(), f"Application ID {application_id} not found in the table."
+        application_row.locator("button[role='radio']").click()
+
+    def fill_reason_for_change(self, reason: str):
+        """Fill the reason for the change request."""
+        self.page.locator(self.reason_textarea).fill(reason)
