@@ -33,6 +33,7 @@ The API documentation is served using *Swagger*. You may access it using:
 - [Getting Started](#getting-started)
 - [Overview of Steps to run ComeBeck WFH Tracker Locally](#overview-of-steps-to-run-comebeck-wfh-tracker-locally)
 - [Login Credentials](#login-credentials)
+- [Testing Your Code Locally](#testing-your-code-locally)
 - [Tech Stack of Ticket Mama](#tech-stack-of-comebeck-wfh-tracker)
 - [Solution Architecture of Ticket Mama](#solution-architecture-of-comebeck-wfh-tracker)
 - [Contributors](#contributors)
@@ -71,7 +72,46 @@ Built with the `FastAPI` framework, ComeBeck WFH Tracker offers a fast and scala
 ### Set Up Environment Variables
 
 To run ComeBeck WFH Tracker locally, you need to create two `.env` files to store sensitive information (secrets).
+### Configuring Poetry
 
+1. **Install Poetry**
+   
+   First, install Poetry if you haven't already. Run the following command in your terminal:
+   ```bash
+   curl -sSL https://install.python-poetry.org | python -
+   ```
+   Once installed, add Poetry to your PATH by adding the following line to your shell configuration file (~/.bashrc, ~/.zshrc, etc.):
+
+   ```bash
+   export PATH="$HOME/.poetry/bin:$PATH"
+   ```
+   Reload your shell configuration to make Poetry available:
+   ```bash
+    source ~/.bashrc
+    ```
+2. **Install Project Dependencies**
+
+   Navigate to your project directory (where pyproject.toml is located):
+
+   ```bash
+   cd path/to/IS212_ComeBeck
+   ```
+   Then, use Poetry to install dependencies:
+
+   ```bash
+    poetry install
+    ```
+    This command installs all the dependencies required for the backend application to run.
+
+3. **Activate the Virtual Environment**
+
+   To activate the virtual environment created by Poetry, run the following command:
+
+   ```bash
+   poetry shell
+   ```
+
+   This command activates the virtual environment and allows you to run commands within the environment.
 ### Overview of the `.env` files needed
 - **`.env` file for Frontend:** This file stores environment variables specific to your frontend development environment.
 - **`.env` file for Backend:** This file stores environment variables specific to your backend development environment
@@ -169,6 +209,68 @@ same password `password123`. You can use the corresponding email addresses to lo
 - `Department Schedule Tab` inside Schedule page is only accessible to `HR` roles.
 - `Team Members I Manage Tab` inside Schedule page is only accessible to `MANAGER` roles.
 
+## Testing Your Code Locally
+> **Note:** All tests for **ComeBeck WFH Tracker** are already executed 
+> automatically in our GitHub workflows. This ensures consistent testing on each push and pull request. However, if you’d like to run the tests locally for development purposes or debugging, follow the instructions below.
+>
+> <img src="./readme_files/githubworkflow.png" width="200px">
+
+To test ComeBeck WFH Tracker locally, ensure that:
+1. The Docker containers for your backend and database services are running.
+2. The Poetry-managed virtual environment is activated.
+
+### Activating the Virtual Environment
+
+To run the tests, you must be within the Poetry virtual environment. You can activate it by running:
+
+```bash
+poetry shell
+```
+Once activated, you should see your terminal prompt update to indicate the active virtual environment. It may look something like this:
+```
+(is-212-wfh-tracking-system-py3.12) PS C:\spm\IS212_ComeBeck>
+```
+If you’re not in the virtual environment, the tests might fail due to missing dependencies.
+### Running the Tests Locally
+### Test Types
+1. End-to-End Tests
+   ```
+   pytest tests/EndToEndTests -m "E2ETest" -v
+   ```
+   These tests simulate real user interactions across the application. This test is executed on our hosted web application https://comebeckwfhtracker.systems/.
+
+
+2. Integration Tests
+   ```
+   pytest tests/IntegrationTests -m "integration" -n auto -v
+   ```
+   Integration tests check the interactions between different components, especially focusing on backend services and database integration. For these tests, the Docker containers for the backend and database should be running, as they verify data flows across services.
+
+3. Unit Tests
+   ```
+   pytest tests/BackendUnitTests -m "unit" -n auto -v
+   ```
+   Unit tests validate individual functions and methods, primarily within the backend services, by isolating dependencies. However, a running Docker environment is still required for these tests to ensure configurations are properly loaded.
+
+### Running the Tests Locally
+1. Start Docker Containers 
+
+   Ensure that your backend and database containers are running. Use the following command to start them in development mode:
+   ```
+   docker-compose --profile dev up -d
+   ```
+   
+2. Execute Tests
+
+   Run each test type by executing the respective commands above. If you want to execute all tests sequentially, you can combine them in a shell script or run them individually.
+
+
+3. Stop Docker Containers
+
+   Once testing is complete, you can stop the Docker containers to free up system resources:
+   ```
+   docker-compose --profile dev down
+   ```
 ## Tech Stack of ComeBeck WFH Tracker
 <img src="./readme_files/ComeBeckWFHTrackerTechStack.png" width="600px">
 
