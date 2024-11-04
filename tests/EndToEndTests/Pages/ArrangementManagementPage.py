@@ -144,7 +144,6 @@ class ArrangementManagementPage(BasePage):
         # Assert visibility and click
         assert application_row.is_visible(
             timeout=10000), f"Application ID {application_id} not found in the table."
-        application_row.click()
 
     def fill_reason_for_change(self, reason: str):
         """Fill the reason for the change request."""
