@@ -34,8 +34,8 @@ The API documentation is served using *Swagger*. You may access it using:
 - [Overview of Steps to run ComeBeck WFH Tracker Locally](#overview-of-steps-to-run-comebeck-wfh-tracker-locally)
 - [Login Credentials](#login-credentials)
 - [Testing Your Code Locally](#testing-your-code-locally)
-- [Tech Stack of Ticket Mama](#tech-stack-of-comebeck-wfh-tracker)
-- [Solution Architecture of Ticket Mama](#solution-architecture-of-comebeck-wfh-tracker)
+- [Tech Stack of Comebeck WFH Tracker](#tech-stack-of-comebeck-wfh-tracker)
+- [Solution Architecture of Comebeck WFH Tracker](#solution-architecture-of-comebeck-wfh-tracker)
 - [Contributors](#contributors)
 
 ## What is ComeBeck WFH Tracker
