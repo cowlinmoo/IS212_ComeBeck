@@ -139,7 +139,6 @@ def create_and_approve_application(bearer_token, create_test_application):
 
 class TestCancelWithdrawArrangementManagement(BaseTest):
 
-    @pytest.mark.usefixtures("create_test_application")
     @pytest.mark.E2ETest
     def test_cancel_arrangement(self, create_test_application):
         # Log in to access the arrangement page
@@ -174,10 +173,8 @@ class TestCancelWithdrawArrangementManagement(BaseTest):
                                  timeout=15000)  # Wait up to 10 seconds
         assert success_message.is_visible(), "Cancel application submission failed or success message not visible"
 
-    @pytest.mark.usefixtures("create_test_application")
-    @pytest.mark.usefixtures("create_and_approve_application")
     @pytest.mark.E2ETest
-    def test_withdraw_arrangement(self, create_test_application):
+    def test_withdraw_arrangement(self, create_and_approve_application):
         # Log in to access the arrangement page
         login_page = LoginPage(self.page)
         login_page.navigate_to_login()
