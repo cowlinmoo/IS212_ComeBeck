@@ -7,14 +7,20 @@ class ArrangementManagementPage(BasePage):
         # Define selectors
         self.arrangement_type_label = "label:text('Arrangement Type:')"
         self.submit_button = "button[type='submit']"
-        self.change_tab = "button#radix-\\:r28\\:-trigger-change"
+        self.change_tab = "button[role='tab']:has-text('Change arrangement')"
 
         # Change arrangement tab selectors
         self.pending_approval_radio = "button[role='radio'][value='Pending Approval']"
         self.application_table = "table"
         self.reason_textarea = "textarea[placeholder='Please provide a reason for your change request.']"
+        self.withdraw_reason_textarea = "textarea[placeholder='Please provide a reason for your withdrawal/cancellation request.']"
         self.application_row_selector = "tr:has(td:text('{}'))"  # Placeholder for application ID
+        self.confirm_button = "button:text('Confirm Change')"
+        self.first_radio_button_in_table = "table tbody tr:first-child button[role='radio']"
 
+        # Withdraw arrangement tab selectors
+        self.withdraw_tab = "button[role='tab']:has-text('Withdraw arrangement')"
+        self.withdraw_button = "button:text('Confirm Withdraw')"
     def navigate_to_arrangement_page(self):
         """Navigate directly to the arrangement page."""
         self.navigate("https://comebeckwfhtracker.systems/arrangement")
@@ -114,10 +120,18 @@ class ArrangementManagementPage(BasePage):
         """Switch to the 'Change arrangement' tab."""
         self.page.locator(self.change_tab).click()
 
+    def switch_to_withdraw_tab(self):
+        """Switch to the 'Withdraw arrangement' tab."""
+        self.page.locator(self.withdraw_tab).click()
+
     def select_pending_approval(self):
         """Ensure 'Pending Approval' radio button is selected in the change tab."""
         if not self.page.locator(self.pending_approval_radio).get_attribute("aria-checked") == "true":
             self.page.locator(self.pending_approval_radio).click()
+
+    def select_approve(self):
+        """Select the 'Approve' radio button."""
+        self.page.locator("button[role='radio'][value='Approved']").click()
 
     def verify_application_in_table(self, application_id: str):
         """Check if the application with the given ID is in the table and select it."""
@@ -128,3 +142,19 @@ class ArrangementManagementPage(BasePage):
     def fill_reason_for_change(self, reason: str):
         """Fill the reason for the change request."""
         self.page.locator(self.reason_textarea).fill(reason)
+
+    def select_first_arrangement_to_change(self):
+        """Select the first available arrangement in the table."""
+        self.page.locator(self.first_radio_button_in_table).click()  # Click the specific radio button in the table
+
+    def submit_change(self):
+        """Submit the change request."""
+        self.page.locator(self.confirm_button).click()
+
+    def confirm_withdraw(self):
+        """Confirm the withdrawal of the arrangement."""
+        self.page.locator(self.withdraw_button).click()
+
+    def fill_reason_for_withdraw(self, reason: str):
+        """Fill the reason for the withdrawal."""
+        self.page.locator(self.withdraw_reason_textarea).fill(reason)

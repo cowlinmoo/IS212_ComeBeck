@@ -1,11 +1,15 @@
-import requests
 import pytest
+import requests
+
+from tests.EndToEndTests.Pages.LoginPage import LoginPage
+from tests.EndToEndTests.Pages.ArrangementManagementPage import ArrangementManagementPage
+from tests.EndToEndTests.Tests.BaseTest import BaseTest
 
 # Define constants
 AUTH_URL = 'https://api.comebeckwfhtracker.systems/api/authenticate'
 APPLICATION_URL = 'https://api.comebeckwfhtracker.systems/api/application'
-DELETE_URL = 'https://api.comebeckwfhtracker.systems/api/application/delete/all_applications_by_staff_id/150348'
-USERNAME = 'colinmok1000@gmail.com'
+DELETE_URL = 'https://api.comebeckwfhtracker.systems/api/application/delete/all_applications_by_staff_id/171043'
+USERNAME = 'Rithy.Luong@allinone.com.sg'
 PASSWORD = 'password123'
 
 
@@ -14,8 +18,7 @@ def bearer_token():
     """Obtain and return a Bearer token for authentication."""
     auth_response = requests.post(
         AUTH_URL,
-        headers={'accept': 'application/json',
-                 'Content-Type': 'application/x-www-form-urlencoded'},
+        headers={'accept': 'application/json', 'Content-Type': 'application/x-www-form-urlencoded'},
         data={
             'grant_type': 'password',
             'username': USERNAME,
@@ -48,7 +51,7 @@ def create_test_application(bearer_token):
         "requested_date": "2024-11-02",
         "application_hour": "fullday",
         "description": "Going on a family vacation",
-        "staff_id": 150348
+        "staff_id": 171043
     }
 
     # Create the application
@@ -57,40 +60,84 @@ def create_test_application(bearer_token):
         application_data = response.json()
         print("Application created successfully:", application_data)
     else:
-        raise Exception(
-            f"Failed to create application: {response.status_code} {response.json()}")
+        raise Exception(f"Failed to create application: {response.status_code} {response.json()}")
 
     # Yield the created application data to the test
     yield application_data
-
-    # Debugging: Print token and headers before deletion
-    print(f"Bearer token before deletion: {bearer_token}")
-    print(f"Headers for deletion request: {headers}")
 
     # Cleanup: Delete all applications by staff_id
     delete_response = requests.delete(DELETE_URL, headers={
         'Authorization': f'Bearer {bearer_token}'})
 
     if delete_response.status_code == 200:
-        print("Cleanup successful: All applications deleted for staff_id 150348.")
+        print("Cleanup successful: All applications deleted for staff_id 171043.")
     else:
         print("Cleanup failed:", delete_response.status_code, delete_response.text)
         raise Exception("Cleanup failed: Unable to delete applications")
 
 
-def test_create_application(create_test_application):
-    """Test creating an application using the fixture."""
-    application_data = create_test_application
-    assert application_data is not None, "Application creation failed: No data returned."
-    assert "application_id" in application_data, "Application creation failed: No application_id in response."
-    assert application_data["reason"] == "Vacation request", "Unexpected reason value."
-    assert application_data["events"][0][
-               "location"] == "Home", "Unexpected location value."
-    assert application_data["events"][0][
-               "requested_date"] == "2024-11-02", "Unexpected requested date."
-    assert application_data["events"][0][
-               "application_hour"] == "fullday", "Unexpected application hour."
-    assert application_data[
-               "description"] == "Going on a family vacation", "Unexpected description."
+@pytest.mark.usefixtures("create_test_application")
+class TestChangeArrangementManagement(BaseTest):
 
-    print("Application creation successful. Application data:", application_data)
+    @pytest.mark.E2ETest
+    def test_change_arrangement_display(self, create_test_application):
+        # Log in to access the arrangement page
+        login_page = LoginPage(self.page)
+        login_page.navigate_to_login()
+        login_page.login(USERNAME, PASSWORD)
+        self.wait_for_url("https://comebeckwfhtracker.systems/schedule")
+
+        # Navigate to Arrangement Management page
+        arrangement_page = ArrangementManagementPage(self.page)
+        arrangement_page.navigate_to_arrangement_page()
+
+        # Switch to the "Change arrangement" tab
+        arrangement_page.switch_to_change_tab()
+
+        # Select "Pending Approval" filter
+        arrangement_page.select_pending_approval()
+
+        # Verify the application appears in the table
+        application_id = create_test_application["application_id"]
+        arrangement_page.verify_application_in_table(application_id)
+
+        # Fill reason for change
+        arrangement_page.fill_reason_for_change("Updating arrangement details for testing purposes")
+
+    def test_submit_single_date_change(self, create_test_application):
+        # Log in to access the arrangement page
+        login_page = LoginPage(self.page)
+        login_page.navigate_to_login()
+        login_page.login(USERNAME, PASSWORD)
+        self.wait_for_url("https://comebeckwfhtracker.systems/schedule")
+
+        # Navigate to Arrangement Management page
+        arrangement_page = ArrangementManagementPage(self.page)
+        arrangement_page.navigate_to_arrangement_page()
+
+        # Switch to the "Change arrangement" tab
+        arrangement_page.switch_to_change_tab()
+
+        # Select "Pending Approval" filter
+        arrangement_page.select_pending_approval()
+
+        # Select the first arrangement to change
+        arrangement_page.select_first_arrangement_to_change()
+
+        # Select the date to change
+        arrangement_page.select_date("27")
+
+        # Select the time slot
+        arrangement_page.select_time_slot("AM")  # Select 'AM' time slot
+
+        # Fill reason for change
+        arrangement_page.fill_reason_for_change("Change from 2 November to 27 November")
+
+        # Submit the change
+        arrangement_page.submit_change()
+
+        success_message = self.page.locator("text=Your change request has been  successfully submitted.")  # Placeholder for actual success text
+
+        success_message.wait_for(state="visible",
+                                 timeout=15000)  # Wait up to 10 seconds
+        assert success_message.is_visible(), "Change submission failed or success message not visible"

@@ -51,7 +51,7 @@ def cleanup():
     assert delete_response.status_code == 200, "Cleanup failed: Unable to delete applications"
 
 @pytest.mark.usefixtures("cleanup")
-class TestArrangementManagement(BaseTest):
+class TestCreateArrangementManagement(BaseTest):
 
     @pytest.mark.E2ETest
     def test_submit_single_date_application(self):
