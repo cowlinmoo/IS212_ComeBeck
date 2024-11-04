@@ -1,6 +1,5 @@
 # ComeBeck WFH Tracker 👨🏻‍💻 - IS212 G9T7
 
-[Click here to access ComeBeck WFH Tracker!](https://comebeckwfhtracker.systems/)
 ```
    ____                     ____            _    
   / ___|___  _ __ ___   ___| __ )  ___  ___| | __
@@ -19,20 +18,29 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white)
 
-## API Documentation
+[Click here to access ComeBeck WFH Tracker!](https://comebeckwfhtracker.systems/)
+## Login Credentials
+| Role    | Email                     | Password    |
+|---------|---------------------------|-------------|
+| HR (1)      | colinmok1000@gmail.com    | password123 |
+| STAFF (2)  | colinmok3@gmail.com       | password123 |
+| MANAGER (3) | colinmokhengyee@gmail.com | password123 |
 
-The API documentation is served using *Swagger*. You may access it using:
+For testing purposes, we have inserted all `554 employees` of All In One with the 
+same password `password123`. You can use the corresponding email addresses to login. However, please note that certain pages/functionalities are restricted to specific roles.
 
-**Hosted Environment:** <https://api.comebeckwfhtracker.systems/api/documentation>
-
-**Local Environment:** <https://localhost:8080/api/documentation>
+- `Department Schedule Page` is only accessible to `HR` roles.
+- `Pending Arrangements Page` is only accessible to `HR` and `Manager` roles.
+- `Withdraw Arrangements Page` is only accessible to `HR` and `Manager` roles.
+- `Department Schedule Tab` inside Schedule page is only accessible to `HR` roles.
+- `Team Members I Manage Tab` inside Schedule page is only accessible to `MANAGER` roles.
 
 ## Table of Contents
 
 - [What is ComeBeck WFH Tracker?](#what-is-comebeck-wfh-tracker)
+- [API Documentation](#api-documentation)
 - [Getting Started](#getting-started)
 - [Overview of Steps to run ComeBeck WFH Tracker Locally](#overview-of-steps-to-run-comebeck-wfh-tracker-locally)
-- [Login Credentials](#login-credentials)
 - [Testing Your Code Locally](#testing-your-code-locally)
 - [Tech Stack of Comebeck WFH Tracker](#tech-stack-of-comebeck-wfh-tracker)
 - [Solution Architecture of Comebeck WFH Tracker](#solution-architecture-of-comebeck-wfh-tracker)
@@ -42,6 +50,14 @@ The API documentation is served using *Swagger*. You may access it using:
 ComeBeck WFH Tracker is an all-in-one work-from-home management platform that enables employees to apply for, view, and manage their remote work arrangements. The platform is designed to be intuitive and efficient, providing a streamlined experience for both employees and managers to coordinate in-office and remote schedules.
 
 Built with the `FastAPI` framework, ComeBeck WFH Tracker offers a fast and scalable backend supported by a `PostgreSQL` database to securely manage user and schedule data. A `React` front-end ensures a responsive and user-friendly interface for all users. In production, the front end is hosted on `Vercel`, while the backend operates in a Dockerized environment on an `Azure Container Apps`, providing a reliable, cloud-based solution for seamless work-from-home tracking and approval workflows.
+
+## API Documentation
+
+The API documentation is served using *Swagger*. You may access it using:
+
+**Hosted Environment:** <https://api.comebeckwfhtracker.systems/api/documentation>
+
+**Local Environment:** <https://localhost:8080/api/documentation>
 
 ## Getting Started
 
@@ -194,20 +210,6 @@ cd frontend # if you are not already in the frontend directory
 npm install # to install the required dependencies
 npm run dev # to start the development server
 ```
-
-## Login Credentials
-| Role    | Email                     | Password    |
-|---------|---------------------------|-------------|
-| HR (1)      | colinmok1000@gmail.com    | password123 |
-| STAFF (2)  | colinmok3@gmail.com       | password123 |
-| MANAGER (3) | colinmokhengyee@gmail.com | password123 |
-
-For testing purposes, we have inserted all `554 employees` of All In One with the 
-same password `password123`. You can use the corresponding email addresses to login. However, please note that certain pages/functionalities are restricted to specific roles.
-
-- `Department Schedule Page` is only accessible to `HR` roles.
-- `Department Schedule Tab` inside Schedule page is only accessible to `HR` roles.
-- `Team Members I Manage Tab` inside Schedule page is only accessible to `MANAGER` roles.
 
 ## Testing Your Code Locally
 > **Note:** All tests for **ComeBeck WFH Tracker** are already executed 
