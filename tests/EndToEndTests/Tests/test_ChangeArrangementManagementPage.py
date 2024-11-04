@@ -104,6 +104,7 @@ class TestChangeArrangementManagement(BaseTest):
         # Fill reason for change
         arrangement_page.fill_reason_for_change("Updating arrangement details for testing purposes")
 
+    @pytest.mark.E2ETest
     def test_submit_single_date_change(self, create_test_application):
         # Log in to access the arrangement page
         login_page = LoginPage(self.page)
