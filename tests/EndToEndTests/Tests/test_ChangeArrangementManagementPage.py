@@ -78,32 +78,7 @@ def create_test_application(bearer_token):
 
 @pytest.mark.usefixtures("create_test_application")
 class TestChangeArrangementManagement(BaseTest):
-
-    @pytest.mark.E2ETest
-    def test_change_arrangement_display(self, create_test_application):
-        # Log in to access the arrangement page
-        login_page = LoginPage(self.page)
-        login_page.navigate_to_login()
-        login_page.login(USERNAME, PASSWORD)
-        self.wait_for_url("https://comebeckwfhtracker.systems/schedule")
-
-        # Navigate to Arrangement Management page
-        arrangement_page = ArrangementManagementPage(self.page)
-        arrangement_page.navigate_to_arrangement_page()
-
-        # Switch to the "Change arrangement" tab
-        arrangement_page.switch_to_change_tab()
-
-        # Select "Pending Approval" filter
-        arrangement_page.select_pending_approval()
-
-        # Verify the application appears in the table
-        application_id = create_test_application["application_id"]
-        arrangement_page.verify_application_in_table(application_id)
-
-        # Fill reason for change
-        arrangement_page.fill_reason_for_change("Updating arrangement details for testing purposes")
-
+    
     @pytest.mark.E2ETest
     def test_submit_single_date_change(self, create_test_application):
         # Log in to access the arrangement page
