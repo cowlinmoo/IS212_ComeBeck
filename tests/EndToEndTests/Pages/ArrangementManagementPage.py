@@ -137,9 +137,14 @@ class ArrangementManagementPage(BasePage):
 
     def verify_application_in_table(self, application_id: str):
         """Check if the application with the given ID is in the table and select it."""
-        application_row = self.page.locator(self.application_row_selector.format(application_id))
-        assert application_row.is_visible(timeout=10000), f"Application ID {application_id} not found in the table."
-        application_row.locator("button[role='radio']").click()
+        # Use a chained selector to locate the application row with the specific ID and the radio button inside it
+        application_row = self.page.locator(
+            f"tr:has(td:text-is('{application_id}')) >> button[role='radio']")
+
+        # Assert visibility and click
+        assert application_row.is_visible(
+            timeout=10000), f"Application ID {application_id} not found in the table."
+        application_row.click()
 
     def fill_reason_for_change(self, reason: str):
         """Fill the reason for the change request."""
