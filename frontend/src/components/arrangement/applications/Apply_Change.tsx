@@ -502,113 +502,86 @@ const Apply_Change: React.FC<IApplications> = ({ staffId, token }) => {
   const [selectedArrangement, setSelectedArrangement] = useState<Arrangement>()
 
 
-  //Submission for apply form
-  async function applySubmit(values: z.infer<typeof changeFormSchema>) {
+// Submission for apply form
+async function applySubmit(values: z.infer<typeof changeFormSchema>) {
     setShowEmptyReasonAlert(false);
     setShowNoSelectionAlert(false);
     setShowEmptyDateAlert(false);
+
     if (values.reason.trim() === "") {
-      setShowEmptyReasonAlert(true);
-    } 
+        setShowEmptyReasonAlert(true);
+    }
     if (!values.selectedArrangement.eventID) {
-      setShowNoSelectionAlert(true);
+        setShowNoSelectionAlert(true);
     }
     if (!values.singleDate?.date) {
-      setShowEmptyDateAlert(true)
+        setShowEmptyDateAlert(true);
     }
-    if (values.reason !=="" && showNoSelectionAlert === false && values.singleDate) {
-      const headers = {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        accept: "application/json",
-      };
-      //
-      console.log(values.selectedArrangement.applicationID);
-      console.log(values.selectedArrangement.eventID);
-      
-      const changeEvents = []
-      let requested_date = ""
-      let application_hour =""
 
-      for (const application of wfhApplications){
-        if (application.application_id === values.selectedArrangement.applicationID){
-          let count = 0
-          for (const event of application.events){
-            count += 1
-            console.log(event.event_id)
-            console.log(values.selectedArrangement.eventID)
-            console.log(typeof event.event_id )
-            console.log(typeof values.selectedArrangement.eventID)
+    if (values.reason !== "" && showNoSelectionAlert === false && values.singleDate) {
+        const headers = {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            accept: "application/json",
+        };
 
-            if (event.event_id.toString() === values.selectedArrangement.eventID){
-              if (count ==1){
-                console.log(values.singleDate.date)
-                requested_date = format(values.singleDate.date, "yyyy-MM-dd")
-                application_hour = values.singleDate.hour
-              }
-              else{
-                console.log(values.singleDate.date)
-                changeEvents.push({
-                  "application_hour":values.singleDate.hour,
-                  "requested_date": format(values.singleDate.date, "yyyy-MM-dd")
-                })
-              }
+        // Initialize changeEvents with the selected date and hour
+        const changeEvents = [{
+            "application_hour": values.singleDate.hour,
+            "requested_date": format(values.singleDate.date, "yyyy-MM-dd")
+        }];
+
+        // Loop through existing events to add them, excluding the selected one
+        for (const application of wfhApplications) {
+            if (application.application_id === values.selectedArrangement.applicationID) {
+                for (const event of application.events) {
+                    if (event.event_id.toString() !== values.selectedArrangement.eventID) {
+                        changeEvents.push({
+                            "application_hour": event.hour,
+                            "requested_date": format(event.date, "yyyy-MM-dd")
+                        });
+                    }
+                }
             }
-            else{
-              if (count ==1){
-                console.log(event.date)
-                requested_date = format(event.date, "yyyy-MM-dd")
-                application_hour = event.hour
-              }
-              else{
-                console.log(event.date)
-                changeEvents.push({
-                  "application_hour":event.hour,
-                  "requested_date": format(event.date, "yyyy-MM-dd")
-                })
-              }
-            }
-          }
         }
-      }
-      const content = {
-        "location": "Home",
-        "reason": values.reason,
-        "requested_date": requested_date,
-        "application_hour": application_hour,
-        "description": "",
-        "staff_id": staffId,
-        "events": changeEvents 
-      };
+
+        const content = {
+            "location": "Home",
+            "reason": values.reason,
+            "requested_date": format(values.singleDate.date, "yyyy-MM-dd"),
+            "application_hour": values.singleDate.hour,
+            "description": "",
+            "staff_id": staffId,
+            "events": changeEvents
+        };
+
         console.log(content);
-        setIsLoading(true)
+        setIsLoading(true);
         try {
-          const response = await fetch(
-            `${URL}/` +
-              values.selectedArrangement.applicationID,
-            { headers: headers, method: "PUT", body: JSON.stringify(content) }
-          );
-          if (!response.ok) {
-            console.log(await response.json());
-            throw new Error(`POST Application API validation ERROR`);
-          } else {
-            console.log(response.json());
-            
-            setShowSuccessAlert(true);
-            //reset form once submission is successful
-            changeForm.reset();
-            //set timeout for alert
-            setTimeout(() => setShowSuccessAlert(false), 5000);
-          }
+            const response = await fetch(
+                `${URL}/` + values.selectedArrangement.applicationID,
+                { headers: headers, method: "PUT", body: JSON.stringify(content) }
+            );
+            if (!response.ok) {
+                console.log(await response.json());
+                throw new Error(`POST Application API validation ERROR`);
+            } else {
+                console.log(response.json());
+
+                setShowSuccessAlert(true);
+                // reset form once submission is successful
+                changeForm.reset();
+                // set timeout for alert
+                setTimeout(() => setShowSuccessAlert(false), 5000);
+            }
         } catch (error: any) {
-          console.log("POST API fetching error.", error.message);
+            console.log("POST API fetching error.", error.message);
         }
         finally {
-          setIsLoading(false)
+          setIsLoading(false);
         }
     }
-  
-  }
+}
 
   return (
     <TabsContent value="change">
